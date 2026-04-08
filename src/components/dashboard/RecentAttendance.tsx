@@ -1,110 +1,57 @@
 import { formatMarketDate, formatTime } from '@/lib/utils'
 import type { AttendedMarket } from '@/lib/queries/maker'
 
-interface Props {
-  attendance: AttendedMarket[]
-}
+interface Props { attendance: AttendedMarket[] }
 
-/**
- * Pure Server Component — no client JS needed. Read-only log.
- */
 export default function RecentAttendance({ attendance }: Props) {
+  const tagStyle = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+
   if (attendance.length === 0) {
     return (
-      <div style={{ border: '3px solid #1a1a1a' }}>
-        <div className="flex items-center justify-between bg-ink px-4 py-3">
-          <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-            §5 — ATTENDANCE LOG
-          </span>
-          <span className="font-tag text-xs text-parchment/30">FP-005</span>
-        </div>
-        <div className="bg-parchment p-5 text-center">
-          <p className="font-tag text-xs tracking-widest uppercase text-ink/25 leading-loose">
-            NO ATTENDANCE RECORDED YET
-          </p>
-        </div>
+      <div style={{ padding: '24px', textAlign: 'center', background: 'var(--P)' }}>
+        <div style={{ ...tagStyle, color: 'rgba(24,22,20,.25)' }}>NO ATTENDANCE RECORDED YET</div>
       </div>
     )
   }
 
   return (
-    <div style={{ border: '3px solid #1a1a1a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between bg-ink px-4 py-3 border-b-[3px] border-ink">
-        <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-          §5 — ATTENDANCE LOG
-        </span>
-        <span className="font-tag text-xs text-parchment/30 tracking-[0.06em]">FP-005</span>
-      </div>
+    <div style={{ background: 'var(--P)' }}>
+      {attendance.map(record => {
+        const checkedOut = Boolean(record.checked_out_at)
+        const isToday = record.market.event_date === new Date().toISOString().split('T')[0]
+        let duration = ''
+        if (record.checked_out_at) {
+          const mins = Math.round((new Date(record.checked_out_at).getTime() - new Date(record.checked_in_at).getTime()) / 60000)
+          duration = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`
+        }
 
-      <div className="bg-parchment divide-y-[2px] divide-ink/10">
-        {attendance.map((record) => {
-          const checkedOut = Boolean(record.checked_out_at)
-          const isToday =
-            record.market.event_date === new Date().toISOString().split('T')[0]
-
-          // Duration calculation
-          let duration = ''
-          if (record.checked_out_at) {
-            const mins = Math.round(
-              (new Date(record.checked_out_at).getTime() -
-                new Date(record.checked_in_at).getTime()) /
-                60000
-            )
-            if (mins < 60) duration = `${mins}m`
-            else duration = `${Math.floor(mins / 60)}h ${mins % 60}m`
-          }
-
-          return (
-            <div
-              key={record.attendance_id}
-              className="flex items-center gap-4 px-4 py-3"
-            >
-              {/* Verified tick */}
-              <div className="w-6 flex-shrink-0 text-center">
-                {record.is_verified ? (
-                  <span className="font-tag text-sm text-grove font-bold" title="Verified by curator">✓</span>
-                ) : (
-                  <span className="font-tag text-sm text-ink/15">·</span>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-display font-black text-lg uppercase tracking-tight leading-none text-ink">
-                    {record.market.space.name}
-                  </p>
-                  {isToday && (
-                    <span className="font-tag text-xs tracking-widest uppercase text-stamp border border-stamp px-2 py-0.5">
-                      TODAY
-                    </span>
-                  )}
+        return (
+          <div key={record.attendance_id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderBottom: '2px solid rgba(24,22,20,.1)' }}>
+            <div style={{ width: '20px', flexShrink: 0, textAlign: 'center', fontFamily: 'var(--TAG)', fontSize: '14px', color: record.is_verified ? 'var(--GRN)' : 'rgba(24,22,20,.15)', fontWeight: 700 }}>
+              {record.is_verified ? '✓' : '·'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1 }}>
+                  {record.market.space.name}
                 </div>
-                <p className="font-tag text-xs tracking-wide uppercase text-ink/35 mt-0.5">
-                  {formatMarketDate(record.market.event_date)}
-                  {record.stall_label && record.stall_label !== 'INTENT' && (
-                    <> · STALL {record.stall_label}</>
-                  )}
-                  {duration && <> · {duration}</>}
-                </p>
+                {isToday && <span style={{ ...tagStyle, fontSize: '10px', color: 'var(--RED)', border: '1px solid var(--RED)', padding: '2px 6px' }}>TODAY</span>}
               </div>
-
-              {/* Status */}
-              <div className="flex-shrink-0 font-tag text-xs tracking-widest uppercase">
-                {checkedOut ? (
-                  <span className="text-ink/30">
-                    {formatTime(record.market.starts_at)}–
-                    {formatTime(record.market.ends_at)}
-                  </span>
-                ) : (
-                  <span className="text-stamp font-bold">● ACTIVE</span>
-                )}
+              <div style={{ ...tagStyle, color: 'rgba(24,22,20,.35)', fontSize: '10px' }}>
+                {formatMarketDate(record.market.event_date)}
+                {record.stall_label && record.stall_label !== 'INTENT' ? ` · STALL ${record.stall_label}` : ''}
+                {duration ? ` · ${duration}` : ''}
               </div>
             </div>
-          )
-        })}
-      </div>
+            <div style={{ flexShrink: 0, ...tagStyle, fontSize: '10px' }}>
+              {checkedOut
+                ? <span style={{ color: 'rgba(24,22,20,.3)' }}>{formatTime(record.market.starts_at)}–{formatTime(record.market.ends_at)}</span>
+                : <span style={{ color: 'var(--RED)', fontWeight: 700 }}>● ACTIVE</span>
+              }
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

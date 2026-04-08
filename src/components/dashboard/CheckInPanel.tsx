@@ -19,9 +19,7 @@ export default function CheckInPanel({ activeCheckins, todayMarkets }: Props) {
   function handleCheckIn(marketId: string) {
     setError(null)
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('market_id', marketId)
-      fd.set('stall_label', stallInput)
+      const fd = new FormData(); fd.set('market_id', marketId); fd.set('stall_label', stallInput)
       const result = await checkInToMarket(fd)
       if (result?.error) setError(result.error)
       else setCheckingInTo(null)
@@ -36,158 +34,69 @@ export default function CheckInPanel({ activeCheckins, todayMarkets }: Props) {
     })
   }
 
-  // Markets available to check in to (not already checked in)
-  const checkedInMarketIds = new Set(activeCheckins.map((c) => c.market.id))
-  const availableToday = todayMarkets.filter(
-    (um) => !checkedInMarketIds.has(um.market.id)
-  )
+  const checkedInIds = new Set(activeCheckins.map(c => c.market.id))
+  const availableToday = todayMarkets.filter(um => !checkedInIds.has(um.market.id))
+
+  const tagStyle = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
 
   return (
-    <div style={{ border: '3px solid #1a1a1a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between bg-ink px-4 py-3 border-b-[3px] border-ink">
-        <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-          §3 — MARKET CHECK-IN
-        </span>
-        <span className="font-tag text-xs text-parchment/30 tracking-[0.06em]">FP-003</span>
-      </div>
+    <div style={{ background: 'var(--P)' }}>
+      {activeCheckins.length > 0 && (
+        <div style={{ padding: '14px', borderBottom: '2px solid rgba(24,22,20,.15)' }}>
+          <div style={{ ...tagStyle, fontWeight: 700, color: 'var(--GRN)', marginBottom: '10px' }}>● CURRENTLY CHECKED IN</div>
+          {activeCheckins.map(c => (
+            <div key={c.attendance_id} style={{ display: 'flex', alignItems: 'center', gap: '12px', border: '2px solid var(--GRN)', background: 'rgba(26,92,48,.05)', padding: '10px 12px', marginBottom: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1, marginBottom: '3px' }}>{c.market.space.name}</div>
+                <div style={{ ...tagStyle, color: 'rgba(24,22,20,.4)' }}>{formatTime(c.market.starts_at)}–{formatTime(c.market.ends_at)}{c.stall_label && c.stall_label !== 'INTENT' ? ` · STALL ${c.stall_label}` : ''}</div>
+              </div>
+              <button onClick={() => handleCheckOut(c.attendance_id)} disabled={isPending} style={{ ...tagStyle, fontWeight: 700, color: 'var(--INK)', background: 'var(--P)', border: '2px solid var(--INK)', padding: '7px 12px', cursor: 'pointer', boxShadow: 'var(--SHD-SM)' }}>CHECK OUT</button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div className="bg-parchment divide-y-[2px] divide-ink/15">
-        {/* Active check-ins */}
-        {activeCheckins.length > 0 && (
-          <div className="p-5">
-            <p className="font-tag font-bold text-xs tracking-[0.2em] uppercase text-grove mb-3">
-              ● CURRENTLY CHECKED IN
-            </p>
-            <div className="space-y-3">
-              {activeCheckins.map((checkin) => (
-                <div
-                  key={checkin.attendance_id}
-                  className="flex items-center gap-4 border-[2px] border-grove bg-grove/5 p-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-display font-black text-xl uppercase tracking-tight leading-none text-ink mb-1">
-                      {checkin.market.space.name}
-                    </p>
-                    <p className="font-tag text-xs tracking-wide uppercase text-ink/40">
-                      {formatTime(checkin.market.starts_at)}–
-                      {formatTime(checkin.market.ends_at)}
-                      {checkin.stall_label &&
-                        checkin.stall_label !== 'INTENT' && (
-                          <> · STALL {checkin.stall_label}</>
-                        )}
-                    </p>
+      {availableToday.length > 0 ? (
+        <div style={{ padding: '14px' }}>
+          <div style={{ ...tagStyle, fontWeight: 700, color: 'rgba(24,22,20,.4)', marginBottom: '10px' }}>TODAY&apos;S MARKETS — TAP TO CHECK IN</div>
+          {availableToday.map(um => {
+            const isExpanded = checkingInTo === um.market.id
+            const isLive = um.market.status === 'live' || um.market.status === 'community_live'
+            return (
+              <div key={um.market.id} style={{ border: '2px solid var(--INK)', marginBottom: '8px' }}>
+                <button onClick={() => setCheckingInTo(isExpanded ? null : um.market.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1 }}>{um.market.space.name}</div>
+                    <div style={{ ...tagStyle, color: 'rgba(24,22,20,.4)', marginTop: '3px' }}>📍 {um.market.space.address ?? um.market.space.parish ?? 'Lisbon'} · {formatTime(um.market.starts_at)}–{formatTime(um.market.ends_at)}</div>
                   </div>
-                  <button
-                    onClick={() => handleCheckOut(checkin.attendance_id)}
-                    disabled={isPending}
-                    className="font-tag font-bold text-xs tracking-widest uppercase text-ink border-[2px] border-ink px-3 py-2 hover:bg-ink hover:text-parchment transition-colors disabled:opacity-50"
-                    style={{ boxShadow: '2px 2px 0 0 #1a1a1a' }}
-                  >
-                    CHECK OUT
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Available markets to check in */}
-        {availableToday.length > 0 ? (
-          <div className="p-5">
-            <p className="font-tag font-bold text-xs tracking-[0.2em] uppercase text-ink/40 mb-3">
-              TODAY&apos;S MARKETS — TAP TO CHECK IN
-            </p>
-            <div className="space-y-3">
-              {availableToday.map((um) => {
-                const isExpanded = checkingInTo === um.market.id
-                return (
-                  <div key={um.market.id} style={{ border: '2px solid #1a1a1a' }}>
-                    {/* Market row */}
-                    <button
-                      onClick={() =>
-                        setCheckingInTo(isExpanded ? null : um.market.id)
-                      }
-                      className="w-full flex items-center gap-3 p-3 hover:bg-parchment-2 transition-colors text-left"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-display font-black text-xl uppercase tracking-tight leading-none text-ink">
-                          {um.market.space.name}
-                        </p>
-                        <p className="font-tag text-xs tracking-wide uppercase text-ink/40 mt-0.5">
-                          📍 {um.market.space.address ?? um.market.space.parish ?? 'Lisbon'}
-                          {' · '}
-                          {formatTime(um.market.starts_at)}–
-                          {formatTime(um.market.ends_at)}
-                        </p>
-                      </div>
-                      <div
-                        className={`font-tag text-xs tracking-widest uppercase px-3 py-1.5 border-[2px] ${
-                          um.market.status === 'live' ||
-                          um.market.status === 'community_live'
-                            ? 'border-stamp text-stamp bg-stamp/5'
-                            : 'border-ink/30 text-ink/40'
-                        }`}
-                      >
-                        {um.market.status === 'live'
-                          ? '● LIVE'
-                          : um.market.status === 'community_live'
-                          ? '● COMM'
-                          : 'SCHED'}
-                      </div>
-                    </button>
-
-                    {/* Expanded check-in form */}
-                    {isExpanded && (
-                      <div className="border-t-[2px] border-ink bg-parchment-2 p-3">
-                        <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                          Stall Reference (optional)
-                        </label>
-                        <div className="flex gap-3">
-                          <input
-                            type="text"
-                            value={stallInput}
-                            onChange={(e) => setStallInput(e.target.value)}
-                            placeholder="e.g. A-1, Unit 7"
-                            className="flex-1 bg-transparent border-b-[2px] border-dashed border-ink px-0 py-2 font-mono text-base text-ink placeholder:text-ink/25 focus:outline-none focus:border-solid transition-all"
-                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                          />
-                          <button
-                            onClick={() => handleCheckIn(um.market.id)}
-                            disabled={isPending}
-                            className="font-tag font-bold text-xs tracking-widest uppercase text-parchment bg-stamp border-[2px] border-stamp px-4 py-2 hover:bg-ink hover:border-ink transition-colors disabled:opacity-50 stamp-noise"
-                            style={{ boxShadow: '4px 4px 0 0 #1a1a1a' }}
-                          >
-                            {isPending ? 'CHECKING IN...' : 'CHECK IN →'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                  <div style={{ ...tagStyle, fontWeight: 700, padding: '4px 8px', border: `1px solid ${isLive ? 'var(--RED)' : 'rgba(24,22,20,.3)'}`, color: isLive ? 'var(--RED)' : 'rgba(24,22,20,.4)' }}>
+                    {isLive ? '● LIVE' : 'SCHED'}
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          activeCheckins.length === 0 && (
-            <div className="p-5 text-center">
-              <p className="font-tag text-xs tracking-widest uppercase text-ink/25 leading-loose">
-                NO MARKETS SCHEDULED TODAY
-                <br />
-                Use the agenda below to declare intent
-              </p>
-            </div>
-          )
-        )}
+                </button>
+                {isExpanded && (
+                  <div style={{ borderTop: '2px solid var(--INK)', background: 'var(--P2)', padding: '10px 12px' }}>
+                    <label style={{ ...tagStyle, color: 'rgba(24,22,20,.45)', display: 'block', marginBottom: '8px' }}>Stall Reference (optional)</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <input type="text" value={stallInput} onChange={e => setStallInput(e.target.value)} placeholder="e.g. A-1, Unit 7"
+                        style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '2px dashed var(--INK)', padding: '8px 0', fontFamily: 'var(--MONO)', fontSize: '16px', color: 'var(--INK)', outline: 'none' }} />
+                      <button onClick={() => handleCheckIn(um.market.id)} disabled={isPending}
+                        style={{ ...tagStyle, fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '2px solid var(--RED)', padding: '8px 14px', cursor: 'pointer', boxShadow: 'var(--SHD-SM)' }}>
+                        {isPending ? 'CHECKING IN...' : 'CHECK IN →'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : activeCheckins.length === 0 && (
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <div style={{ ...tagStyle, color: 'rgba(24,22,20,.25)', lineHeight: 2 }}>NO MARKETS SCHEDULED TODAY<br />Use the agenda below to declare intent</div>
+        </div>
+      )}
 
-        {error && (
-          <div className="px-5 py-3 border-l-[3px] border-stamp">
-            <p className="font-tag text-xs tracking-wide uppercase text-stamp font-bold">
-              ✗ {error}
-            </p>
-          </div>
-        )}
-      </div>
+      {error && <div style={{ padding: '10px 14px', borderLeft: '3px solid var(--RED)', ...tagStyle, fontWeight: 700, color: 'var(--RED)' }}>✗ {error}</div>}
     </div>
   )
 }

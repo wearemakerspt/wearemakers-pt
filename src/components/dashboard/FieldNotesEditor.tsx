@@ -3,137 +3,96 @@
 import { useState, useTransition, useRef } from 'react'
 import { saveFieldNotes } from '@/app/dashboard/maker/actions'
 
-interface Props {
-  initialOffer: string | null
-}
+interface Props { initialOffer: string | null }
 
 export default function FieldNotesEditor({ initialOffer }: Props) {
   const [value, setValue] = useState(initialOffer ?? '')
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const formRef = useRef<HTMLFormElement>(null)
-
   const charLimit = 160
   const remaining = charLimit - value.length
   const isOverLimit = remaining < 0
 
   async function handleSubmit(formData: FormData) {
-    setError(null)
-    setSaved(false)
-
+    setError(null); setSaved(false)
     startTransition(async () => {
       const result = await saveFieldNotes(formData)
-      if (result?.error) {
-        setError(result.error)
-      } else {
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
-      }
+      if (result?.error) { setError(result.error) }
+      else { setSaved(true); setTimeout(() => setSaved(false), 3000) }
     })
   }
 
   return (
-    <div style={{ border: '3px solid #1a1a1a' }}>
-      {/* Section header */}
-      <div className="flex items-center justify-between bg-ink px-4 py-3 border-b-[3px] border-ink">
-        <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-          §2 — FIELD NOTES / DAILY OFFER
-        </span>
-        <span className="font-tag text-xs text-parchment/30 tracking-[0.06em]">FP-002</span>
+    <div>
+      <div style={{ borderLeft: '3px solid var(--RED)', paddingLeft: '10px', marginBottom: '14px' }}>
+        <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', lineHeight: 1.6 }}>
+          This text appears on your public card and Courtesy screen. Visitors see it in the live feed.
+        </div>
       </div>
 
-      <div className="bg-parchment p-5">
-        <p className="font-tag text-xs tracking-wide uppercase text-ink/40 leading-relaxed mb-4 border-l-[3px] border-stamp pl-3">
-          This text appears on your public card and Courtesy screen.
-          Visitors see it in the live feed.
-        </p>
-
-        <form ref={formRef} action={handleSubmit}>
-          {/* Textarea */}
-          <div className="mb-4">
-            <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-              TODAY&apos;S OFFER / FIELD NOTE
-            </label>
-            <textarea
-              name="offer"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              rows={3}
-              placeholder="e.g. 10% off all pots today. Show this screen at the stall."
-              maxLength={charLimit + 20}
-              className={`
-                w-full bg-transparent border-[2px] border-dashed border-ink px-3 py-3
-                font-mono text-base text-ink leading-relaxed resize-none
-                placeholder:text-ink/25 placeholder:italic
-                focus:outline-none focus:border-solid focus:border-[2px] transition-all
-                ${isOverLimit ? 'border-stamp' : ''}
-              `}
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            />
-            {/* Character counter */}
-            <div className="flex justify-between mt-1">
-              <span className="font-tag text-xs text-ink/30 tracking-wide">
-                {value.length > 0 ? `"${value.slice(0, 40)}${value.length > 40 ? '...' : ''}"` : '— no offer set —'}
-              </span>
-              <span
-                className={`font-tag text-xs tracking-wide ${
-                  isOverLimit ? 'text-stamp font-bold' : 'text-ink/30'
-                }`}
-              >
-                {remaining} chars
-              </span>
-            </div>
+      <form action={handleSubmit}>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', display: 'block', marginBottom: '8px' }}>
+            TODAY&apos;S OFFER / FIELD NOTE
+          </label>
+          <textarea
+            name="offer"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            rows={3}
+            placeholder="e.g. 10% off all pots today. Show this screen at the stall."
+            maxLength={charLimit + 20}
+            style={{
+              width: '100%', background: 'transparent',
+              border: `2px ${isOverLimit ? 'solid' : 'dashed'} ${isOverLimit ? 'var(--RED)' : 'var(--INK)'}`,
+              padding: '10px 12px', fontFamily: 'var(--MONO)', fontSize: '16px',
+              color: 'var(--INK)', lineHeight: 1.6, resize: 'vertical', outline: 'none',
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+            <span style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: 'rgba(24,22,20,.3)' }}>
+              {value.length > 0 ? `"${value.slice(0, 40)}${value.length > 40 ? '...' : ''}"` : '— no offer set —'}
+            </span>
+            <span style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: isOverLimit ? 'var(--RED)' : 'rgba(24,22,20,.3)', fontWeight: isOverLimit ? 700 : 400 }}>
+              {remaining} chars
+            </span>
           </div>
+        </div>
 
-          {/* Live preview */}
+        {value && (
+          <div style={{ marginBottom: '14px', border: '2px dashed var(--INK)', background: 'var(--P2)', padding: '10px 12px' }}>
+            <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(24,22,20,.35)', marginBottom: '4px' }}>LIVE FEED PREVIEW</div>
+            <div style={{ fontFamily: 'var(--MONO)', fontSize: '15px', color: 'var(--INK)', fontStyle: 'italic', lineHeight: 1.6 }}>✦ {value}</div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            type="submit"
+            disabled={isPending || isOverLimit}
+            style={{
+              fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.16em',
+              textTransform: 'uppercase', color: 'var(--P)', background: 'var(--INK)',
+              border: '3px solid var(--INK)', padding: '11px 18px', cursor: isPending ? 'not-allowed' : 'pointer',
+              boxShadow: 'var(--SHD-SM)', opacity: isPending || isOverLimit ? 0.5 : 1,
+            }}
+          >
+            {isPending ? 'SAVING...' : 'SAVE NOTES →'}
+          </button>
           {value && (
-            <div className="mb-5 border-[2px] border-dashed border-ink bg-parchment-2 p-3">
-              <p className="font-tag text-xs tracking-widest uppercase text-ink/35 mb-1">
-                LIVE FEED PREVIEW
-              </p>
-              <p className="font-mono text-sm text-ink italic leading-relaxed">
-                ✦ {value}
-              </p>
-            </div>
-          )}
-
-          {/* Actions row */}
-          <div className="flex items-center gap-4">
             <button
-              type="submit"
-              disabled={isPending || isOverLimit}
-              className="font-tag font-bold text-xs tracking-widest uppercase text-parchment bg-ink border-[3px] border-ink px-5 py-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stamp hover:border-stamp transition-colors"
-              style={{ boxShadow: '4px 4px 0 0 #1a1a1a' }}
+              type="button"
+              onClick={() => setValue('')}
+              style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', background: 'transparent', border: '1px dashed rgba(24,22,20,.3)', padding: '11px 14px', cursor: 'pointer' }}
             >
-              {isPending ? 'SAVING...' : 'SAVE NOTES →'}
+              CLEAR
             </button>
-
-            {value && (
-              <button
-                type="button"
-                onClick={() => setValue('')}
-                className="font-tag text-xs tracking-widest uppercase text-ink/40 border border-dashed border-ink/30 px-4 py-3 hover:text-ink hover:border-ink transition-colors"
-              >
-                CLEAR
-              </button>
-            )}
-
-            {/* Save confirmation */}
-            {saved && (
-              <span className="font-tag font-bold text-xs tracking-widest uppercase text-grove">
-                ✓ SAVED
-              </span>
-            )}
-
-            {error && (
-              <span className="font-tag text-xs tracking-widest uppercase text-stamp font-bold">
-                ✗ {error}
-              </span>
-            )}
-          </div>
-        </form>
-      </div>
+          )}
+          {saved && <span style={{ fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--GRN)' }}>✓ SAVED</span>}
+          {error && <span style={{ fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--RED)' }}>✗ {error}</span>}
+        </div>
+      </form>
     </div>
   )
 }
