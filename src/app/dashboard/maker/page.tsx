@@ -116,7 +116,7 @@ export default async function MakerDashboardPage() {
                 <span>§3 — ACTIVE CHECK-INS</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
               </div>
-              <CheckInPanel checkins={activeCheckins} todayMarkets={todayMarkets} />
+             <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
             </div>
           )}
 
