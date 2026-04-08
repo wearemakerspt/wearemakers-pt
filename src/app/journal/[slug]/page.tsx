@@ -9,12 +9,9 @@ import MakersInLoop from '@/components/journal/MakersInLoop'
 
 // ISR: revalidate every 5 minutes
 export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 // Pre-render all published articles at build time
-export async function generateStaticParams() {
-  const articles = await getAllArticles()
-  return articles.map((a) => ({ slug: a.slug }))
-}
 
 // Per-article OG metadata
 export async function generateMetadata({
