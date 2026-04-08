@@ -130,7 +130,7 @@ export default async function MakerDashboardPage() {
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
               </div>
               <div style={{ padding: '0' }}>
-                <CheckInPanel checkins={activeCheckins} todayMarkets={todayMarkets} />
+                <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
               </div>
             </div>
           )}
