@@ -40,12 +40,24 @@ export default function BrandCard({ brand: b, view = 'list' }: Props) {
 
           {/* Info */}
           <div style={{ background: '#f0ece0', padding: '8px 9px', borderTop: '2px solid #181614' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(14px,3.5vw,18px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(14px,3.5vw,18px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {b.display_name}
             </div>
-            {b.is_verified && (
-              <span className="badge-pro" style={{ fontSize: '9px', marginBottom: '2px', display: 'inline-block' }}>✦ PRO</span>
+            {(b.bio_i18n as any)?._category && (
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {(b.bio_i18n as any)._category.split(',')[0].trim()}
+              </div>
             )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+              {b.is_verified && (
+                <span className="badge-pro" style={{ fontSize: '9px', display: 'inline-block' }}>✦ PRO</span>
+              )}
+              {(b.bio_i18n as any)?._price_range && (
+                <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c8291a', border: '1px solid rgba(200,41,26,.3)', padding: '1px 5px' }}>
+                  {(b.bio_i18n as any)._price_range}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Link>

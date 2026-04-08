@@ -1,17 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { checkInToMarket, checkOutOfMarket, setLiveStatus } from '@/app/dashboard/maker/actions'
+import { useState, useTransition, useEffect } from 'react'
+import { checkInToMarket, checkOutOfMarket } from '@/app/dashboard/maker/actions'
 import type { AttendedMarket, UpcomingMarket } from '@/lib/queries/maker'
-
-interface LiveMarket {
-  id: string
-  title: string
-  space_name: string
-  starts_at: string
-  ends_at: string
-  status: string
-}
 
 interface Props {
   initialIsActive: boolean
@@ -20,32 +11,23 @@ interface Props {
   todayMarkets: UpcomingMarket[]
 }
 
-const CATEGORIES = [
-  'Ceramics', 'Leather', 'Textile', 'Paper', 'Jewellery',
-  'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
-  'Food', 'Accessories', 'Other',
-]
-
 function formatTime(t: string) { return t.slice(0, 5) }
 
 export default function LiveToggle({ initialIsActive, displayName, activeCheckins, todayMarkets }: Props) {
   const [isActive, setIsActive] = useState(initialIsActive)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [justWentLive, setJustWentLive] = useState(false)
   const [selectedMarketId, setSelectedMarketId] = useState<string>(
     todayMarkets[0]?.market.id ?? ''
   )
 
-  // Markets already checked into
   const checkedInIds = new Set(activeCheckins.map(c => c.market.id))
-  // Live markets available to check into
   const availableMarkets = todayMarkets.filter(
     um => !checkedInIds.has(um.market.id) &&
     (um.market.status === 'live' || um.market.status === 'community_live' || um.market.status === 'scheduled')
   )
-
   const selectedMarket = todayMarkets.find(um => um.market.id === selectedMarketId)
-  const isCheckedIntoSelected = checkedInIds.has(selectedMarketId)
 
   function handleGoLive() {
     if (!selectedMarketId) { setError('Select a market first'); return }
@@ -56,7 +38,11 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
       fd.set('stall_label', '')
       const result = await checkInToMarket(fd)
       if (result?.error) { setError(result.error) }
-      else { setIsActive(true) }
+      else {
+        setIsActive(true)
+        setJustWentLive(true)
+        setTimeout(() => setJustWentLive(false), 4000)
+      }
     })
   }
 
@@ -73,6 +59,58 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
 
+  // ── Full-screen GO LIVE confirmation overlay ──────────────
+  if (justWentLive) {
+    const mkt = selectedMarket ?? todayMarkets[0]
+    return (
+      <div style={{
+        background: 'var(--RED)', padding: '32px 20px', textAlign: 'center',
+        animation: 'fadeIn .2s ease',
+      }}>
+        {/* Stamp */}
+        <div style={{
+          display: 'inline-block', border: '4px solid rgba(255,255,255,.8)',
+          padding: '12px 28px', marginBottom: '20px',
+          transform: 'rotate(-2deg)',
+          boxShadow: '4px 4px 0 rgba(0,0,0,.25)',
+        }}>
+          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '52px', color: '#fff', letterSpacing: '-0.02em', lineHeight: 0.9, textTransform: 'uppercase' }}>
+            LIVE
+          </div>
+          <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: 'rgba(255,255,255,.8)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '4px' }}>
+            ON MAP NOW
+          </div>
+        </div>
+
+        <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.01em', marginBottom: '8px' }}>
+          {displayName.toUpperCase()} IS BROADCASTING
+        </div>
+
+        {mkt && (
+          <div style={{ ...T, color: 'rgba(255,255,255,.7)', fontSize: '12px', marginBottom: '20px' }}>
+            {mkt.market.space.name} · {formatTime(mkt.market.starts_at)}–{formatTime(mkt.market.ends_at)}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '320px', margin: '0 auto' }}>
+          {[
+            '✓ Visible to all visitors on the platform',
+            '✓ Saved followers will receive a notification',
+            '✓ Your brand appears in the Live Now feed',
+          ].map((line, i) => (
+            <div key={i} style={{ ...T, fontSize: '10px', color: 'rgba(255,255,255,.75)', textAlign: 'left', display: 'flex', gap: '8px' }}>
+              <span>{line}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ ...T, fontSize: '10px', color: 'rgba(255,255,255,.4)', marginTop: '20px' }}>
+          THIS SCREEN WILL DISMISS AUTOMATICALLY
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: 'var(--P)', padding: '16px' }}>
 
@@ -84,20 +122,17 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
             {isActive ? '● BROADCASTING LIVE' : '○ OFFLINE'}
           </div>
           <div style={{ ...T, color: 'rgba(24,22,20,.35)', marginTop: '3px' }}>
-            {isActive
-              ? `${displayName.toUpperCase()} VISIBLE ON PUBLIC MAP`
-              : 'NOT VISIBLE TO VISITORS'}
+            {isActive ? `${displayName.toUpperCase()} VISIBLE ON PUBLIC MAP` : 'NOT VISIBLE TO VISITORS'}
           </div>
         </div>
       </div>
 
-      {/* Market selector — only show when offline */}
+      {/* Market selector — only when offline */}
       {!isActive && (
         <div style={{ marginBottom: '14px' }}>
           <div style={{ ...T, color: 'rgba(24,22,20,.45)', marginBottom: '8px' }}>
             SELECT MARKET TO CHECK INTO
           </div>
-
           {availableMarkets.length === 0 ? (
             <div style={{ border: '1px dashed rgba(24,22,20,.25)', padding: '14px', background: 'var(--P2)' }}>
               <div style={{ ...T, fontWeight: 700, color: 'rgba(24,22,20,.5)', fontSize: '10px', marginBottom: '8px' }}>
@@ -107,18 +142,16 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
                 Your curator needs to open a market before you can check in.
               </div>
               <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: 'var(--RED)' }}>→</span>
-                  Check §4 below to declare intent for upcoming markets
-                </div>
-                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: 'var(--RED)' }}>→</span>
-                  If you run your own market, check the curator dashboard
-                </div>
-                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: 'var(--RED)' }}>→</span>
-                  3 makers checking in independently opens a community market
-                </div>
+                {[
+                  'Check §4 below to declare intent for upcoming markets',
+                  'If you run your own market, check the curator dashboard',
+                  '3 makers checking in independently opens a community market',
+                ].map((tip, i) => (
+                  <div key={i} style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                    <span style={{ color: 'var(--RED)', flexShrink: 0 }}>→</span>
+                    <span>{tip}</span>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
@@ -127,16 +160,10 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
                 const selected = selectedMarketId === um.market.id
                 const isLive = um.market.status === 'live' || um.market.status === 'community_live'
                 return (
-                  <button
-                    key={um.market.id}
-                    onClick={() => setSelectedMarketId(um.market.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 12px', border: `2px solid ${selected ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
-                      background: selected ? 'var(--INK)' : 'var(--P2)',
-                      cursor: 'pointer', textAlign: 'left', width: '100%',
-                    }}
-                  >
+                  <button key={um.market.id} onClick={() => setSelectedMarketId(um.market.id)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px',
+                      border: `2px solid ${selected ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
+                      background: selected ? 'var(--INK)' : 'var(--P2)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
                     <div>
                       <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: selected ? 'var(--P)' : 'var(--INK)', lineHeight: 1, marginBottom: '3px' }}>
                         {um.market.space.name}
@@ -147,12 +174,8 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {isLive && (
-                        <span style={{ ...T, fontSize: '9px', color: selected ? 'var(--GRN)' : 'var(--GRN)', fontWeight: 700 }}>● LIVE</span>
-                      )}
-                      {selected && (
-                        <span style={{ ...T, fontSize: '9px', color: 'var(--RED)', fontWeight: 700 }}>SELECTED ✓</span>
-                      )}
+                      {isLive && <span style={{ ...T, fontSize: '9px', color: 'var(--GRN)', fontWeight: 700 }}>● LIVE</span>}
+                      {selected && <span style={{ ...T, fontSize: '9px', color: 'var(--RED)', fontWeight: 700 }}>SELECTED ✓</span>}
                     </div>
                   </button>
                 )
@@ -180,8 +203,7 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
       )}
 
       {/* The big button */}
-      <button
-        onClick={isActive ? handleGoOffline : handleGoLive}
+      <button onClick={isActive ? handleGoOffline : handleGoLive}
         disabled={isPending || (!isActive && availableMarkets.length === 0)}
         style={{
           width: '100%', padding: '18px 16px', border: '3px solid',
@@ -194,15 +216,12 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
           boxShadow: isPending ? 'var(--SHD-ACT)' : 'var(--SHD)',
           transform: isPending ? 'translate(6px,6px)' : 'none',
           opacity: isPending || (!isActive && availableMarkets.length === 0) ? 0.5 : 1,
-        }}
-      >
+        }}>
         <span>{isPending ? 'UPDATING...' : isActive ? '[ STOP TRANSMISSION ]' : '[ START TRANSMISSION ]'}</span>
         <span style={{ display: 'block', fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', marginTop: '6px', opacity: 0.55 }}>
-          {isActive
-            ? 'Tap to go offline — remove from live map'
-            : selectedMarketId
-              ? `Check in to ${selectedMarket?.market.space.name ?? 'selected market'}`
-              : 'Select a market above first'}
+          {isActive ? 'Tap to go offline — remove from live map'
+            : selectedMarketId ? `Check in to ${selectedMarket?.market.space.name ?? 'selected market'}`
+            : 'Select a market above first'}
         </span>
       </button>
 

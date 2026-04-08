@@ -65,6 +65,24 @@ export default async function BrandPage({ params }: Props) {
           )}
         </div>
 
+        {/* Categories + price range strip */}
+        {((brand.bio_i18n as any)?._category || (brand.bio_i18n as any)?._price_range) && (
+          <div style={{ padding: '10px 16px', borderBottom: '3px solid #181614', background: '#e6e0d0', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {(brand.bio_i18n as any)?._category && (
+              (brand.bio_i18n as any)._category.split(',').map((cat: string) => cat.trim()).filter(Boolean).map((cat: string) => (
+                <span key={cat} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '4px 10px', border: '2px solid #181614', color: '#181614', background: '#f0ece0' }}>
+                  {cat}
+                </span>
+              ))
+            )}
+            {(brand.bio_i18n as any)?._price_range && (
+              <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '4px 10px', border: '2px solid #c8291a', color: '#c8291a', background: 'rgba(200,41,26,.06)' }}>
+                {(brand.bio_i18n as any)._price_range}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Bio */}
         <div style={{ padding: '20px 16px', borderBottom: '3px solid #181614' }}>
           {brand.bio && (

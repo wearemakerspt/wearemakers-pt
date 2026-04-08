@@ -27,6 +27,13 @@ export default async function MakerDashboardPage() {
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
   const isLive = activeCheckins.length > 0
+  const isProfileComplete = !!(profile.bio && profile.slug && (profile.bio_i18n as any)?._category)
+  const profileCompleteness = [
+    !!profile.bio,
+    !!(profile.bio_i18n as any)?._category,
+    !!profile.instagram_handle,
+    !!(profile.bio_i18n as any)?._price_range,
+  ].filter(Boolean).length
 
   return (
     <>
@@ -99,6 +106,47 @@ export default async function MakerDashboardPage() {
 
         {/* ── Work order sections ── */}
         <div style={{ padding: '0' }}>
+
+          {/* Onboarding banner — shown when profile is incomplete */}
+          {!isProfileComplete && (
+            <div style={{ margin: '12px 12px 0', border: '3px solid var(--RED)', background: 'rgba(200,41,26,.06)', padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ flexShrink: 0, fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '32px', color: 'var(--RED)', lineHeight: 1 }}>!</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '6px' }}>
+                    COMPLETE YOUR PROFILE TO GO LIVE
+                  </div>
+                  <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6, marginBottom: '12px' }}>
+                    Visitors can't find you until your profile is complete. Fill in §0 below to appear on the platform.
+                  </div>
+                  {/* Progress bar */}
+                  <div style={{ marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.5)' }}>PROFILE STRENGTH</span>
+                      <span style={{ fontFamily: 'var(--TAG)', fontSize: '10px', fontWeight: 700, color: 'var(--RED)' }}>{profileCompleteness}/4</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(24,22,20,.1)', position: 'relative' }}>
+                      <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(profileCompleteness / 4) * 100}%`, background: profileCompleteness >= 3 ? 'var(--GRN)' : 'var(--RED)', transition: 'width .3s' }} />
+                    </div>
+                  </div>
+                  {/* Checklist */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {[
+                      { label: 'Bio — describe your work', done: !!profile.bio },
+                      { label: 'Category — what do you make', done: !!(profile.bio_i18n as any)?._category },
+                      { label: 'Instagram handle', done: !!profile.instagram_handle },
+                      { label: 'Price range', done: !!(profile.bio_i18n as any)?._price_range },
+                    ].map((item, i) => (
+                      <div key={i} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.done ? 'var(--GRN)' : 'rgba(24,22,20,.4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontWeight: 700 }}>{item.done ? '✓' : '○'}</span>
+                        <span style={{ textDecoration: item.done ? 'line-through' : 'none', opacity: item.done ? 0.5 : 1 }}>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* §0 Brand Profile */}
           <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
