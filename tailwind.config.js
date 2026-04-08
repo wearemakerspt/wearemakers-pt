@@ -12,8 +12,6 @@ module.exports = {
         'parchment-2': '#e6e0d0',
         'parchment-3': '#d0c8b4',
         ink: '#181614',
-        'ink-2': '#2a2820',
-        'ink-4': '#6e6c68',
         stamp: '#c8291a',
         grove: '#1a5c30',
         gold: '#c49a2a',
@@ -25,5 +23,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [],
 }
