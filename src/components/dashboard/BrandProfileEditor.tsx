@@ -16,11 +16,11 @@ const CATEGORIES = [
   'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
   'Food', 'Accessories', 'Handmade',
   'Gifts for Him', 'Gifts for Her', 'Gifts Under €20',
-  "Men's Accessories", 'T-shirts & Hoodies', 'Other',
+  'Men's Accessories', 'T-shirts & Hoodies', 'Other',
 ]
 
 export default function BrandProfileEditor({
-  initialName, initialBio, initialInstagram, initialSlug, initialCategory
+  initialName, initialBio, initialInstagram, initialSlug, initialCategory, initialPriceRange
 }: Props) {
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
@@ -38,6 +38,7 @@ export default function BrandProfileEditor({
       return [...prev, cat]
     })
   }
+  const [priceRange, setPriceRange] = useState(initialPriceRange ?? '')
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -139,6 +140,38 @@ export default function BrandProfileEditor({
           <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', marginTop: '4px', textAlign: 'right' }}>
             {bio.length} / 400
           </div>
+        </div>
+
+        {/* Price range */}
+        <div style={dividerStyle}>
+          <label style={labelStyle}>PRICE RANGE — TYPICAL PIECE</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {['Under €20', '€20–€50', '€50–€100', '€100–€200', 'Over €200'].map(p => {
+              const selected = priceRange === p
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriceRange(selected ? '' : p)}
+                  style={{
+                    ...T, fontSize: '10px', padding: '6px 14px',
+                    border: `2px solid ${selected ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
+                    background: selected ? 'var(--INK)' : 'transparent',
+                    color: selected ? 'var(--P)' : 'rgba(24,22,20,.5)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {selected ? `✓ ${p}` : p}
+                </button>
+              )
+            })}
+          </div>
+          <input type="hidden" name="price_range" value={priceRange} />
+          {priceRange && (
+            <div style={{ ...T, fontSize: '10px', color: 'var(--GRN)', marginTop: '8px', fontWeight: 700 }}>
+              ✓ {priceRange.toUpperCase()} SELECTED
+            </div>
+          )}
         </div>
 
         {/* Instagram */}

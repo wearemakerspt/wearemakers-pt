@@ -99,12 +99,26 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
           </div>
 
           {availableMarkets.length === 0 ? (
-            <div style={{ border: '1px dashed rgba(24,22,20,.25)', padding: '12px', background: 'var(--P2)' }}>
-              <div style={{ ...T, color: 'rgba(24,22,20,.3)', fontSize: '10px' }}>
-                NO LIVE MARKETS TODAY
+            <div style={{ border: '1px dashed rgba(24,22,20,.25)', padding: '14px', background: 'var(--P2)' }}>
+              <div style={{ ...T, fontWeight: 700, color: 'rgba(24,22,20,.5)', fontSize: '10px', marginBottom: '8px' }}>
+                NO OPEN MARKETS TODAY
               </div>
-              <div style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'rgba(24,22,20,.4)', marginTop: '4px' }}>
-                Markets must be opened by a curator first. Check the upcoming agenda below.
+              <div style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'rgba(24,22,20,.45)', lineHeight: 1.6 }}>
+                Your curator needs to open a market before you can check in.
+              </div>
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: 'var(--RED)' }}>→</span>
+                  Check §4 below to declare intent for upcoming markets
+                </div>
+                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: 'var(--RED)' }}>→</span>
+                  If you run your own market, check the curator dashboard
+                </div>
+                <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ color: 'var(--RED)' }}>→</span>
+                  3 makers checking in independently opens a community market
+                </div>
               </div>
             </div>
           ) : (

@@ -53,9 +53,15 @@ export default async function BrandPage({ params }: Props) {
             {brand.is_verified && <span className="badge-pro">✦ PRO</span>}
           </div>
           {brand.instagram_handle && (
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#c8291a', fontWeight: 700 }}>
+            <a
+              href={`https://instagram.com/${brand.instagram_handle.replace('@','')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#c8291a', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
               {brand.instagram_handle}
-            </div>
+              <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
+            </a>
           )}
         </div>
 

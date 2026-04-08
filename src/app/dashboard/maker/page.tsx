@@ -112,6 +112,7 @@ export default async function MakerDashboardPage() {
               initialInstagram={profile.instagram_handle ?? null}
               initialSlug={profile.slug ?? null}
               initialCategory={(profile.bio_i18n as any)?._category ?? null}
+              initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
             />
           </div>
 

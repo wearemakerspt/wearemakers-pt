@@ -197,7 +197,12 @@ export async function saveBrandProfile(formData: FormData) {
     .eq('id', user.id)
     .single()
 
-  const bio_i18n = { ...(existing?.bio_i18n ?? {}), ...(category ? { _category: category } : {}) }
+  const price_range = (formData.get('price_range') as string | null)?.trim() || null
+  const bio_i18n = {
+    ...(existing?.bio_i18n ?? {}),
+    ...(category ? { _category: category } : {}),
+    ...(price_range ? { _price_range: price_range } : {}),
+  }
 
   const { error } = await supabase
     .from('profiles')
