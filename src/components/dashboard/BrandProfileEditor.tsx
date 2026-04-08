@@ -8,13 +8,15 @@ interface Props {
   initialBio: string | null
   initialInstagram: string | null
   initialSlug: string | null
-  initialCategory?: string | null
+  initialCategory?: string | null  // stored as JSON array string or single value
 }
 
 const CATEGORIES = [
   'Ceramics', 'Leather', 'Textile', 'Paper', 'Jewellery',
   'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
-  'Food', 'Accessories', 'Other',
+  'Food', 'Accessories', 'Handmade',
+  'Gifts for Him', 'Gifts for Her', 'Gifts Under €20',
+  'Men's Accessories', 'T-shirts & Hoodies', 'Other',
 ]
 
 export default function BrandProfileEditor({
@@ -23,7 +25,19 @@ export default function BrandProfileEditor({
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
-  const [category, setCategory] = useState(initialCategory ?? '')
+  // Multi-select up to 3 categories
+  const [categories, setCategories] = useState<string[]>(() => {
+    if (!initialCategory) return []
+    return initialCategory.split(',').map(c => c.trim()).filter(Boolean)
+  })
+
+  function toggleCategory(cat: string) {
+    setCategories(prev => {
+      if (prev.includes(cat)) return prev.filter(c => c !== cat)
+      if (prev.length >= 3) return prev // max 3
+      return [...prev, cat]
+    })
+  }
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -66,31 +80,47 @@ export default function BrandProfileEditor({
           )}
         </div>
 
-        {/* Category */}
+        {/* Categories — up to 3 */}
         <div style={dividerStyle}>
-          <label style={labelStyle}>CATEGORY — WHAT DO YOU MAKE?</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                style={{
-                  ...T, fontSize: '10px', padding: '6px 12px',
-                  border: `2px solid ${category === cat ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
-                  background: category === cat ? 'var(--INK)' : 'transparent',
-                  color: category === cat ? 'var(--P)' : 'rgba(24,22,20,.5)',
-                  cursor: 'pointer',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <label style={labelStyle}>CATEGORIES — WHAT DO YOU MAKE? (pick up to 3)</label>
+            <span style={{ ...T, fontSize: '10px', color: categories.length >= 3 ? 'var(--RED)' : 'rgba(24,22,20,.3)' }}>
+              {categories.length}/3
+            </span>
           </div>
-          <input type="hidden" name="category" value={category} />
-          {category && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {CATEGORIES.map(cat => {
+              const selected = categories.includes(cat)
+              const disabled = !selected && categories.length >= 3
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => toggleCategory(cat)}
+                  disabled={disabled}
+                  style={{
+                    ...T, fontSize: '10px', padding: '6px 12px',
+                    border: `2px solid ${selected ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
+                    background: selected ? 'var(--INK)' : 'transparent',
+                    color: selected ? 'var(--P)' : disabled ? 'rgba(24,22,20,.2)' : 'rgba(24,22,20,.5)',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.4 : 1,
+                  }}
+                >
+                  {selected ? `✓ ${cat}` : cat}
+                </button>
+              )
+            })}
+          </div>
+          <input type="hidden" name="category" value={categories.join(',')} />
+          {categories.length > 0 && (
             <div style={{ ...T, fontSize: '10px', color: 'var(--GRN)', marginTop: '8px', fontWeight: 700 }}>
-              ✓ {category.toUpperCase()} SELECTED
+              {categories.join(' · ')}
+            </div>
+          )}
+          {categories.length >= 3 && (
+            <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', marginTop: '4px' }}>
+              MAX 3 CATEGORIES REACHED
             </div>
           )}
         </div>
