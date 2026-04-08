@@ -1,11 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * Called from middleware.ts to refresh the Supabase session on every request.
- * This ensures the session cookie stays alive and server components always
- * have access to a fresh token.
- */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -17,26 +12,23 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options as never)
           )
         },
       },
     }
   )
 
-  // IMPORTANT: Do not add logic between createServerClient and supabase.auth.getUser().
-  // This refreshes the session and must be the first awaited call.
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect dashboard routes — redirect to login if not authenticated
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/maker') ||
