@@ -1,15 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import type { Profile } from '@/types/database'
+import Link from 'next/link'
+
+interface MakerSummary {
+  id: string
+  display_name: string
+  slug: string | null
+  bio: string | null
+  instagram_handle: string | null
+  avatar_url: string | null
+  is_verified: boolean
+  digital_offer: string | null
+  role: string
+}
 
 interface Props {
-  makers: Profile[]
+  makers: MakerSummary[]
   articleSlug: string
 }
 
 export default function MakersInLoop({ makers, articleSlug }: Props) {
-  // Read starred brands from localStorage (mirrors the SPA logic)
   const [starred, setStarred] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set()
     try {
@@ -29,108 +40,45 @@ export default function MakersInLoop({ makers, articleSlug }: Props) {
         next.add(slug)
       }
       try {
-        localStorage.setItem('wm_starred', JSON.stringify([...next]))
+        localStorage.setItem('wm_starred', JSON.stringify(Array.from(next)))
       } catch {}
       return next
     })
   }
 
   return (
-    <section
-      aria-label="Makers in this Loop"
-      className="max-w-2xl mx-auto px-5 mb-10"
-    >
-      {/* Section header */}
-      <div className="border-4 border-ink shadow-hard">
-        <div className="bg-ink px-4 py-3">
-          <h2 className="font-tag font-bold text-sm tracking-[0.2em] uppercase text-parchment">
-            MAKERS IN THIS LOOP —{' '}
-            <span className="text-stamp">{makers.length} FEATURED</span>
-          </h2>
-        </div>
-
-        {/* Maker rows */}
-        <div className="divide-y-[2px] divide-ink bg-parchment">
-          {makers.map((maker) => {
-            const key = maker.slug ?? maker.id
-            const isStarred = starred.has(key)
-
-            return (
-              <div
-                key={maker.id}
-                className="flex items-center gap-4 px-4 py-3 hover:bg-parchment-2 transition-colors"
-              >
-                {/* Avatar */}
-                <div className="w-11 h-11 flex-shrink-0 bg-parchment-2 border-2 border-ink flex items-center justify-center shadow-hard-xs">
-                  {maker.avatar_url ? (
-                    <img
-                      src={maker.avatar_url}
-                      alt={maker.display_name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="font-display font-black text-base text-stamp">
-                      {maker.display_name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <a
-                      href={maker.slug ? `/makers/${maker.slug}` : '#'}
-                      className="font-display font-black text-2xl uppercase tracking-tight leading-none text-ink hover:text-stamp transition-colors"
-                    >
-                      {maker.display_name}
-                    </a>
-                    {maker.is_verified && (
-                      <span className="font-tag font-bold text-xs tracking-widest uppercase bg-ink text-parchment px-2 py-0.5 shadow-hard-xs">
-                        ✦ PRO
-                      </span>
-                    )}
-                  </div>
-                  {maker.instagram_handle && (
-                    <p className="font-tag text-sm text-stamp mt-0.5">
-                      {maker.instagram_handle}
-                    </p>
-                  )}
-                </div>
-
-                {/* Star button */}
-                <button
-                  onClick={() => toggleStar(key)}
-                  title={isStarred ? 'Remove from My Circuit' : 'Add to My Circuit'}
-                  className={`w-9 h-9 flex-shrink-0 border-2 flex items-center justify-center text-lg transition-colors shadow-hard-xs ${
-                    isStarred
-                      ? 'bg-stamp border-stamp text-parchment'
-                      : 'bg-parchment-2 border-ink text-ink hover:bg-stamp hover:border-stamp hover:text-parchment'
-                  }`}
-                >
-                  {isStarred ? '★' : '☆'}
-                </button>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* View on map CTA */}
-        <button
-          onClick={() => {
-            // Navigate to the SPA with loop filter pre-set
-            const slugs = makers
-              .map((m) => m.slug ?? m.display_name)
-              .join(',')
-            window.location.href = `/?loop=${encodeURIComponent(slugs)}`
-          }}
-          className="w-full bg-ink text-parchment px-4 py-5 border-t-4 border-ink font-display font-black text-2xl uppercase tracking-tight hover:bg-stamp transition-colors stamp-noise"
-        >
-          VIEW THIS LOOP ON THE MAP
-          <span className="block font-tag font-normal text-sm tracking-widest mt-1 opacity-55">
-            Filter live feed · {makers.length} makers
-          </span>
-        </button>
+    <div style={{ marginTop: '32px', border: '3px solid #181614', boxShadow: '6px 6px 0 0 #181614' }}>
+      <div style={{ background: '#181614', color: '#f0ece0', padding: '11px 16px', fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid #181614' }}>
+        MAKERS IN THIS LOOP
       </div>
-    </section>
+      {makers.map((maker) => {
+        const slug = maker.slug ?? maker.id
+        const isStarred = starred.has(slug)
+        const initials = maker.display_name.slice(0, 2).toUpperCase()
+        return (
+          <div key={maker.id} style={{ borderBottom: '2px solid #181614', padding: '13px 16px', display: 'flex', gap: '13px', alignItems: 'center', background: '#f0ece0' }}>
+            <div style={{ width: '44px', height: '44px', flexShrink: 0, background: '#181614', border: '3px solid #181614', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '16px', color: '#c8291a' }}>
+              {initials}
+            </div>
+            <div style={{ flex: 1 }}>
+              <Link href={`/brands/${slug}`} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, textDecoration: 'none' }}>
+                {maker.display_name}
+              </Link>
+              {maker.instagram_handle && (
+                <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '13px', color: '#c8291a' }}>
+                  {maker.instagram_handle}
+                </div>
+              )}
+            </div>
+            <button onClick={() => toggleStar(slug)} style={{ width: '36px', height: '36px', border: '2px solid #181614', background: isStarred ? '#c8291a' : '#f0ece0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '16px', color: isStarred ? '#fff' : '#181614', flexShrink: 0 }}>
+              {isStarred ? '★' : '☆'}
+            </button>
+          </div>
+        )
+      })}
+      <Link href={`/brands?loop=${articleSlug}`} style={{ display: 'block', padding: '18px', background: '#181614', color: '#f0ece0', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', textAlign: 'center', textDecoration: 'none' }}>
+        SEE THEM ALL →
+      </Link>
+    </div>
   )
 }
