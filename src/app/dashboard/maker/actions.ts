@@ -168,3 +168,38 @@ export async function toggleAttendanceIntent(formData: FormData) {
   revalidatePath('/dashboard/maker')
   return { success: true }
 }
+
+// ── Brand Profile ─────────────────────────────────────────────
+
+/**
+ * Update the maker's brand profile fields.
+ */
+export async function saveBrandProfile(formData: FormData) {
+  const display_name = (formData.get('display_name') as string)?.trim()
+  const bio = (formData.get('bio') as string)?.trim() || null
+  const instagram_handle = (formData.get('instagram_handle') as string)?.trim() || null
+  const slug = display_name
+    ? display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : null
+
+  if (!display_name) return { error: 'Brand name is required' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      display_name,
+      bio,
+      instagram_handle,
+      slug,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/maker')
+  return { success: true }
+}

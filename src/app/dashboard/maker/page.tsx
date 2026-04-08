@@ -8,6 +8,7 @@ import FieldNotesEditor from '@/components/dashboard/FieldNotesEditor'
 import CheckInPanel from '@/components/dashboard/CheckInPanel'
 import UpcomingAgenda from '@/components/dashboard/UpcomingAgenda'
 import RecentAttendance from '@/components/dashboard/RecentAttendance'
+import BrandProfileEditor from '@/components/dashboard/BrandProfileEditor'
 
 export const metadata: Metadata = {
   title: 'Field Transmitter — Maker Dashboard',
@@ -33,11 +34,13 @@ export default async function MakerDashboardPage() {
 
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
 
+        {/* ── Black header ── */}
         <div style={{ background: 'var(--INK)', borderBottom: '3px solid var(--INK)', padding: '16px 16px 14px' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '10px' }}>
             MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(0, 6).toUpperCase()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            {/* Avatar */}
             <div style={{ width: '64px', height: '64px', flexShrink: 0, border: '3px solid rgba(240,236,224,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,236,224,.08)', overflow: 'hidden' }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt={profile.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -60,11 +63,13 @@ export default async function MakerDashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Stats row */}
           <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(240,236,224,.1)', paddingTop: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'MARKETS ATTENDED', value: recentAttendance.length, sub: 'LAST 30 DAYS' },
               { label: 'UPCOMING', value: upcomingMarkets.length, sub: 'NEXT 60 DAYS' },
-              { label: 'CONFIRMED', value: upcomingMarkets.filter((u: any) => u.is_attending).length, sub: 'I WILL BE THERE' },
+              { label: 'CONFIRMED', value: upcomingMarkets.filter(u => u.is_attending).length, sub: 'I WILL BE THERE' },
               { label: isLive ? 'LIVE' : 'OFFLINE', value: '', sub: isLive ? 'ON MAP NOW' : 'NOT VISIBLE' },
             ].map((s, i) => (
               <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 3 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
@@ -82,6 +87,7 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
+        {/* ── Field Protocol header ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.4 }}>
             WORK ORDER — FIELD PROTOCOL
@@ -91,17 +97,23 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
-        <div>
-          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* ── Work order sections ── */}
+        <div style={{ padding: '0' }}>
+
+          {/* §1 Live Toggle */}
+          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>§1 — TRANSMISSION STATUS</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span>
             </div>
-            <LiveToggle initialIsActive={isLive} displayName={profile.display_name} />
+            <div style={{ padding: '0' }}>
+              <LiveToggle initialIsActive={isLive} displayName={profile.display_name} />
+            </div>
           </div>
 
-          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* §2 Field Notes */}
+          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>§2 — FIELD NOTES / DAILY OFFER</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span>
             </div>
@@ -110,33 +122,43 @@ export default async function MakerDashboardPage() {
             </div>
           </div>
 
+          {/* §3 Check-in panel */}
           {activeCheckins.length > 0 && (
-            <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-              <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+              <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>§3 — ACTIVE CHECK-INS</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
               </div>
-             <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
+              <div style={{ padding: '0' }}>
+                <CheckInPanel checkins={activeCheckins} todayMarkets={todayMarkets} />
+              </div>
             </div>
           )}
 
-          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* §4 Upcoming agenda */}
+          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>§4 — UPCOMING AGENDA</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span>
             </div>
-            <UpcomingAgenda markets={upcomingMarkets} />
+            <div style={{ padding: '0' }}>
+              <UpcomingAgenda markets={upcomingMarkets} />
+            </div>
           </div>
 
+          {/* §5 Recent attendance */}
           {recentAttendance.length > 0 && (
-            <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-              <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+              <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>§5 — RECENT ATTENDANCE</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
               </div>
-              <RecentAttendance attendance={recentAttendance} />
+              <div style={{ padding: '0' }}>
+                <RecentAttendance attendance={recentAttendance} />
+              </div>
             </div>
           )}
+
         </div>
       </main>
     </>
