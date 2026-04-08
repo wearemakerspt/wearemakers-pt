@@ -34,11 +34,13 @@ export default async function MakerDashboardPage() {
 
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
 
+        {/* ── Black header ── */}
         <div style={{ background: 'var(--INK)', borderBottom: '3px solid var(--INK)', padding: '16px 16px 14px' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '10px' }}>
             MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(0, 6).toUpperCase()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            {/* Avatar */}
             <div style={{ width: '64px', height: '64px', flexShrink: 0, border: '3px solid rgba(240,236,224,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,236,224,.08)', overflow: 'hidden' }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt={profile.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -61,11 +63,13 @@ export default async function MakerDashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Stats row */}
           <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(240,236,224,.1)', paddingTop: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'MARKETS ATTENDED', value: recentAttendance.length, sub: 'LAST 30 DAYS' },
               { label: 'UPCOMING', value: upcomingMarkets.length, sub: 'NEXT 60 DAYS' },
-              { label: 'CONFIRMED', value: upcomingMarkets.filter((u: any) => u.is_attending).length, sub: 'I WILL BE THERE' },
+              { label: 'CONFIRMED', value: upcomingMarkets.filter(u => u.is_attending).length, sub: 'I WILL BE THERE' },
               { label: isLive ? 'LIVE' : 'OFFLINE', value: '', sub: isLive ? 'ON MAP NOW' : 'NOT VISIBLE' },
             ].map((s, i) => (
               <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 3 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
@@ -83,6 +87,7 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
+        {/* ── Field Protocol header ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.4 }}>
             WORK ORDER — FIELD PROTOCOL
@@ -92,6 +97,7 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
+        {/* ── Work order sections ── */}
         <div style={{ padding: '0' }}>
 
           {/* §0 Brand Profile */}
@@ -105,6 +111,7 @@ export default async function MakerDashboardPage() {
               initialBio={profile.bio ?? null}
               initialInstagram={profile.instagram_handle ?? null}
               initialSlug={profile.slug ?? null}
+              initialCategory={(profile.bio_i18n as any)?._category ?? null}
             />
           </div>
 
@@ -114,7 +121,9 @@ export default async function MakerDashboardPage() {
               <span>§1 — TRANSMISSION STATUS</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span>
             </div>
-            <LiveToggle initialIsActive={isLive} displayName={profile.display_name} />
+            <div style={{ padding: '0' }}>
+              <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
+            </div>
           </div>
 
           {/* §2 Field Notes */}
@@ -135,7 +144,9 @@ export default async function MakerDashboardPage() {
                 <span>§3 — ACTIVE CHECK-INS</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
               </div>
-              <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
+              <div style={{ padding: '0' }}>
+                <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
+              </div>
             </div>
           )}
 
@@ -145,7 +156,9 @@ export default async function MakerDashboardPage() {
               <span>§4 — UPCOMING AGENDA</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span>
             </div>
-            <UpcomingAgenda markets={upcomingMarkets} />
+            <div style={{ padding: '0' }}>
+              <UpcomingAgenda markets={upcomingMarkets} />
+            </div>
           </div>
 
           {/* §5 Recent attendance */}
@@ -155,7 +168,9 @@ export default async function MakerDashboardPage() {
                 <span>§5 — RECENT ATTENDANCE</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
               </div>
-              <RecentAttendance attendance={recentAttendance} />
+              <div style={{ padding: '0' }}>
+                <RecentAttendance attendance={recentAttendance} />
+              </div>
             </div>
           )}
 

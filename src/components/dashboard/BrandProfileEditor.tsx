@@ -8,6 +8,7 @@ interface Props {
   initialBio: string | null
   initialInstagram: string | null
   initialSlug: string | null
+  initialCategory?: string | null
 }
 
 const CATEGORIES = [
@@ -16,10 +17,13 @@ const CATEGORIES = [
   'Food', 'Accessories', 'Other',
 ]
 
-export default function BrandProfileEditor({ initialName, initialBio, initialInstagram, initialSlug }: Props) {
+export default function BrandProfileEditor({
+  initialName, initialBio, initialInstagram, initialSlug, initialCategory
+}: Props) {
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
+  const [category, setCategory] = useState(initialCategory ?? '')
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -36,15 +40,16 @@ export default function BrandProfileEditor({ initialName, initialBio, initialIns
   }
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
-  const fieldStyle = { width: '100%', background: 'transparent', border: 'none', borderBottom: '1px dashed rgba(24,22,20,.3)', padding: '8px 0', fontFamily: 'var(--MONO)', fontSize: '16px', color: 'var(--INK)', outline: 'none', letterSpacing: '0.02em' }
   const labelStyle = { ...T, color: 'rgba(24,22,20,.45)', display: 'block', marginBottom: '6px' }
+  const fieldStyle = { width: '100%', background: 'transparent', border: 'none', borderBottom: '1px dashed rgba(24,22,20,.3)', padding: '8px 0', fontFamily: 'var(--MONO)', fontSize: '16px', color: 'var(--INK)', outline: 'none' }
+  const dividerStyle = { marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed rgba(24,22,20,.15)' }
 
   return (
     <div style={{ background: 'var(--P)', padding: '16px' }}>
       <form action={handleSubmit}>
 
         {/* Brand name */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
+        <div style={dividerStyle}>
           <label style={labelStyle}>BRAND / DISPLAY NAME *</label>
           <input
             name="display_name"
@@ -61,8 +66,37 @@ export default function BrandProfileEditor({ initialName, initialBio, initialIns
           )}
         </div>
 
+        {/* Category */}
+        <div style={dividerStyle}>
+          <label style={labelStyle}>CATEGORY — WHAT DO YOU MAKE?</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategory(cat)}
+                style={{
+                  ...T, fontSize: '10px', padding: '6px 12px',
+                  border: `2px solid ${category === cat ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`,
+                  background: category === cat ? 'var(--INK)' : 'transparent',
+                  color: category === cat ? 'var(--P)' : 'rgba(24,22,20,.5)',
+                  cursor: 'pointer',
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <input type="hidden" name="category" value={category} />
+          {category && (
+            <div style={{ ...T, fontSize: '10px', color: 'var(--GRN)', marginTop: '8px', fontWeight: 700 }}>
+              ✓ {category.toUpperCase()} SELECTED
+            </div>
+          )}
+        </div>
+
         {/* Bio */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
+        <div style={dividerStyle}>
           <label style={labelStyle}>BIO — DESCRIBE YOUR WORK (shown to visitors)</label>
           <textarea
             name="bio"
@@ -78,7 +112,7 @@ export default function BrandProfileEditor({ initialName, initialBio, initialIns
         </div>
 
         {/* Instagram */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
+        <div style={dividerStyle}>
           <label style={labelStyle}>INSTAGRAM HANDLE</label>
           <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dashed rgba(24,22,20,.3)' }}>
             <span style={{ fontFamily: 'var(--MONO)', fontSize: '16px', color: 'var(--RED)', paddingBottom: '8px', paddingTop: '8px', marginRight: '2px' }}>@</span>
@@ -92,11 +126,10 @@ export default function BrandProfileEditor({ initialName, initialBio, initialIns
           </div>
         </div>
 
-        {/* Slug hidden */}
         <input type="hidden" name="slug" value={slug} />
 
         {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <button
             type="submit"
             disabled={isPending || !name}
@@ -109,23 +142,14 @@ export default function BrandProfileEditor({ initialName, initialBio, initialIns
           >
             {isPending ? 'SAVING...' : 'SAVE PROFILE →'}
           </button>
-
-          {saved && (
-            <span style={{ ...T, fontWeight: 700, color: 'var(--GRN)' }}>✓ PROFILE SAVED</span>
-          )}
-          {error && (
-            <span style={{ ...T, fontWeight: 700, color: 'var(--RED)' }}>✗ {error}</span>
-          )}
+          {saved && <span style={{ ...T, fontWeight: 700, color: 'var(--GRN)' }}>✓ PROFILE SAVED</span>}
+          {error && <span style={{ ...T, fontWeight: 700, color: 'var(--RED)' }}>✗ {error}</span>}
         </div>
 
-        {/* Public profile link */}
         {initialSlug && (
           <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed rgba(24,22,20,.15)' }}>
-            <a
-              href={`/brands/${initialSlug}`}
-              target="_blank"
-              style={{ ...T, color: 'var(--RED)', textDecoration: 'none', fontWeight: 700 }}
-            >
+            <a href={`/brands/${initialSlug}`} target="_blank"
+              style={{ ...T, color: 'var(--RED)', textDecoration: 'none', fontWeight: 700 }}>
               VIEW PUBLIC PROFILE →
             </a>
           </div>

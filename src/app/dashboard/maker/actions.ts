@@ -182,11 +182,22 @@ export async function saveBrandProfile(formData: FormData) {
     ? display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     : null
 
+  const category = (formData.get('category') as string | null)?.trim() || null
+
   if (!display_name) return { error: 'Brand name is required' }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  // Fetch existing bio_i18n to merge category into it
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('bio_i18n')
+    .eq('id', user.id)
+    .single()
+
+  const bio_i18n = { ...(existing?.bio_i18n ?? {}), ...(category ? { _category: category } : {}) }
 
   const { error } = await supabase
     .from('profiles')
@@ -195,6 +206,7 @@ export async function saveBrandProfile(formData: FormData) {
       bio,
       instagram_handle,
       slug,
+      bio_i18n,
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id)
