@@ -1,11 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-/**
- * Server-side Supabase client.
- * Use this in Server Components, Route Handlers, and Server Actions.
- * Reads and writes session cookies via Next.js headers API.
- */
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -17,15 +12,13 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options as never)
             })
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have a middleware refreshing
-            // user sessions.
+            // Called from a Server Component — cookies can't be set
           }
         },
       },
