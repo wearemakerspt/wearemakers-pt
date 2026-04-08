@@ -4,8 +4,8 @@
 
 /* ============================================================
    WEAREMAKERS.PT — Design System v9
-   Full CSS extracted from wearemakers-spa-v9.html
-   All styles self-contained — no Tailwind dependency for visuals
+   Full CSS from wearemakers-spa-v9.html
+   SPA shell rules patched for Next.js page routing
 ============================================================ */
 
 
@@ -42,7 +42,7 @@
 }
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;border-radius:0!important;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--P);color:var(--INK);font-family:var(--MONO);-webkit-font-smoothing:antialiased;font-size:var(--fs-body,18px)}
+html,body{background:var(--P);color:var(--INK);font-family:var(--MONO);-webkit-font-smoothing:antialiased;font-size:var(--fs-body,18px);overflow:auto;height:auto;}
 
 /* Paper grain — 200gsm stock */
 body::before{
@@ -54,7 +54,7 @@ body::before{
 /* ════════════════════════════════════════════
    APP SHELL
 ════════════════════════════════════════════ */
-#app{height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#app{display:flex;flex-direction:column;}
 
 /* ── MASTHEAD — 100% width, 4px rule, edge-to-edge ── */
 #masthead{
@@ -103,7 +103,7 @@ body::before{
 @keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.5)}}
 
 /* ── SCROLL WRAPPER ── */
-#scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+#scroll-area{overflow-x:hidden;-webkit-overflow-scrolling:touch}
 
 /* ── BOTTOM NAV — Heavy Black Bar, White Mono ── */
 #bnav{
@@ -1069,34 +1069,24 @@ hr.rule-dashed{border:none;border-top:var(--BD);margin:8px 0}
 
 /* ============================================================
    NEXT.JS OVERRIDES
-   Override app shell classes for Next.js page structure
 ============================================================ */
 
-/* Body — match v9 exactly */
-body {
-  background: var(--P);
-  color: var(--INK);
-  font-family: var(--MONO);
-  font-size: 18px;
-  -webkit-font-smoothing: antialiased;
+/* Ensure pages scroll normally */
+html, body {
+  overflow: auto !important;
+  height: auto !important;
 }
 
-/* Next.js pages don't use #app shell — use body directly */
+/* Next.js pages use <main> not #app shell */
 main {
   background: var(--P);
   min-height: 100dvh;
 }
 
-/* Override any Tailwind resets that conflict */
-*, *::before, *::after {
-  border-radius: 0 !important;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Ensure links don't get Tailwind default styles */
+/* Links */
 a { color: inherit; text-decoration: none; }
 
-/* Badge classes (used in JSX) */
+/* Badge classes */
 .badge-live {
   display: inline-flex;
   align-items: center;
@@ -1125,13 +1115,7 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 2px 2px 0 var(--RED);
 }
 
-/* Prose for journal articles */
-.prose-wm {
-  --tw-prose-body: var(--INK);
-  --tw-prose-headings: var(--INK);
-  --tw-prose-links: var(--RED);
-  --tw-prose-bold: var(--INK);
-}
+/* Prose for journal */
 .prose-wm p {
   font-family: var(--MONO);
   font-size: 18px;
