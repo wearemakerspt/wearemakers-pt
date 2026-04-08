@@ -1,171 +1,20 @@
-@import "tailwindcss";
-@import "@tailwindcss/typography";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ──────────────────────────────────────────────────────────────
-   WEAREMAKERS.PT — Global Design System v9
-   Fonts: Barlow Condensed 900 (display), JetBrains Mono (body),
-          Share Tech Mono (labels/data), Barlow (body prose)
-   Palette: #f0ece0 parchment · #181614 ink · #c8291a stamp red
-            #1a5c30 grove green · #c49a2a gold
-────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&family=Share+Tech+Mono&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Barlow:wght@400;600;700&family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&family=Share+Tech+Mono&display=swap');
+*, *::before, *::after { border-radius: 0 !important; }
 
-@theme {
-  /* ── Colours ───────────────────────────────────────────── */
-  --color-parchment:   #f0ece0;
-  --color-parchment-2: #e6e0d0;
-  --color-parchment-3: #d0c8b4;
-  --color-ink:         #181614;
-  --color-ink-2:       #2a2820;
-  --color-ink-3:       #4a4840;
-  --color-ink-4:       #6e6c68;
-  --color-stamp:       #c8291a;
-  --color-grove:       #1a5c30;
-  --color-gold:        #c49a2a;
-  --color-white:       #ffffff;
+html { background-color: #f0ece0; color: #181614; font-family: 'JetBrains Mono', monospace; font-size: 18px; -webkit-font-smoothing: antialiased; }
 
-  /* ── Typography ────────────────────────────────────────── */
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body:    'Barlow', sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
-  --font-tag:     'Share Tech Mono', monospace;
-
-  /* ── Shadows — hard offset, no blur ───────────────────── */
-  --shadow-hard:    6px 6px 0 0 #181614;
-  --shadow-hard-sm: 3px 3px 0 0 #181614;
-  --shadow-hard-xs: 2px 2px 0 0 #181614;
-  --shadow-hard-act: 1px 1px 0 0 #181614;
-  --shadow-hard-red: 6px 6px 0 0 #c8291a;
-}
-
-/* ── Base reset ──────────────────────────────────────────── */
-*, *::before, *::after {
-  border-radius: 0 !important;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  background-color: #f0ece0;
-  color: #181614;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 18px;
-  -webkit-font-smoothing: antialiased;
-  scroll-behavior: smooth;
-}
-
-/* ── Paper grain overlay ─────────────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  opacity: 0.055;
-  mix-blend-mode: multiply;
-}
-
-/* ── Utility classes ─────────────────────────────────────── */
 .font-display { font-family: 'Barlow Condensed', sans-serif; }
-.font-tag     { font-family: 'Share Tech Mono', monospace; }
+.font-tag { font-family: 'Share Tech Mono', monospace; }
 
-/* Hard-offset box shadows */
-.shadow-hard     { box-shadow: 6px 6px 0 0 #181614; }
-.shadow-hard-sm  { box-shadow: 3px 3px 0 0 #181614; }
-.shadow-hard-xs  { box-shadow: 2px 2px 0 0 #181614; }
-.shadow-hard-red { box-shadow: 6px 6px 0 0 #c8291a; }
-
-/* Noise texture for stamps */
-.stamp-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend in='SourceGraphic' mode='multiply'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
-  background-blend-mode: multiply;
-}
-
-/* Button press */
-.btn-press:active {
-  transform: translate(6px, 6px);
-  box-shadow: 1px 1px 0 0 #181614 !important;
-}
-
-/* Live pulse dot */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.25; transform: scale(0.5); }
-}
-.animate-pulse-dot {
-  animation: pulse-dot 1.8s ease-in-out infinite;
-}
-
-/* Live badge — green pill, no rotation */
-.badge-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #1a5c30;
-  color: #fff;
-  font-family: 'Share Tech Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-}
+.badge-live { display: inline-flex; align-items: center; gap: 5px; background: #1a5c30; color: #fff; font-family: 'Share Tech Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; }
 .badge-live::before { content: '●'; font-size: 7px; }
 
-/* PRO badge */
-.badge-pro {
-  display: inline-block;
-  background: #181614;
-  color: #f0ece0;
-  font-family: 'Share Tech Mono', monospace;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  box-shadow: 2px 2px 0 #c8291a;
-}
+.badge-pro { display: inline-block; background: #181614; color: #f0ece0; font-family: 'Share Tech Mono', monospace; font-weight: 700; font-size: 11px; padding: 2px 6px; box-shadow: 2px 2px 0 #c8291a; }
 
-/* Section eyebrow */
-.eyebrow {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #c8291a;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.eyebrow::before {
-  content: '';
-  width: 20px;
-  height: 1px;
-  background: #c8291a;
-  flex-shrink: 0;
-}
-
-/* Prose overrides for journal articles */
-.prose-wm {
-  --tw-prose-body: #181614;
-  --tw-prose-headings: #181614;
-  --tw-prose-links: #c8291a;
-  --tw-prose-bold: #181614;
-  --tw-prose-quotes: #181614;
-  --tw-prose-quote-borders: #c8291a;
-  --tw-prose-hr: #181614;
-}
-.prose-wm p {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 18px;
-  line-height: 1.85;
-}
-.prose-wm h2 {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 2rem;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.animate-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
