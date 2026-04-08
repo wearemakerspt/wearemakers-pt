@@ -34,13 +34,11 @@ export default async function MakerDashboardPage() {
 
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
 
-        {/* ── Black header ── */}
         <div style={{ background: 'var(--INK)', borderBottom: '3px solid var(--INK)', padding: '16px 16px 14px' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '10px' }}>
             MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(0, 6).toUpperCase()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
-            {/* Avatar */}
             <div style={{ width: '64px', height: '64px', flexShrink: 0, border: '3px solid rgba(240,236,224,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,236,224,.08)', overflow: 'hidden' }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt={profile.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -63,13 +61,11 @@ export default async function MakerDashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* Stats row */}
           <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(240,236,224,.1)', paddingTop: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'MARKETS ATTENDED', value: recentAttendance.length, sub: 'LAST 30 DAYS' },
               { label: 'UPCOMING', value: upcomingMarkets.length, sub: 'NEXT 60 DAYS' },
-              { label: 'CONFIRMED', value: upcomingMarkets.filter(u => u.is_attending).length, sub: 'I WILL BE THERE' },
+              { label: 'CONFIRMED', value: upcomingMarkets.filter((u: any) => u.is_attending).length, sub: 'I WILL BE THERE' },
               { label: isLive ? 'LIVE' : 'OFFLINE', value: '', sub: isLive ? 'ON MAP NOW' : 'NOT VISIBLE' },
             ].map((s, i) => (
               <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 3 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
@@ -87,7 +83,6 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
-        {/* ── Field Protocol header ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.4 }}>
             WORK ORDER — FIELD PROTOCOL
@@ -97,8 +92,21 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
-        {/* ── Work order sections ── */}
         <div style={{ padding: '0' }}>
+
+          {/* §0 Brand Profile */}
+          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>§0 — BRAND PROFILE</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span>
+            </div>
+            <BrandProfileEditor
+              initialName={profile.display_name}
+              initialBio={profile.bio ?? null}
+              initialInstagram={profile.instagram_handle ?? null}
+              initialSlug={profile.slug ?? null}
+            />
+          </div>
 
           {/* §1 Live Toggle */}
           <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
@@ -106,9 +114,7 @@ export default async function MakerDashboardPage() {
               <span>§1 — TRANSMISSION STATUS</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span>
             </div>
-            <div style={{ padding: '0' }}>
-              <LiveToggle initialIsActive={isLive} displayName={profile.display_name} />
-            </div>
+            <LiveToggle initialIsActive={isLive} displayName={profile.display_name} />
           </div>
 
           {/* §2 Field Notes */}
@@ -129,9 +135,7 @@ export default async function MakerDashboardPage() {
                 <span>§3 — ACTIVE CHECK-INS</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
               </div>
-              <div style={{ padding: '0' }}>
-                <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
-              </div>
+              <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
             </div>
           )}
 
@@ -141,9 +145,7 @@ export default async function MakerDashboardPage() {
               <span>§4 — UPCOMING AGENDA</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span>
             </div>
-            <div style={{ padding: '0' }}>
-              <UpcomingAgenda markets={upcomingMarkets} />
-            </div>
+            <UpcomingAgenda markets={upcomingMarkets} />
           </div>
 
           {/* §5 Recent attendance */}
@@ -153,9 +155,7 @@ export default async function MakerDashboardPage() {
                 <span>§5 — RECENT ATTENDANCE</span>
                 <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
               </div>
-              <div style={{ padding: '0' }}>
-                <RecentAttendance attendance={recentAttendance} />
-              </div>
+              <RecentAttendance attendance={recentAttendance} />
             </div>
           )}
 
