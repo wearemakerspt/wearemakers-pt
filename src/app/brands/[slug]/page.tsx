@@ -88,6 +88,7 @@ export default async function BrandPage({ params }: Props) {
               initialSaved={initialSaved}
               userId={user?.id ?? null}
               size="lg"
+              dark={true}
             />
           </div>
         </div>

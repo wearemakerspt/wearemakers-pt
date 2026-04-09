@@ -9,9 +9,10 @@ interface Props {
   initialSaved?: boolean
   userId?: string | null
   size?: 'sm' | 'md' | 'lg'
+  dark?: boolean
 }
 
-export default function SaveBrandButton({ brandId, brandName, initialSaved = false, userId, size = 'md' }: Props) {
+export default function SaveBrandButton({ brandId, brandName, initialSaved = false, userId, size = 'md', dark = false }: Props) {
   const [saved, setSaved] = useState(initialSaved)
   const [isPending, setIsPending] = useState(false)
 
@@ -31,7 +32,6 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
     e.preventDefault()
     e.stopPropagation()
     if (isPending) return
-
     setIsPending(true)
     const next = !saved
     setSaved(next)
@@ -72,6 +72,11 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
   }
   const s = sizes[size]
 
+  // Colour scheme — dark background variant uses parchment
+  const borderColor = saved ? '#c8291a' : dark ? 'rgba(240,236,224,.5)' : 'var(--INK)'
+  const bgColor = saved ? '#c8291a' : 'transparent'
+  const textColor = saved ? '#f0ece0' : dark ? 'rgba(240,236,224,.8)' : 'var(--INK)'
+
   return (
     <button
       type="button"
@@ -83,10 +88,9 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
         padding: s.padding, cursor: isPending ? 'not-allowed' : 'pointer',
         fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: s.fontSize,
         letterSpacing: '0.12em', textTransform: 'uppercase',
-        border: `2px solid ${saved ? 'var(--RED)' : 'var(--INK)'}`,
-        background: saved ? 'var(--RED)' : 'transparent',
-        color: saved ? 'var(--P)' : 'var(--INK)',
-        boxShadow: saved ? 'none' : 'var(--SHD-SM)',
+        border: `2px solid ${borderColor}`,
+        background: bgColor,
+        color: textColor,
         opacity: isPending ? 0.6 : 1,
         transition: 'background .1s, color .1s, border-color .1s',
       }}
