@@ -25,10 +25,7 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
     setPendingId(marketId)
     setError(null)
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('market_id', marketId)
-      fd.set('status', newStatus)
-      const result = await setMarketStatus(fd)
+      const result = await setMarketStatus(marketId, newStatus)
       if (result?.error) { optimisticSetStatus(marketId, prev); setError(result.error) }
       setPendingId(null)
     })
