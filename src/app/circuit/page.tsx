@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SaveBrandButton from '@/components/ui/SaveBrandButton'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
+import PushSubscribe from '@/components/ui/PushSubscribe'
 
 export const metadata: Metadata = {
   title: 'My Circuit — WEAREMAKERS.PT',
@@ -98,6 +99,13 @@ export default async function CircuitPage() {
               </div>
             ))}
           </div>
+
+          {/* Push notifications */}
+          {user && (
+            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(240,236,224,.1)' }}>
+              <PushSubscribe userId={user.id} />
+            </div>
+          )}
         </div>
 
         {/* ── Not logged in ── */}
@@ -163,7 +171,7 @@ export default async function CircuitPage() {
               <span>● ACTIVE RIGHT NOW</span>
               <span style={{ opacity: 0.6, fontSize: '9px' }}>{liveNow.length} LIVE</span>
             </div>
-            {liveNow.map(brand => <BrandRow key={brand.id} brand={brand} userId={user?.id ?? null} />)}
+            {liveNow.map(brand => <BrandRow key={brand.id} brand={brand} userId={user.id} />)}
           </div>
         )}
 
