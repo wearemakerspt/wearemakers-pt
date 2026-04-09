@@ -25,7 +25,10 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
     setPendingId(marketId)
     setError(null)
     startTransition(async () => {
-      const result = await setMarketStatus(marketId, newStatus)
+      const fd = new FormData()
+      fd.set('market_id', marketId)
+      fd.set('status', newStatus)
+      const result = await setMarketStatus(fd)
       if (result?.error) { optimisticSetStatus(marketId, prev); setError(result.error) }
       setPendingId(null)
     })
@@ -108,6 +111,11 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
               <div style={{ width: '80px', flexShrink: 0, padding: '12px 10px', borderRight: '1px solid rgba(24,22,20,.1)' }}>
                 <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '13px', color: 'var(--INK)', lineHeight: 1.2 }}>
                   {formatMarketDate(market.event_date)}
+                  {(market as any).event_date_end && (
+                    <span style={{ display: 'block', fontWeight: 400, fontSize: '11px', color: 'rgba(24,22,20,.5)', marginTop: '1px' }}>
+                      → {formatMarketDate((market as any).event_date_end)}
+                    </span>
+                  )}
                 </div>
                 {isToday && <div style={{ ...T, fontSize: '8px', color: 'var(--RED)', fontWeight: 700, marginTop: '2px' }}>TODAY</div>}
               </div>
@@ -119,6 +127,7 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
                 </div>
                 <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>
                   {formatTime(market.starts_at)}–{formatTime(market.ends_at)}
+                  {(market as any).event_date_end && ' · MULTI-DAY'}
                   {market.attending_makers.length > 0 && ` · ${market.attending_makers.length} LIVE`}
                 </div>
               </div>

@@ -8,6 +8,7 @@ interface Props { spaces: Space[] }
 
 export default function CreateMarketForm({ spaces }: Props) {
   const [open, setOpen] = useState(false)
+  const [isRange, setIsRange] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -80,12 +81,44 @@ export default function CreateMarketForm({ spaces }: Props) {
                 </select>
               </div>
 
+              {/* Single day vs range toggle */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={labelStyle}>MARKET TYPE</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[
+                    { value: 'single', label: 'SINGLE DAY' },
+                    { value: 'range', label: 'DATE RANGE' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setIsRange(opt.value === 'range')}
+                      style={{
+                        ...T, fontSize: '10px', fontWeight: 700, padding: '7px 14px',
+                        border: '2px solid var(--INK)',
+                        background: (isRange ? opt.value === 'range' : opt.value === 'single') ? 'var(--INK)' : 'transparent',
+                        color: (isRange ? opt.value === 'range' : opt.value === 'single') ? 'var(--P)' : 'var(--INK)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Date + Time row */}
               <div style={{ display: 'flex', gap: '14px', marginBottom: '14px', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: '120px' }}>
-                  <label style={labelStyle}>DATE *</label>
+                  <label style={labelStyle}>{isRange ? 'START DATE *' : 'DATE *'}</label>
                   <input type="date" name="event_date" defaultValue={nextSaturday} required style={inputStyle} />
                 </div>
+                {isRange && (
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <label style={labelStyle}>END DATE *</label>
+                    <input type="date" name="event_date_end" required style={inputStyle} />
+                  </div>
+                )}
                 <div style={{ flex: 1, minWidth: '80px' }}>
                   <label style={labelStyle}>OPENS</label>
                   <input type="time" name="starts_at" defaultValue="10:00" style={inputStyle} />

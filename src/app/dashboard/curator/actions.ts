@@ -33,6 +33,7 @@ export async function createMarket(formData: FormData) {
 
   const spaceId = formData.get('space_id') as string
   const eventDate = formData.get('event_date') as string
+  const eventDateEnd = (formData.get('event_date_end') as string) || null
   const startsAt = (formData.get('starts_at') as string) || '09:00'
   const endsAt = (formData.get('ends_at') as string) || '19:00'
   const title = (formData.get('title') as string)?.trim() || ''
@@ -60,6 +61,7 @@ export async function createMarket(formData: FormData) {
       title: resolvedTitle,
       description,
       event_date: eventDate,
+      event_date_end: eventDateEnd || null,
       starts_at: startsAt,
       ends_at: endsAt,
       status: 'scheduled',

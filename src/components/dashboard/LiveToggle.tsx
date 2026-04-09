@@ -26,10 +26,14 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
   )
 
   const checkedInIds = new Set(activeCheckins.map(c => c.market.id))
-  const availableMarkets = todayMarkets.filter(
-    um => !checkedInIds.has(um.market.id) &&
-    (um.market.status === 'live' || um.market.status === 'community_live' || um.market.status === 'scheduled')
-  )
+  // Include range markets where today falls within the range
+  const todayStr2 = new Date().toISOString().split('T')[0]
+  const availableMarkets = todayMarkets.filter(um => {
+    if (checkedInIds.has(um.market.id)) return false
+    if (!['live', 'community_live', 'scheduled'].includes(um.market.status)) return false
+    const endDate = (um.market as any).event_date_end ?? um.market.event_date
+    return todayStr2 >= um.market.event_date && todayStr2 <= endDate
+  })
   const selectedMarket = todayMarkets.find(um => um.market.id === selectedMarketId)
   const [stallLabel, setStallLabel] = useState('')
 
@@ -231,6 +235,7 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
                       </div>
                       <div style={{ ...T, fontSize: '10px', color: selected ? 'rgba(240,236,224,.45)' : 'rgba(24,22,20,.38)' }}>
                         {formatTime(um.market.starts_at)}–{formatTime(um.market.ends_at)}
+                        {(um.market as any).event_date_end ? ` · UNTIL ${new Date((um.market as any).event_date_end + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}` : ''}
                         {um.market.space.address ? ` · ${um.market.space.address}` : ''}
                       </div>
                     </div>

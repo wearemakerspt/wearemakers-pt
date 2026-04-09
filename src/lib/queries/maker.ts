@@ -65,13 +65,12 @@ export async function getMakerDashboardData(
         checked_out_at,
         is_verified,
         market:markets (
-          id, title, event_date, starts_at, ends_at, status, space_id,
+          id, title, event_date, event_date_end, starts_at, ends_at, status, space_id,
           space:spaces ( id, name, address, parish )
         )
       `)
       .eq('maker_id', makerId)
       .is('checked_out_at', null)
-      .filter('market.event_date', 'eq', today)
       .order('checked_in_at', { ascending: false }),
 
     // ── 2. Recent attendance — last 30 days + today
@@ -134,10 +133,12 @@ export async function getMakerDashboardData(
   )
 
   // ── Fetch upcoming markets — only at spaces the maker knows, or where they have intent
+  const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().split('T')[0]
+
   const upcomingRaw = await supabase
     .from('markets')
     .select(`
-      id, title, event_date, starts_at, ends_at, status, space_id,
+      id, title, event_date, event_date_end, starts_at, ends_at, status, space_id,
       space:spaces ( id, name, address, parish ),
       attendance!left (
         id,
@@ -147,7 +148,7 @@ export async function getMakerDashboardData(
       )
     `)
     .gte('event_date', today)
-    .lte('event_date', new Date(Date.now() + 60 * 86400_000).toISOString().split('T')[0])
+    .lte('event_date', in60)
     .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
     .order('event_date', { ascending: true })
     .limit(50)
