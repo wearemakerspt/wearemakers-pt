@@ -57,10 +57,11 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
         localStorage.setItem('wam_circuit', JSON.stringify(updated))
       }
     } catch {
-      setSaved(!next) // revert on error
-    } finally {
-      setIsPending(false)
-    }
+        setSaved(!next) // revert on error
+      } finally {
+        setIsPending(false)
+      }
+    })()
   }
 
   const sizes = {
@@ -73,7 +74,8 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
 
   return (
     <button
-      onClick={handleToggle}
+      type="button"
+      onClick={e => { e.preventDefault(); e.stopPropagation(); handleToggle() }}
       disabled={isPending}
       title={saved ? `Remove ${brandName} from Circuit` : `Save ${brandName} to Circuit`}
       style={{
