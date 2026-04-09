@@ -79,6 +79,9 @@ export default async function CircuitPage() {
             {savedBrands.length} BRAND{savedBrands.length !== 1 ? 'S' : ''} SAVED
             {liveNow.length > 0 && <span style={{ color: 'var(--RED)', fontWeight: 700, marginLeft: '10px' }}>● {liveNow.length} LIVE NOW</span>}
           </div>
+          <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.2)', marginTop: '6px' }}>
+            BRANDS · MARKETS · GEMS — COMING SOON
+          </div>
         </div>
 
         {/* Not logged in */}

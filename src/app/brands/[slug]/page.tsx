@@ -32,21 +32,23 @@ function formatDate(d: string) {
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params
   const [brand, user] = await Promise.all([getBrandBySlug(slug), getCurrentUser()])
+  if (!brand) notFound()
 
   // Check if visitor has saved this brand
   let initialSaved = false
-  if (user && brand) {
-    const { createClient: createServer } = await import('@/lib/supabase/server')
-    const supabase = await createServer()
-    const { data } = await supabase
-      .from('saved_brands')
-      .select('id')
-      .eq('visitor_id', user.id)
-      .eq('brand_id', brand.id)
-      .single()
-    initialSaved = !!data
+  if (user) {
+    try {
+      const { createClient: createServer } = await import('@/lib/supabase/server')
+      const supabase = await createServer()
+      const { data } = await supabase
+        .from('saved_brands')
+        .select('id')
+        .eq('visitor_id', user.id)
+        .eq('brand_id', brand.id)
+        .maybeSingle()
+      initialSaved = !!data
+    } catch { /* ignore — saved state defaults to false */ }
   }
-  if (!brand) notFound()
 
   const initials = brand.display_name.slice(0, 2).toUpperCase()
 
