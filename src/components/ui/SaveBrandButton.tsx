@@ -15,26 +15,29 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
   const [saved, setSaved] = useState(initialSaved)
   const [isPending, setIsPending] = useState(false)
 
-  // Sync with localStorage for anonymous users
   useEffect(() => {
     if (!userId) {
-      const stored = localStorage.getItem('wam_circuit')
-      if (stored) {
-        const circuit: string[] = JSON.parse(stored)
-        setSaved(circuit.includes(brandId))
-      }
+      try {
+        const stored = localStorage.getItem('wam_circuit')
+        if (stored) {
+          const circuit: string[] = JSON.parse(stored)
+          setSaved(circuit.includes(brandId))
+        }
+      } catch {}
     }
   }, [brandId, userId])
 
-  async function handleToggle() {
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     if (isPending) return
+
     setIsPending(true)
     const next = !saved
-    setSaved(next) // optimistic
+    setSaved(next)
 
     try {
       if (userId) {
-        // Logged in — sync to database
         const supabase = createClient()
         if (next) {
           await supabase.from('saved_brands').upsert({
@@ -48,7 +51,6 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
             .eq('brand_id', brandId)
         }
       } else {
-        // Anonymous — localStorage only
         const stored = localStorage.getItem('wam_circuit')
         const circuit: string[] = stored ? JSON.parse(stored) : []
         const updated = next
@@ -57,11 +59,10 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
         localStorage.setItem('wam_circuit', JSON.stringify(updated))
       }
     } catch {
-        setSaved(!next) // revert on error
-      } finally {
-        setIsPending(false)
-      }
-    })()
+      setSaved(!next)
+    } finally {
+      setIsPending(false)
+    }
   }
 
   const sizes = {
@@ -69,13 +70,12 @@ export default function SaveBrandButton({ brandId, brandName, initialSaved = fal
     md: { padding: '9px 16px', fontSize: '11px', gap: '7px' },
     lg: { padding: '14px 22px', fontSize: '12px', gap: '8px' },
   }
-
   const s = sizes[size]
 
   return (
     <button
       type="button"
-      onClick={e => { e.preventDefault(); e.stopPropagation(); handleToggle() }}
+      onClick={handleClick}
       disabled={isPending}
       title={saved ? `Remove ${brandName} from Circuit` : `Save ${brandName} to Circuit`}
       style={{
