@@ -60,7 +60,7 @@ export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
         )
       )
     `)
-    .eq('role', 'maker')
+    .in('role', ['maker', 'admin'])
     .eq('is_active', true)
     .order('display_name', { ascending: true })
 
@@ -115,7 +115,7 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
       )
     `)
     .eq('slug', slug)
-    .eq('role', 'maker')
+    .in('role', ['maker', 'admin'])
     .single()
 
   if (error || !profile) return null
