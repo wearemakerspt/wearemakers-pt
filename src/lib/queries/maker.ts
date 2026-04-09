@@ -135,23 +135,42 @@ export async function getMakerDashboardData(
   // ── Fetch upcoming markets — only at spaces the maker knows, or where they have intent
   const in60 = new Date(Date.now() + 60 * 86400_000).toISOString().split('T')[0]
 
-  const upcomingRaw = await supabase
-    .from('markets')
-    .select(`
-      id, title, event_date, event_date_end, starts_at, ends_at, status, space_id,
-      space:spaces ( id, name, address, parish ),
-      attendance!left (
-        id,
-        maker_id,
-        checked_out_at,
-        stall_label
-      )
-    `)
-    .gte('event_date', today)
-    .lte('event_date', in60)
-    .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
-    .order('event_date', { ascending: true })
-    .limit(50)
+  // Fetch markets starting today OR range markets that started before today but end in the future
+  const [upcomingStarting, upcomingRange] = await Promise.all([
+    supabase
+      .from('markets')
+      .select(`
+        id, title, event_date, event_date_end, starts_at, ends_at, status, space_id,
+        space:spaces ( id, name, address, parish ),
+        attendance!left ( id, maker_id, checked_out_at, stall_label )
+      `)
+      .gte('event_date', today)
+      .lte('event_date', in60)
+      .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
+      .order('event_date', { ascending: true })
+      .limit(40),
+    // Range markets that started before today but haven't ended yet
+    supabase
+      .from('markets')
+      .select(`
+        id, title, event_date, event_date_end, starts_at, ends_at, status, space_id,
+        space:spaces ( id, name, address, parish ),
+        attendance!left ( id, maker_id, checked_out_at, stall_label )
+      `)
+      .lt('event_date', today)
+      .gte('event_date_end', today)
+      .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
+      .order('event_date', { ascending: true })
+      .limit(10),
+  ])
+
+  // Merge and deduplicate by id
+  const seen = new Set<string>()
+  const mergedData = [...(upcomingStarting.data ?? []), ...(upcomingRange.data ?? [])]
+    .filter(row => { if (seen.has(row.id)) return false; seen.add(row.id); return true })
+    .sort((a, b) => a.event_date.localeCompare(b.event_date))
+
+  const upcomingRaw = { data: mergedData }
 
   // ── Normalise upcoming markets + attendance intent
   // Show: markets at spaces the maker has attended + markets with existing intent

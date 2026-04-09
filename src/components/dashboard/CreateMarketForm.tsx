@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createMarket } from '@/app/dashboard/curator/actions'
 import type { Space } from '@/types/database'
 
 interface Props { spaces: Space[] }
 
 export default function CreateMarketForm({ spaces }: Props) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isRange, setIsRange] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -30,6 +32,8 @@ export default function CreateMarketForm({ spaces }: Props) {
         setSuccess(true)
         setOpen(false)
         formRef.current?.reset()
+        setIsRange(false)
+        router.refresh()
         setTimeout(() => setSuccess(false), 3000)
       }
     })
