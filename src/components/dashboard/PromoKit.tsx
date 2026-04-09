@@ -6,6 +6,7 @@ interface LiveMaker {
   id: string
   display_name: string
   slug: string | null
+  instagram_handle?: string | null
 }
 
 interface LiveMarket {
@@ -31,7 +32,10 @@ export default function PromoKit({ liveMakers, liveMarkets }: Props) {
     const marketNames = liveMarkets.map(m => m.space.name.toUpperCase()).join(' + ')
 
     const makerHandles = liveMakers
-      .map(m => `@${m.display_name.toLowerCase().replace(/[^a-z0-9]/g, '')}`)
+      .map(m => {
+        if (m.instagram_handle) return `@${m.instagram_handle.replace('@', '')}`
+        return `@${m.display_name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+      })
       .join(' ')
 
     const lines = [

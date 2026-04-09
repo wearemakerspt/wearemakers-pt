@@ -8,8 +8,23 @@ export default function RecentAttendance({ attendance }: Props) {
 
   if (attendance.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', background: 'var(--P)' }}>
-        <div style={{ ...tagStyle, color: 'rgba(24,22,20,.25)' }}>NO ATTENDANCE RECORDED YET</div>
+      <div style={{ padding: '24px', background: 'var(--P)' }}>
+        <div style={{ ...tagStyle, color: 'rgba(24,22,20,.25)', marginBottom: '8px' }}>NO ATTENDANCE RECORDED YET</div>
+        <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.35)', lineHeight: 1.6 }}>
+          Your first market appearance will be recorded here automatically when you check in.
+        </div>
+        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          {[
+            '→ Go to §1 above and select a market',
+            '→ Tap START TRANSMISSION to go live',
+            '→ Your session will appear here after check-out',
+          ].map((tip, i) => (
+            <div key={i} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'rgba(24,22,20,.3)', display: 'flex', gap: '6px' }}>
+              <span style={{ color: 'var(--RED)' }}>{tip.slice(0, 1)}</span>
+              <span>{tip.slice(2)}</span>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

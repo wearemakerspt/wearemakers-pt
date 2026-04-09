@@ -45,7 +45,7 @@ export default async function MakerDashboardPage() {
         {/* ── Black header ── */}
         <div style={{ background: 'var(--INK)', borderBottom: '3px solid var(--INK)', padding: '16px 16px 14px' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '10px' }}>
-            MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(0, 6).toUpperCase()}
+            MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(-6).toUpperCase()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
             {/* Avatar */}
@@ -216,7 +216,7 @@ export default async function MakerDashboardPage() {
           </div>
 
           {/* §5 Recent attendance */}
-          {recentAttendance.length > 0 && (
+          {true && (
             <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
               <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>§5 — RECENT ATTENDANCE</span>

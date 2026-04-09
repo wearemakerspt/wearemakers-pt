@@ -10,6 +10,7 @@ export interface CuratorMarket extends Market {
     id: string
     display_name: string
     slug: string | null
+    instagram_handle: string | null
     is_verified: boolean
     stall_label: string | null
     checked_in_at: string
@@ -60,7 +61,7 @@ export async function getCuratorDashboardData(
             checked_in_at,
             checked_out_at,
             stall_label,
-            maker:profiles ( id, display_name, slug, is_verified )
+            maker:profiles ( id, display_name, slug, instagram_handle, is_verified )
           )
         `)
         .eq('curator_id', curatorId)
