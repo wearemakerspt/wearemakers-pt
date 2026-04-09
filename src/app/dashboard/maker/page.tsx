@@ -9,6 +9,7 @@ import CheckInPanel from '@/components/dashboard/CheckInPanel'
 import UpcomingAgenda from '@/components/dashboard/UpcomingAgenda'
 import RecentAttendance from '@/components/dashboard/RecentAttendance'
 import BrandProfileEditor from '@/components/dashboard/BrandProfileEditor'
+import FieldKit from '@/components/dashboard/FieldKit'
 
 export const metadata: Metadata = {
   title: 'Field Transmitter — Maker Dashboard',
@@ -222,6 +223,21 @@ export default async function MakerDashboardPage() {
               </div>
             </div>
           )}
+
+          {/* §6 Field Kit */}
+          <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>§6 — FIELD KIT · STALL CARD</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span>
+            </div>
+            <FieldKit
+              displayName={profile.display_name}
+              slug={profile.slug ?? null}
+              category={(profile.bio_i18n as any)?._category ?? null}
+              instagramHandle={profile.instagram_handle ?? null}
+              priceRange={(profile.bio_i18n as any)?._price_range ?? null}
+            />
+          </div>
 
         </div>
       </main>
