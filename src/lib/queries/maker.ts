@@ -54,7 +54,7 @@ export async function getMakerDashboardData(
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [activeResult, recentResult, upcomingResult] = await Promise.all([
+  const [activeResult, recentResult, spaceResult] = await Promise.all([
     // ── 1. Today's active check-ins (checked_out_at IS NULL, event_date = today)
     supabase
       .from('attendance')
@@ -93,23 +93,13 @@ export async function getMakerDashboardData(
       .order('checked_in_at', { ascending: false })
       .limit(10),
 
-    // ── 3. Upcoming markets in the next 60 days — with attendance intent flag
+    // ── 3. Maker's attended spaces (last 90 days) — for filtering upcoming
     supabase
-      .from('markets')
-      .select(`
-        id, title, event_date, starts_at, ends_at, status, space_id,
-        space:spaces ( id, name, address, parish ),
-        attendance!left (
-          id,
-          maker_id,
-          checked_out_at
-        )
-      `)
-      .gte('event_date', today)
-      .lte('event_date', new Date(Date.now() + 60 * 86400_000).toISOString().split('T')[0])
-      .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
-      .order('event_date', { ascending: true })
-      .limit(15),
+      .from('attendance')
+      .select('market:markets(space_id)')
+      .eq('maker_id', makerId)
+      .gte('checked_in_at', new Date(Date.now() - 90 * 86400_000).toISOString())
+      .limit(50),
   ])
 
   // ── Normalise active check-ins
@@ -136,19 +126,62 @@ export async function getMakerDashboardData(
       market: row.market,
     }))
 
+  // ── Get space IDs the maker has attended
+  const attendedSpaceIds = new Set(
+    (spaceResult.data ?? [])
+      .map((row: any) => row.market?.space_id)
+      .filter(Boolean)
+  )
+
+  // ── Fetch upcoming markets — only at spaces the maker knows, or where they have intent
+  const upcomingRaw = await supabase
+    .from('markets')
+    .select(`
+      id, title, event_date, starts_at, ends_at, status, space_id,
+      space:spaces ( id, name, address, parish ),
+      attendance!left (
+        id,
+        maker_id,
+        checked_out_at,
+        stall_label
+      )
+    `)
+    .gte('event_date', today)
+    .lte('event_date', new Date(Date.now() + 60 * 86400_000).toISOString().split('T')[0])
+    .in('status', ['scheduled', 'shadow', 'live', 'community_live'])
+    .order('event_date', { ascending: true })
+    .limit(50)
+
   // ── Normalise upcoming markets + attendance intent
-  const upcomingMarkets: UpcomingMarket[] = (upcomingResult.data ?? [])
-    .filter((row: any) => row.space !== null)
-    .map((row: any) => {
-      // Look for the current maker's attendance row in the joined data
+  // Show: markets at spaces the maker has attended + markets with existing intent
+  const upcomingMarkets: UpcomingMarket[] = (upcomingRaw.data ?? [])
+    .filter((row: any) => {
+      if (!row.space) return false
+      // Always show if maker has declared intent
       const myAttendance = (row.attendance ?? []).find(
-        (a: any) => a.maker_id === makerId && a.checked_out_at === null
+        (a: any) => a.maker_id === makerId
+      )
+      if (myAttendance) return true
+      // Show if maker has been to this space before
+      if (attendedSpaceIds.has(row.space_id)) return true
+      // If maker has no history at all, show all (new maker experience)
+      if (attendedSpaceIds.size === 0) return true
+      return false
+    })
+    .map((row: any) => {
+      const myAttendance = (row.attendance ?? []).find(
+        (a: any) => a.maker_id === makerId && a.stall_label !== 'INTENT'
+          ? a.checked_out_at === null
+          : a.maker_id === makerId
+      )
+      const intentRow = (row.attendance ?? []).find(
+        (a: any) => a.maker_id === makerId
       )
       const { attendance: _att, ...marketData } = row
       return {
         market: marketData,
-        is_attending: Boolean(myAttendance),
-        attendance_id: myAttendance?.id ?? null,
+        is_attending: Boolean(intentRow),
+        attendance_id: intentRow?.id ?? null,
       }
     })
 

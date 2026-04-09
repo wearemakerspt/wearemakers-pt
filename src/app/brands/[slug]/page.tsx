@@ -92,8 +92,8 @@ export default async function BrandPage({ params }: Props) {
           )}
         </div>
 
-        {/* Active offer */}
-        {brand.digital_offer && (
+        {/* Active offer — show if offer exists and not explicitly deactivated */}
+        {brand.digital_offer && (brand.bio_i18n as any)?._offer_active !== false && (
           <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#e6e0d0' }}>
             <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '6px' }}>
               ✦ TODAY'S OFFER
