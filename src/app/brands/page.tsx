@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getAllBrands } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
+import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import BrandCard from '@/components/brands/BrandCard'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +25,7 @@ export default async function BrandsPage() {
 
   return (
     <>
+      <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveCount} />
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 

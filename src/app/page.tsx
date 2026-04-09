@@ -4,6 +4,7 @@ import { getLiveMarkets, getAllMarkets } from '@/lib/queries/markets'
 import { getAllBrands } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
+import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveMarkets.length} />
 
       <div id="scroll-area" style={{ overflowY: 'auto', flex: 1 }}>

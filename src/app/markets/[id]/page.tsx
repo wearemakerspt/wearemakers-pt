@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getMarketBySlug } from '@/lib/queries/markets'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
+import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,7 @@ export default async function MarketDetailPage({ params }: Props) {
 
   return (
     <>
+      <RealtimeRefresh />
       <SiteHeader user={user} liveCount={isLive ? market.checkin_count : 0} />
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 
