@@ -7,6 +7,7 @@ import CreateMarketForm from '@/components/dashboard/CreateMarketForm'
 import MarketLedger from '@/components/dashboard/MarketLedger'
 import SpotlightPins from '@/components/dashboard/SpotlightPins'
 import ActivityLog from '@/components/dashboard/ActivityLog'
+import PromoKit from '@/components/dashboard/PromoKit'
 
 export const metadata: Metadata = {
   title: 'Command Center — Curator Dashboard',
@@ -16,228 +17,157 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function CuratorDashboardPage() {
-  // ── Auth guard ──────────────────────────────────────────────
   const user = await getCurrentUser()
-
   if (!user) redirect('/auth/login?next=/dashboard/curator')
-  if (!['curator', 'admin'].includes(user.profile?.role ?? '')) {
-    redirect('/')
-  }
+  if (!['curator', 'admin'].includes(user.profile?.role ?? '')) redirect('/')
 
   const profile = user.profile!
-
-  // ── Data — parallel ─────────────────────────────────────────
   const { ownMarkets, spaces, featuredSlots, recentActivityLog, searchableMakers } =
     await getCuratorDashboardData(user.id)
 
-  // ── Summary stats ────────────────────────────────────────────
   const today = new Date().toISOString().split('T')[0]
-  const liveNow = ownMarkets.filter(
-    (m) => m.status === 'live' || m.status === 'community_live'
-  )
-  const todayMarkets = ownMarkets.filter((m) => m.event_date === today)
+  const liveNow = ownMarkets.filter(m => m.status === 'live' || m.status === 'community_live')
+  const todayMarkets = ownMarkets.filter(m => m.event_date === today)
   const totalCheckins = ownMarkets.reduce((sum, m) => sum + m.checkin_count, 0)
-  const featuredCount = featuredSlots.filter((s) => s.pinned !== null).length
+  const featuredCount = featuredSlots.filter(s => s.pinned !== null).length
+
+  // Live makers across all live markets (for Promo Kit)
+  const liveMakers = liveNow.flatMap(m => m.attending_makers)
+
+  const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
 
   return (
     <>
-      <SiteHeader user={user} />
+      <SiteHeader user={user} liveCount={liveNow.length} />
 
-      <main className="min-h-dvh bg-parchment">
+      <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
+
         {/* ── Black command header ── */}
-        <div className="bg-ink border-b-[3px] border-ink">
-          <div className="max-w-6xl mx-auto px-4 py-5">
-            {/* Classification */}
-            <p className="font-tag text-xs tracking-[0.22em] uppercase text-stamp mb-3">
-              CURATOR COMMAND CENTER · INTERNAL USE ONLY · REF: MCL-2026-
-              {profile.id.slice(0, 6).toUpperCase()}
-            </p>
+        <div style={{ background: 'var(--INK)', borderBottom: '3px solid var(--INK)', padding: '16px 16px 14px' }}>
+          <div style={{ ...T, color: 'var(--RED)', marginBottom: '10px' }}>
+            CURATOR COMMAND CENTER · INTERNAL USE ONLY · REF: MCL-2026-{profile.id.slice(-6).toUpperCase()}
+          </div>
 
-            {/* Identity */}
-            <div className="flex items-end gap-5 flex-wrap mb-5">
-              <div>
-                <h1 className="font-display font-black text-[clamp(36px,8vw,56px)] uppercase tracking-tight leading-none text-parchment mb-2">
-                  {profile.display_name.toUpperCase()}
-                </h1>
-                <p className="font-tag text-xs tracking-[0.16em] uppercase text-parchment/40">
-                  Curator · Lisbon ·{' '}
-                  {liveNow.length > 0 ? (
-                    <span className="text-stamp font-bold">
-                      {liveNow.length} MARKET{liveNow.length > 1 ? 'S' : ''} LIVE NOW
-                    </span>
-                  ) : (
-                    'No markets live right now'
-                  )}
-                </p>
-              </div>
-
-              {/* Add market — primary CTA in the header */}
-              <div className="ml-auto">
-                <CreateMarketForm spaces={spaces} />
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <div>
+              <h1 style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: 'clamp(32px,8vw,52px)', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.88, color: 'var(--P)', marginBottom: '6px' }}>
+                {profile.display_name.toUpperCase()}
+              </h1>
+              <div style={{ ...T, fontSize: '10px', color: 'rgba(240,236,224,.4)' }}>
+                Curator · Lisbon ·{' '}
+                {liveNow.length > 0
+                  ? <span style={{ color: 'var(--RED)', fontWeight: 700 }}>{liveNow.length} MARKET{liveNow.length > 1 ? 'S' : ''} LIVE NOW</span>
+                  : 'No markets live right now'}
               </div>
             </div>
+            <div style={{ marginLeft: 'auto' }}>
+              <CreateMarketForm spaces={spaces} />
+            </div>
+          </div>
 
-            {/* Stats strip */}
-            <div className="flex gap-0 border-[2px] border-parchment/10 overflow-hidden">
-              {[
-                {
-                  label: 'MARKETS SCHEDULED',
-                  value: ownMarkets.length,
-                  sub: 'NEXT 60 DAYS',
-                },
-                {
-                  label: 'LIVE RIGHT NOW',
-                  value: liveNow.length,
-                  sub: liveNow.length > 0 ? liveNow.map((m) => m.space.name).join(' · ') : 'NONE ACTIVE',
-                  highlight: liveNow.length > 0,
-                },
-                {
-                  label: 'TODAY',
-                  value: todayMarkets.length,
-                  sub: todayMarkets.length > 0
-                    ? todayMarkets.map((m) => m.space.name).join(' · ')
-                    : 'NO MARKETS TODAY',
-                },
-                {
-                  label: 'TOTAL CHECKINS',
-                  value: totalCheckins,
-                  sub: 'ACROSS ALL MARKETS',
-                },
-                {
-                  label: "CURATOR'S CHOICE",
-                  value: `${featuredCount}/3`,
-                  sub: featuredCount === 3 ? 'SPOTLIGHT FULL' : 'SLOTS AVAILABLE',
-                },
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  className="flex-1 px-4 py-3 border-r-[2px] border-parchment/10 last:border-r-0 min-w-0"
-                >
-                  <p
-                    className={`font-display font-black text-2xl leading-none mb-1 truncate ${
-                      stat.highlight ? 'text-stamp' : 'text-parchment'
-                    }`}
-                  >
-                    {typeof stat.value === 'number'
-                      ? String(stat.value).padStart(2, '0')
-                      : stat.value}
-                  </p>
-                  <p className="font-tag text-xs tracking-widest uppercase text-parchment/30 leading-tight">
-                    {stat.label}
-                    <br />
-                    <span className="opacity-60 text-[10px] tracking-wider truncate block">{stat.sub}</span>
-                  </p>
+          {/* Stats strip */}
+          <div style={{ display: 'flex', border: '2px solid rgba(240,236,224,.1)', overflow: 'hidden', flexWrap: 'wrap' }}>
+            {[
+              { label: 'SCHEDULED', value: ownMarkets.length, sub: 'NEXT 60 DAYS' },
+              { label: 'LIVE NOW', value: liveNow.length, sub: liveNow.length > 0 ? liveNow.map(m => m.space.name).join(' · ') : 'NONE ACTIVE', highlight: liveNow.length > 0 },
+              { label: 'TODAY', value: todayMarkets.length, sub: todayMarkets.length > 0 ? todayMarkets.map(m => m.space.name).join(' · ') : 'NO MARKETS' },
+              { label: 'TOTAL CHECK-INS', value: totalCheckins, sub: 'ALL MARKETS' },
+              { label: "CURATOR'S CHOICE", value: `${featuredCount}/3`, sub: featuredCount === 3 ? 'SPOTLIGHT FULL' : 'SLOTS AVAILABLE' },
+            ].map((stat, i) => (
+              <div key={i} style={{ flex: 1, padding: '10px 14px', borderRight: '2px solid rgba(240,236,224,.1)', minWidth: '80px' }}>
+                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '24px', lineHeight: 1, marginBottom: '4px', color: stat.highlight ? 'var(--RED)' : 'var(--P)' }}>
+                  {typeof stat.value === 'number' ? String(stat.value).padStart(2, '0') : stat.value}
                 </div>
-              ))}
-            </div>
+                <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.3)', lineHeight: 1.4 }}>
+                  {stat.label}<br />
+                  <span style={{ opacity: 0.6, fontSize: '8px' }}>{stat.sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Field Protocol subheader ── */}
+        <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)' }}>
+            COMMAND CENTER — CURATOR PROTOCOL · FP-CUR-001 through FP-CUR-005
+          </div>
+          <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.25)' }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}
           </div>
         </div>
 
         {/* ── Dashboard body ── */}
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {/* Technical manual sub-header */}
-          <div className="flex items-center gap-4 mb-5 pb-4 border-b border-dashed border-ink">
-            <div>
-              <p className="font-tag text-xs tracking-[0.28em] uppercase text-ink/30">
-                COMMAND CENTER — CURATOR PROTOCOL
-              </p>
-              <p className="font-tag text-xs tracking-[0.14em] uppercase text-ink/20 mt-0.5">
-                Document: FP-CUR-001 through FP-CUR-003 · Classification: CURATOR USE ONLY
-              </p>
+        <div style={{ padding: '0' }}>
+
+          {/* §1 Market Ledger */}
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§1 — MARKET LEDGER</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ ...T, fontSize: '10px', fontWeight: 700, color: liveNow.length > 0 ? 'var(--RED)' : 'rgba(240,236,224,.25)' }}>
+                  {liveNow.length > 0 ? `${liveNow.length} LIVE` : `${ownMarkets.length} TOTAL`}
+                </span>
+                <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-001</span>
+              </div>
             </div>
-            <div className="ml-auto text-right">
-              <p className="font-tag text-xs tracking-[0.14em] uppercase text-ink/20">
-                {new Date()
-                  .toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })
-                  .toUpperCase()}
-              </p>
+            <div style={{ background: 'var(--P2)', padding: '8px 13px', borderBottom: '2px solid rgba(24,22,20,.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)' }}>Click a market to see checked-in makers and verify attendance.</div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.25)' }}>CANCEL = RED CARD</div>
+            </div>
+            <MarketLedger markets={ownMarkets} />
+          </div>
+
+          {/* §2 Promo Kit */}
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§2 — PROMO KIT · INSTAGRAM STORIES</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-002</span>
+            </div>
+            <PromoKit liveMakers={liveMakers} liveMarkets={liveNow} />
+          </div>
+
+          {/* §3 Spotlight Pins */}
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§3 — SPOTLIGHT PINS · CURATOR'S CHOICE</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-003</span>
+            </div>
+            <SpotlightPins slots={featuredSlots} searchableMakers={searchableMakers} />
+          </div>
+
+          {/* §4 Activity Log */}
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§4 — ACTIVITY LOG</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-004</span>
+            </div>
+            <ActivityLog entries={recentActivityLog} />
+          </div>
+
+          {/* §5 Status key */}
+          <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§5 — MARKET STATUS KEY</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-005</span>
+            </div>
+            <div style={{ background: 'var(--P)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { color: 'var(--RED)', label: 'LIVE', desc: 'Curator opened · on the map now · makers can check in' },
+                { color: 'var(--GRN)', label: 'COMMUNITY', desc: `${ownMarkets[0]?.checkin_threshold ?? 3}+ maker check-ins · auto-flipped by database trigger` },
+                { color: 'rgba(24,22,20,.3)', label: 'SCHEDULED', desc: 'Upcoming · visible to visitors · not yet open' },
+                { color: 'rgba(24,22,20,.15)', label: 'SHADOW', desc: 'On annual calendar · not visible to visitors yet' },
+                { color: 'var(--INK)', label: 'CANCELLED', desc: 'Rain / no-show · visitors notified automatically' },
+              ].map(({ color, label, desc }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '12px', height: '12px', flexShrink: 0, background: color }} />
+                  <div style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--INK)', width: '100px', flexShrink: 0 }}>{label}</div>
+                  <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)' }}>{desc}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* ── Two-column layout ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-
-            {/* LEFT — Market Ledger (full width on mobile, 2/3 on desktop) */}
-            <div className="space-y-5">
-              {/* §1 Market Ledger */}
-              <div style={{ border: '3px solid #1a1a1a' }}>
-                <div className="flex items-center justify-between bg-ink px-4 py-3 border-b-[3px] border-ink">
-                  <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-                    §1 — MARKET MANIFESTO
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`font-tag text-xs font-bold tracking-widest uppercase ${
-                        liveNow.length > 0 ? 'text-stamp' : 'text-parchment/25'
-                      }`}
-                    >
-                      {liveNow.length > 0
-                        ? `${liveNow.length} LIVE`
-                        : `${ownMarkets.length} TOTAL`}
-                    </span>
-                    <span className="font-tag text-xs text-parchment/30">FP-CUR-001</span>
-                  </div>
-                </div>
-
-                {/* Instruction */}
-                <div className="bg-parchment-2 px-4 py-2 border-b-[2px] border-ink/15 flex items-center justify-between">
-                  <p className="font-tag text-xs tracking-wide uppercase text-ink/40">
-                    Click a row to see checked-in makers and verify attendance.
-                  </p>
-                  <span className="font-tag text-xs tracking-widest uppercase text-ink/25">
-                    ☂ CANCEL RAIN = RED CARD
-                  </span>
-                </div>
-
-                <MarketLedger markets={ownMarkets} />
-              </div>
-            </div>
-
-            {/* RIGHT — Spotlight + Activity */}
-            <div className="space-y-5">
-              {/* §2 Spotlight Pins */}
-              <SpotlightPins
-                slots={featuredSlots}
-                searchableMakers={searchableMakers}
-              />
-
-              {/* §3 Activity Log */}
-              <ActivityLog entries={recentActivityLog} />
-
-              {/* Quick stats card */}
-              <div style={{ border: '3px solid #1a1a1a' }}>
-                <div className="bg-ink px-4 py-3 border-b-[3px] border-ink">
-                  <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-                    §4 — MARKET STATUS KEY
-                  </span>
-                </div>
-                <div className="bg-parchment p-4 space-y-2">
-                  {[
-                    { dot: 'bg-stamp', label: 'LIVE', desc: 'Curator opened · on the map now' },
-                    { dot: 'bg-grove', label: 'COMMUNITY', desc: `${ownMarkets[0]?.checkin_threshold ?? 3}+ checkins · auto-flipped` },
-                    { dot: 'bg-parchment-3 border border-ink/20', label: 'SCHEDULED', desc: 'Upcoming · not yet open' },
-                    { dot: 'bg-ink/20 border border-dashed border-ink/20', label: 'UNCONFIRMED', desc: 'Shadow · needs confirmation' },
-                    { dot: 'bg-ink', label: 'CANCELLED', desc: 'Rain / no-show · Red card issued' },
-                  ].map(({ dot, label, desc }) => (
-                    <div key={label} className="flex items-center gap-3">
-                      <span className={`w-3 h-3 flex-shrink-0 ${dot}`} style={{ borderRadius: '2px' }} />
-                      <span className="font-tag font-bold text-xs tracking-widest uppercase text-ink w-28 flex-shrink-0">
-                        {label}
-                      </span>
-                      <span className="font-tag text-xs text-ink/40 tracking-wide">
-                        {desc}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </>

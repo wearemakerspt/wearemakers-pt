@@ -6,9 +6,7 @@ import { formatMarketDate, formatTime, getStatusMeta } from '@/lib/utils'
 import type { CuratorMarket } from '@/lib/queries/curator'
 import type { MarketStatus } from '@/types/database'
 
-interface Props {
-  markets: CuratorMarket[]
-}
+interface Props { markets: CuratorMarket[] }
 
 export default function MarketLedger({ markets: initialMarkets }: Props) {
   const [markets, setMarkets] = useState(initialMarkets)
@@ -18,307 +16,200 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   function optimisticSetStatus(marketId: string, status: MarketStatus) {
-    setMarkets((prev) =>
-      prev.map((m) => (m.id === marketId ? { ...m, status } : m))
-    )
+    setMarkets(prev => prev.map(m => m.id === marketId ? { ...m, status } : m))
   }
 
   function handleStatusChange(marketId: string, newStatus: MarketStatus) {
-    const prev = markets.find((m) => m.id === marketId)?.status ?? 'scheduled'
+    const prev = markets.find(m => m.id === marketId)?.status ?? 'scheduled'
     optimisticSetStatus(marketId, newStatus)
     setPendingId(marketId)
     setError(null)
-
     startTransition(async () => {
-      const result = await setMarketStatus(marketId, newStatus)
-      if (result?.error) {
-        optimisticSetStatus(marketId, prev) // revert
-        setError(result.error)
-      }
+      const fd = new FormData()
+      fd.set('market_id', marketId)
+      fd.set('status', newStatus)
+      const result = await setMarketStatus(fd)
+      if (result?.error) { optimisticSetStatus(marketId, prev); setError(result.error) }
       setPendingId(null)
     })
   }
 
   function handleDelete(marketId: string) {
     if (!confirm('Delete this market? This cannot be undone.')) return
-    setMarkets((prev) => prev.filter((m) => m.id !== marketId))
+    setMarkets(prev => prev.filter(m => m.id !== marketId))
     startTransition(async () => {
-      const result = await deleteMarket(marketId)
-      if (result?.error) {
-        setError(result.error)
-        // Reload would be needed to restore — Server Component will re-render on next visit
-      }
+      const fd = new FormData()
+      fd.set('market_id', marketId)
+      const result = await deleteMarket(fd)
+      if (result?.error) { setError(result.error) }
     })
   }
 
-  function handleVerify(attendanceId: string, marketId: string, makerName: string) {
-    setMarkets((prev) =>
-      prev.map((m) => {
-        if (m.id !== marketId) return m
-        return {
-          ...m,
-          attending_makers: m.attending_makers.map((mk) =>
-            mk.attendance_id === attendanceId ? { ...mk } : mk
-          ),
-        }
-      })
-    )
+  function handleVerify(attendanceId: string, marketId: string) {
     startTransition(async () => {
-      await verifyAttendance(attendanceId)
+      const fd = new FormData()
+      fd.set('attendance_id', attendanceId)
+      await verifyAttendance(fd)
+      setMarkets(prev => prev.map(m => m.id === marketId ? {
+        ...m,
+        attending_makers: m.attending_makers.map(a =>
+          a.attendance_id === attendanceId ? { ...a, is_verified: true } : a
+        )
+      } : m))
     })
+  }
+
+  const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+  const statusColors: Record<string, string> = {
+    live: 'var(--RED)', community_live: 'var(--GRN)', scheduled: 'rgba(24,22,20,.4)',
+    shadow: 'rgba(24,22,20,.2)', cancelled: 'var(--INK)',
   }
 
   if (markets.length === 0) {
     return (
-      <div className="bg-parchment p-8 text-center border-t-[2px] border-ink/10">
-        <p className="font-tag text-xs tracking-widest uppercase text-ink/25 leading-loose">
-          NO MARKETS SCHEDULED IN THE NEXT 60 DAYS
-          <br />
-          Use &ldquo;+ ADD NEW MARKET&rdquo; above to create one.
-        </p>
+      <div style={{ padding: '32px', textAlign: 'center', background: 'var(--P)' }}>
+        <div style={{ ...T, color: 'rgba(24,22,20,.25)', lineHeight: 2 }}>
+          NO MARKETS SCHEDULED<br />Use "+ ADD NEW MARKET" above to create one.
+        </div>
       </div>
     )
   }
 
+  const today = new Date().toISOString().split('T')[0]
+
   return (
-    <div>
-      {/* Error banner */}
+    <div style={{ background: 'var(--P)' }}>
       {error && (
-        <div className="bg-stamp/10 border-l-[3px] border-stamp px-4 py-3">
-          <p className="font-tag text-xs tracking-wide uppercase text-stamp font-bold">
-            ✗ {error}
-          </p>
+        <div style={{ background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', padding: '10px 14px', ...T, fontWeight: 700, color: 'var(--RED)' }}>
+          ✗ {error}
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-ink">
-              {['#', 'DATE', 'SPACE', 'TIME', 'STATUS', 'CHECKINS', 'ACTIONS'].map(
-                (h) => (
-                  <th
-                    key={h}
-                    className="font-tag text-xs tracking-[0.14em] uppercase text-parchment/50 text-left px-3 py-3 border-r border-parchment/8 last:border-r-0 whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y-[2px] divide-ink">
-            {markets.map((market, i) => {
-              const statusMeta = getStatusMeta(market.status)
-              const isLive =
-                market.status === 'live' || market.status === 'community_live'
-              const isCancelled = market.status === 'cancelled'
-              const isExpanded = expandedId === market.id
-              const thisIsPending = pendingId === market.id && isPending
-              const today = new Date().toISOString().split('T')[0]
-              const isToday = market.event_date === today
+      {markets.map((market, i) => {
+        const isLive = market.status === 'live' || market.status === 'community_live'
+        const isCancelled = market.status === 'cancelled'
+        const isExpanded = expandedId === market.id
+        const isToday = market.event_date === today
+        const thisIsPending = pendingId === market.id && isPending
 
-              return (
-                <>
-                  {/* Main row */}
-                  <tr
-                    key={market.id}
-                    className={`transition-colors cursor-pointer ${
-                      isCancelled
-                        ? 'bg-stamp/8'
-                        : isLive
-                        ? 'bg-grove/5'
-                        : isToday
-                        ? 'bg-ink/4'
-                        : 'bg-parchment'
-                    } hover:bg-parchment-2`}
-                    onClick={() =>
-                      setExpandedId(isExpanded ? null : market.id)
-                    }
-                  >
-                    {/* # */}
-                    <td className="px-3 py-3 border-r border-ink/8">
-                      <span className="font-display font-black text-xl text-ink/15 leading-none">
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                    </td>
+        return (
+          <div key={market.id} style={{ borderBottom: '2px solid var(--INK)', opacity: isCancelled ? 0.5 : 1 }}>
+            {/* Main row */}
+            <div
+              onClick={() => setExpandedId(isExpanded ? null : market.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0', cursor: 'pointer',
+                background: isLive ? 'rgba(200,41,26,.04)' : isToday ? 'rgba(24,22,20,.02)' : 'transparent',
+                padding: '0',
+              }}
+            >
+              {/* Status stripe */}
+              <div style={{ width: '4px', alignSelf: 'stretch', background: statusColors[market.status] ?? 'transparent', flexShrink: 0 }} />
 
-                    {/* Date */}
-                    <td className="px-3 py-3 border-r border-ink/8 whitespace-nowrap">
-                      <p className="font-mono font-bold text-sm text-ink leading-none">
-                        {formatMarketDate(market.event_date)}
-                      </p>
-                      {isToday && (
-                        <span className="font-tag text-xs tracking-widest uppercase text-stamp font-bold">
-                          TODAY
-                        </span>
-                      )}
-                    </td>
+              {/* Row number */}
+              <div style={{ width: '36px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0', borderRight: '1px solid rgba(24,22,20,.1)' }}>
+                <span style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', color: 'rgba(24,22,20,.15)', lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</span>
+              </div>
 
-                    {/* Space */}
-                    <td className="px-3 py-3 border-r border-ink/8 min-w-[160px]">
-                      <p className="font-display font-black text-lg uppercase tracking-tight leading-none text-ink">
-                        {market.space.name}
-                      </p>
-                      <p className="font-tag text-xs tracking-wide uppercase text-ink/35 mt-0.5">
-                        {market.space.parish ?? market.space.address ?? ''}
-                      </p>
-                    </td>
+              {/* Date */}
+              <div style={{ width: '80px', flexShrink: 0, padding: '12px 10px', borderRight: '1px solid rgba(24,22,20,.1)' }}>
+                <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '13px', color: 'var(--INK)', lineHeight: 1.2 }}>
+                  {formatMarketDate(market.event_date)}
+                </div>
+                {isToday && <div style={{ ...T, fontSize: '8px', color: 'var(--RED)', fontWeight: 700, marginTop: '2px' }}>TODAY</div>}
+              </div>
 
-                    {/* Time */}
-                    <td className="px-3 py-3 border-r border-ink/8 whitespace-nowrap">
-                      <span className="font-mono font-bold text-sm text-ink/60">
-                        {formatTime(market.starts_at)}–{formatTime(market.ends_at)}
-                      </span>
-                    </td>
+              {/* Space + title */}
+              <div style={{ flex: 1, minWidth: 0, padding: '12px 12px' }}>
+                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {market.space.name}
+                </div>
+                <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>
+                  {formatTime(market.starts_at)}–{formatTime(market.ends_at)}
+                  {market.attending_makers.length > 0 && ` · ${market.attending_makers.length} LIVE`}
+                </div>
+              </div>
 
-                    {/* Status badge */}
-                    <td className="px-3 py-3 border-r border-ink/8">
-                      <span
-                        className={`font-tag font-bold text-xs tracking-widest uppercase px-2 py-1 border ${statusMeta.colorClass}`}
-                        style={{ borderColor: 'currentColor' }}
-                      >
-                        {thisIsPending ? '...' : statusMeta.label}
-                      </span>
-                    </td>
+              {/* Status badge */}
+              <div style={{ flexShrink: 0, padding: '12px 8px' }}>
+                <span style={{ ...T, fontSize: '9px', fontWeight: 700, color: statusColors[market.status], border: `1px solid ${statusColors[market.status]}`, padding: '3px 7px' }}>
+                  {market.status.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
 
-                    {/* Checkins */}
-                    <td className="px-3 py-3 border-r border-ink/8 text-center">
-                      <span
-                        className={`font-display font-black text-2xl leading-none ${
-                          market.checkin_count > 0 ? 'text-grove' : 'text-ink/20'
-                        }`}
-                      >
-                        {String(market.checkin_count).padStart(2, '0')}
-                      </span>
-                    </td>
+              {/* Expand arrow */}
+              <div style={{ width: '32px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(24,22,20,.3)', fontSize: '12px' }}>
+                {isExpanded ? '▲' : '▼'}
+              </div>
+            </div>
 
-                    {/* Actions */}
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
-                        {/* Go Live / Stop */}
-                        {!isCancelled && (
-                          <button
-                            onClick={() =>
-                              handleStatusChange(
-                                market.id,
-                                isLive ? 'scheduled' : 'live'
-                              )
-                            }
-                            disabled={thisIsPending}
-                            className={`font-tag font-bold text-xs tracking-widest uppercase px-3 py-2 border-[2px] transition-colors whitespace-nowrap ${
-                              isLive
-                                ? 'bg-grove border-grove text-parchment hover:bg-stamp hover:border-stamp'
-                                : 'bg-parchment border-ink text-ink hover:bg-ink hover:text-parchment'
-                            } disabled:opacity-40`}
-                            style={{ boxShadow: '2px 2px 0 0 #1a1a1a' }}
-                          >
-                            {isLive ? '■ STOP' : '● GO LIVE'}
-                          </button>
-                        )}
+            {/* Expanded panel */}
+            {isExpanded && (
+              <div style={{ borderTop: '2px solid rgba(24,22,20,.1)', background: 'var(--P2)', padding: '14px' }}>
 
-                        {/* Cancel / Restore */}
-                        <button
-                          onClick={() =>
-                            handleStatusChange(
-                              market.id,
-                              isCancelled ? 'scheduled' : 'cancelled'
-                            )
-                          }
-                          disabled={thisIsPending}
-                          className={`font-tag font-bold text-xs tracking-widest uppercase px-3 py-2 border-[2px] transition-colors whitespace-nowrap ${
-                            isCancelled
-                              ? 'bg-parchment border-ink text-ink hover:bg-ink hover:text-parchment'
-                              : 'bg-parchment border-ink/30 text-ink/40 hover:border-stamp hover:text-stamp'
-                          } disabled:opacity-40`}
-                          style={{ boxShadow: isCancelled ? '2px 2px 0 0 #1a1a1a' : 'none' }}
-                        >
-                          {isCancelled ? '↺ RESTORE' : '☂ CANCEL'}
-                        </button>
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  {market.status !== 'live' && market.status !== 'cancelled' && (
+                    <button onClick={() => handleStatusChange(market.id, 'live')} disabled={thisIsPending}
+                      style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '2px solid var(--RED)', padding: '8px 14px', cursor: 'pointer', boxShadow: 'var(--SHD-SM)', opacity: thisIsPending ? 0.5 : 1 }}>
+                      ● OPEN MARKET
+                    </button>
+                  )}
+                  {(market.status === 'live' || market.status === 'community_live') && (
+                    <button onClick={() => handleStatusChange(market.id, 'scheduled')} disabled={thisIsPending}
+                      style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--INK)', background: 'var(--P)', border: '2px solid var(--INK)', padding: '8px 14px', cursor: 'pointer', boxShadow: 'var(--SHD-SM)', opacity: thisIsPending ? 0.5 : 1 }}>
+                      ○ CLOSE MARKET
+                    </button>
+                  )}
+                  {market.status !== 'cancelled' && (
+                    <button onClick={() => handleStatusChange(market.id, 'cancelled')} disabled={thisIsPending}
+                      style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'rgba(24,22,20,.5)', background: 'transparent', border: '2px solid rgba(24,22,20,.2)', padding: '8px 14px', cursor: 'pointer', opacity: thisIsPending ? 0.5 : 1 }}>
+                      ✕ CANCEL
+                    </button>
+                  )}
+                  <button onClick={() => handleDelete(market.id)} disabled={thisIsPending}
+                    style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', background: 'transparent', border: '1px dashed rgba(24,22,20,.2)', padding: '8px 12px', cursor: 'pointer', marginLeft: 'auto' }}>
+                    DELETE
+                  </button>
+                </div>
 
-                        {/* Delete (scheduled only) */}
-                        {market.status === 'scheduled' && (
-                          <button
-                            onClick={() => handleDelete(market.id)}
-                            disabled={isPending}
-                            className="font-tag text-xs tracking-widest uppercase text-ink/25 px-2 py-2 border-[2px] border-transparent hover:border-stamp hover:text-stamp transition-colors disabled:opacity-40"
-                            title="Delete market"
-                          >
-                            ✕
+                {/* Checked-in makers */}
+                {market.attending_makers.length > 0 ? (
+                  <div>
+                    <div style={{ ...T, fontWeight: 700, color: 'var(--GRN)', fontSize: '10px', marginBottom: '8px' }}>
+                      ● {market.attending_makers.length} MAKER{market.attending_makers.length !== 1 ? 'S' : ''} CHECKED IN
+                    </div>
+                    {market.attending_makers.map(maker => (
+                      <div key={maker.attendance_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', border: '1px solid rgba(24,22,20,.15)', background: 'var(--P)', marginBottom: '6px' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', color: 'var(--INK)', lineHeight: 1 }}>
+                            {maker.display_name}
+                          </div>
+                          {maker.stall_label && maker.stall_label !== 'INTENT' && (
+                            <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '2px' }}>STALL {maker.stall_label}</div>
+                          )}
+                        </div>
+                        {maker.is_verified ? (
+                          <span style={{ ...T, fontSize: '9px', fontWeight: 700, color: 'var(--GRN)' }}>✓ VERIFIED</span>
+                        ) : (
+                          <button onClick={() => handleVerify(maker.attendance_id, market.id)}
+                            style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.5)', background: 'transparent', border: '1px dashed rgba(24,22,20,.3)', padding: '4px 8px', cursor: 'pointer' }}>
+                            VERIFY
                           </button>
                         )}
                       </div>
-                    </td>
-                  </tr>
-
-                  {/* Expanded maker row */}
-                  {isExpanded && (
-                    <tr key={`${market.id}-expanded`}>
-                      <td
-                        colSpan={7}
-                        className="bg-parchment-2 px-3 py-3 border-t border-dashed border-ink/20"
-                      >
-                        {market.attending_makers.length === 0 ? (
-                          <p className="font-tag text-xs tracking-widest uppercase text-ink/25">
-                            No makers checked in yet.
-                          </p>
-                        ) : (
-                          <div className="space-y-2">
-                            <p className="font-tag font-bold text-xs tracking-[0.18em] uppercase text-ink/40 mb-2">
-                              MAKERS CHECKED IN NOW
-                            </p>
-                            {market.attending_makers.map((mk) => (
-                              <div
-                                key={mk.id}
-                                className="flex items-center gap-3 bg-parchment border-[2px] border-ink/10 px-3 py-2"
-                              >
-                                <div className="w-8 h-8 bg-ink flex items-center justify-center flex-shrink-0">
-                                  <span className="font-display font-black text-sm text-stamp">
-                                    {mk.display_name.slice(0, 2).toUpperCase()}
-                                  </span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-display font-black text-lg uppercase tracking-tight leading-none text-ink">
-                                    {mk.display_name}
-                                    {mk.is_verified && (
-                                      <span className="ml-2 font-tag font-normal text-xs text-ink/40">
-                                        ✦ PRO
-                                      </span>
-                                    )}
-                                  </p>
-                                  {mk.stall_label && (
-                                    <p className="font-tag text-xs tracking-wide uppercase text-ink/35">
-                                      Stall {mk.stall_label}
-                                    </p>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() =>
-                                    handleVerify(
-                                      mk.attendance_id,
-                                      market.id,
-                                      mk.display_name
-                                    )
-                                  }
-                                  className="font-tag font-bold text-xs tracking-widest uppercase text-grove border-[2px] border-grove px-3 py-1.5 hover:bg-grove hover:text-parchment transition-colors"
-                                  style={{ boxShadow: '2px 2px 0 0 #0d2e18' }}
-                                >
-                                  ✓ VERIFY
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)' }}>
+                    No makers checked in yet. Open the market first.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

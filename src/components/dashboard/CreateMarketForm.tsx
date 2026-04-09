@@ -4,9 +4,7 @@ import { useState, useTransition, useRef } from 'react'
 import { createMarket } from '@/app/dashboard/curator/actions'
 import type { Space } from '@/types/database'
 
-interface Props {
-  spaces: Space[]
-}
+interface Props { spaces: Space[] }
 
 export default function CreateMarketForm({ spaces }: Props) {
   const [open, setOpen] = useState(false)
@@ -15,7 +13,6 @@ export default function CreateMarketForm({ spaces }: Props) {
   const [success, setSuccess] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Default date = next Saturday
   const nextSaturday = (() => {
     const d = new Date()
     const day = d.getDay()
@@ -27,188 +24,114 @@ export default function CreateMarketForm({ spaces }: Props) {
     setError(null)
     startTransition(async () => {
       const result = await createMarket(formData)
-      if (result?.error) {
-        setError(result.error)
-      } else {
+      if (result?.error) { setError(result.error) }
+      else {
         setSuccess(true)
+        setOpen(false)
         formRef.current?.reset()
-        setTimeout(() => {
-          setSuccess(false)
-          setOpen(false)
-        }, 1500)
+        setTimeout(() => setSuccess(false), 3000)
       }
     })
   }
 
+  const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+  const inputStyle = { width: '100%', background: 'transparent', border: 'none', borderBottom: '1px dashed rgba(24,22,20,.3)', padding: '8px 0', fontFamily: 'var(--MONO)', fontSize: '15px', color: 'var(--INK)', outline: 'none' }
+  const labelStyle = { ...T, fontSize: '10px', color: 'rgba(24,22,20,.45)', display: 'block', marginBottom: '5px' }
+
   return (
-    <>
-      {/* Trigger button */}
+    <div>
       <button
-        onClick={() => setOpen(true)}
-        className="font-tag font-bold text-xs tracking-widest uppercase text-parchment bg-stamp border-[3px] border-stamp px-5 py-3 stamp-noise hover:bg-ink hover:border-ink transition-colors"
-        style={{ boxShadow: '4px 4px 0 0 #1a1a1a' }}
+        onClick={() => setOpen(!open)}
+        style={{
+          ...T, fontWeight: 700, fontSize: '12px',
+          color: open ? 'var(--P)' : 'var(--INK)',
+          background: open ? 'var(--INK)' : 'var(--P)',
+          border: '3px solid var(--INK)', padding: '11px 18px',
+          cursor: 'pointer', boxShadow: open ? 'none' : 'var(--SHD)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}
       >
-        + ADD NEW MARKET
+        <span>{open ? '✕' : '+'}</span>
+        <span>{open ? 'CANCEL' : 'ADD NEW MARKET'}</span>
       </button>
 
-      {/* Modal overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-ink/85 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setOpen(false)}
-        >
-          <div
-            className="bg-parchment w-full max-w-lg max-h-[90dvh] overflow-y-auto"
-            style={{ border: '3px solid #1a1a1a', boxShadow: '8px 8px 0 0 #1a1a1a' }}
-          >
-            {/* Modal header */}
-            <div className="flex items-center justify-between bg-ink px-5 py-4 border-b-[3px] border-ink">
-              <div>
-                <p className="font-tag text-xs tracking-[0.22em] uppercase text-stamp">
-                  NEW MARKET INSTANCE
-                </p>
-                <h2 className="font-display font-black text-3xl uppercase tracking-tight leading-none text-parchment mt-1">
-                  CREATE MARKET
-                </h2>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="font-tag text-xs tracking-widest uppercase text-parchment/40 border border-parchment/20 px-3 py-2 hover:text-parchment hover:border-parchment/50 transition-colors"
-              >
-                ✕ CLOSE
-              </button>
-            </div>
+      {success && (
+        <div style={{ marginTop: '8px', ...T, fontWeight: 700, fontSize: '10px', color: 'var(--GRN)' }}>
+          ✓ MARKET CREATED — appears in the ledger below
+        </div>
+      )}
 
-            {/* Form body */}
-            <form ref={formRef} action={handleSubmit} className="p-5 space-y-4">
+      {open && (
+        <div style={{ marginTop: '12px', border: '3px solid var(--INK)', background: 'var(--P)', boxShadow: 'var(--SHD)' }}>
+          <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', ...T, fontWeight: 700, borderBottom: '3px solid var(--INK)' }}>
+            NEW MARKET DATE
+          </div>
+          <div style={{ padding: '16px' }}>
+            <form ref={formRef} action={handleSubmit}>
+
               {/* Space */}
-              <div>
-                <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                  Space / Location *
-                </label>
-                <select
-                  name="space_id"
-                  required
-                  className="w-full bg-parchment border-[3px] border-ink px-3 py-3 font-mono text-base text-ink focus:outline-none"
-                  style={{ fontFamily: "'JetBrains Mono', monospace", boxShadow: '3px 3px 0 0 #1a1a1a' }}
-                >
-                  <option value="">— Select a space —</option>
-                  {spaces.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                      {s.parish ? ` · ${s.parish}` : ''}
-                    </option>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={labelStyle}>SPACE / LOCATION *</label>
+                <select name="space_id" required style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option value="">Select a space...</option>
+                  {spaces.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} — {s.parish ?? s.city}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Custom title (optional) */}
-              <div>
-                <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                  Market Title{' '}
-                  <span className="text-ink/25">(leave blank to use space name)</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="e.g. Mercado D. Luís Especial"
-                  className="w-full bg-transparent border-b-[2px] border-dashed border-ink px-0 py-2 font-mono text-base text-ink placeholder:text-ink/25 focus:outline-none focus:border-solid transition-all"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                />
-              </div>
-
-              {/* Date */}
-              <div>
-                <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                  Date *
-                </label>
-                <input
-                  type="date"
-                  name="event_date"
-                  required
-                  defaultValue={nextSaturday}
-                  className="w-full bg-transparent border-b-[2px] border-dashed border-ink px-0 py-2 font-mono text-base text-ink focus:outline-none focus:border-solid transition-all"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                />
-              </div>
-
-              {/* Time range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    name="starts_at"
-                    defaultValue="09:00"
-                    className="w-full bg-transparent border-b-[2px] border-dashed border-ink px-0 py-2 font-mono text-base text-ink focus:outline-none focus:border-solid transition-all"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                  />
+              {/* Date + Time row */}
+              <div style={{ display: 'flex', gap: '14px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '120px' }}>
+                  <label style={labelStyle}>DATE *</label>
+                  <input type="date" name="event_date" defaultValue={nextSaturday} required style={inputStyle} />
                 </div>
-                <div>
-                  <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    name="ends_at"
-                    defaultValue="19:00"
-                    className="w-full bg-transparent border-b-[2px] border-dashed border-ink px-0 py-2 font-mono text-base text-ink focus:outline-none focus:border-solid transition-all"
-                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                  />
+                <div style={{ flex: 1, minWidth: '80px' }}>
+                  <label style={labelStyle}>OPENS</label>
+                  <input type="time" name="starts_at" defaultValue="10:00" style={inputStyle} />
+                </div>
+                <div style={{ flex: 1, minWidth: '80px' }}>
+                  <label style={labelStyle}>CLOSES</label>
+                  <input type="time" name="ends_at" defaultValue="19:00" style={inputStyle} />
                 </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="font-tag text-xs tracking-widest uppercase text-ink/45 block mb-2">
-                  Notes <span className="text-ink/25">(optional)</span>
-                </label>
-                <textarea
-                  name="description"
-                  rows={2}
-                  placeholder="Anything makers or visitors should know..."
-                  className="w-full bg-transparent border-[2px] border-dashed border-ink px-3 py-2 font-mono text-base text-ink placeholder:text-ink/25 resize-none focus:outline-none focus:border-solid transition-all"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                />
+              {/* Title */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={labelStyle}>MARKET TITLE (optional)</label>
+                <input type="text" name="title" placeholder="e.g. LX Market Spring Edition" style={inputStyle} />
               </div>
 
-              {/* Error */}
+              {/* Status */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>INITIAL STATUS</label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { value: 'scheduled', label: 'SCHEDULED — publish now, open later' },
+                    { value: 'shadow', label: 'SHADOW — private, not visible yet' },
+                  ].map(opt => (
+                    <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', ...T, fontSize: '10px', color: 'rgba(24,22,20,.6)' }}>
+                      <input type="radio" name="status" value={opt.value} defaultChecked={opt.value === 'scheduled'} />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {error && (
-                <div className="border-l-[3px] border-stamp pl-3">
-                  <p className="font-tag text-xs tracking-wide uppercase text-stamp font-bold">
-                    ✗ {error}
-                  </p>
+                <div style={{ marginBottom: '12px', borderLeft: '3px solid var(--RED)', paddingLeft: '10px', ...T, fontWeight: 700, color: 'var(--RED)', fontSize: '10px' }}>
+                  ✗ {error}
                 </div>
               )}
 
-              {/* Submit */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={isPending || success}
-                  className="flex-1 font-tag font-bold text-xs tracking-widest uppercase text-parchment bg-ink border-[3px] border-ink py-4 hover:bg-stamp hover:border-stamp transition-colors disabled:opacity-50"
-                  style={{ boxShadow: '4px 4px 0 0 #1a1a1a' }}
-                >
-                  {success
-                    ? '✓ MARKET CREATED'
-                    : isPending
-                    ? 'CREATING...'
-                    : 'CREATE MARKET →'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="font-tag font-bold text-xs tracking-widest uppercase text-ink bg-parchment border-[3px] border-ink px-5 py-4 hover:bg-parchment-2 transition-colors"
-                >
-                  CANCEL
-                </button>
-              </div>
+              <button type="submit" disabled={isPending}
+                style={{ ...T, fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '3px solid var(--RED)', padding: '12px 20px', cursor: isPending ? 'not-allowed' : 'pointer', boxShadow: 'var(--SHD-SM)', opacity: isPending ? 0.5 : 1 }}>
+                {isPending ? 'CREATING...' : 'CREATE MARKET →'}
+              </button>
             </form>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

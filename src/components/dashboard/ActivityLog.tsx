@@ -1,84 +1,60 @@
 import type { ActivityEntry } from '@/lib/queries/curator'
 
-interface Props {
-  entries: ActivityEntry[]
-}
+interface Props { entries: ActivityEntry[] }
 
 const TYPE_META: Record<ActivityEntry['type'], { icon: string; color: string }> = {
-  checkin: { icon: '→', color: 'text-ink/50' },
-  market_open: { icon: '●', color: 'text-grove' },
-  market_cancel: { icon: '✕', color: 'text-stamp' },
-  feature: { icon: '★', color: 'text-stamp' },
-  system: { icon: '·', color: 'text-ink/25' },
+  checkin:       { icon: '→', color: 'var(--GRN)' },
+  market_open:   { icon: '●', color: 'var(--RED)' },
+  market_cancel: { icon: '✕', color: 'var(--RED)' },
+  feature:       { icon: '★', color: 'var(--RED)' },
+  system:        { icon: '·', color: 'rgba(24,22,20,.25)' },
 }
 
-/**
- * Pure Server Component — zero client JS.
- */
+function timeAgo(at: string): string {
+  const mins = Math.round((Date.now() - new Date(at).getTime()) / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
 export default function ActivityLog({ entries }: Props) {
+  const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+
   return (
-    <div style={{ border: '3px solid #1a1a1a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between bg-ink px-4 py-3 border-b-[3px] border-ink">
-        <span className="font-tag text-xs tracking-[0.22em] uppercase text-parchment/60">
-          §3 — ACTIVITY LOG
-        </span>
-        <span className="font-tag text-xs text-parchment/30">FP-CUR-003</span>
-      </div>
-
-      <div className="bg-parchment divide-y-[1px] divide-ink/8">
-        {entries.length === 0 ? (
-          <div className="px-4 py-6 text-center">
-            <p className="font-tag text-xs tracking-widest uppercase text-ink/25">
-              NO ACTIVITY YET
-            </p>
+    <div style={{ background: 'var(--P)' }}>
+      {entries.length === 0 ? (
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <div style={{ ...T, color: 'rgba(24,22,20,.25)', lineHeight: 2 }}>
+            NO ACTIVITY YET<br />
+            Events appear here as makers check in and markets open.
           </div>
-        ) : (
-          entries.map((entry, i) => {
-            const meta = TYPE_META[entry.type]
-            const time = new Date(entry.at).toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-            const date = new Date(entry.at).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-            }).toUpperCase()
-            const isToday =
-              new Date(entry.at).toDateString() === new Date().toDateString()
-
-            return (
-              <div
-                key={entry.id}
-                className={`flex items-start gap-3 px-4 py-3 ${
-                  i === 0 ? 'bg-ink/4' : ''
-                }`}
-              >
-                {/* Icon */}
-                <span
-                  className={`font-tag font-bold text-sm flex-shrink-0 w-4 text-center ${meta.color}`}
-                >
-                  {meta.icon}
-                </span>
-
-                {/* Message */}
-                <p
-                  className={`flex-1 font-mono text-sm leading-relaxed ${
-                    i === 0 ? 'text-ink' : 'text-ink/45'
-                  }`}
-                >
-                  {entry.label}
-                </p>
-
-                {/* Timestamp */}
-                <span className="font-tag text-xs tracking-wide uppercase text-ink/25 flex-shrink-0 text-right">
-                  {isToday ? time : date}
-                </span>
+        </div>
+      ) : (
+        entries.map((entry, i) => {
+          const meta = TYPE_META[entry.type]
+          return (
+            <div key={entry.id} style={{
+              display: 'flex', alignItems: 'flex-start', gap: '12px',
+              padding: '10px 14px', borderBottom: '1px dashed rgba(24,22,20,.12)',
+              background: i === 0 ? 'rgba(200,41,26,.03)' : 'transparent',
+            }}>
+              <div style={{ width: '18px', flexShrink: 0, fontFamily: 'var(--MONO)', fontWeight: 700, fontSize: '14px', color: meta.color, lineHeight: 1.4, marginTop: '1px' }}>
+                {meta.icon}
               </div>
-            )
-          })
-        )}
-      </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'var(--INK)', lineHeight: 1.4 }}>
+                  {entry.label}
+                </div>
+                <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)', marginTop: '2px' }}>
+                  {timeAgo(entry.at)}
+                </div>
+              </div>
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }
