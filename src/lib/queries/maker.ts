@@ -173,21 +173,9 @@ export async function getMakerDashboardData(
   const upcomingRaw = { data: mergedData }
 
   // ── Normalise upcoming markets + attendance intent
-  // Show: markets at spaces the maker has attended + markets with existing intent
+  // Show all upcoming markets — makers can declare intent for any of them
   const upcomingMarkets: UpcomingMarket[] = (upcomingRaw.data ?? [])
-    .filter((row: any) => {
-      if (!row.space) return false
-      // Always show if maker has declared intent
-      const myAttendance = (row.attendance ?? []).find(
-        (a: any) => a.maker_id === makerId
-      )
-      if (myAttendance) return true
-      // Show if maker has been to this space before
-      if (attendedSpaceIds.has(row.space_id)) return true
-      // If maker has no history at all, show all (new maker experience)
-      if (attendedSpaceIds.size === 0) return true
-      return false
-    })
+    .filter((row: any) => !!row.space)
     .map((row: any) => {
       const myAttendance = (row.attendance ?? []).find(
         (a: any) => a.maker_id === makerId && a.stall_label !== 'INTENT'
