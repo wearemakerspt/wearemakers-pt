@@ -42,9 +42,7 @@ export default function SpotlightPins({ slots: initialSlots, searchableMakers }:
   function handleUnpin(pinId: string, position: number) {
     setSlots(prev => prev.map(s => s.position === position ? { ...s, pinned: null } : s))
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('pin_id', pinId)
-      const result = await unpinFeaturedMaker(fd)
+      const result = await unpinFeaturedMaker(pinId)
       if (result?.error) { setError(result.error) }
     })
   }

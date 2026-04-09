@@ -25,7 +25,10 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
     setPendingId(marketId)
     setError(null)
     startTransition(async () => {
-      const result = await setMarketStatus(marketId, newStatus)
+      const fd = new FormData()
+      fd.set('market_id', marketId)
+      fd.set('status', newStatus)
+      const result = await setMarketStatus(fd)
       if (result?.error) { optimisticSetStatus(marketId, prev); setError(result.error) }
       setPendingId(null)
     })
@@ -35,18 +38,14 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
     if (!confirm('Delete this market? This cannot be undone.')) return
     setMarkets(prev => prev.filter(m => m.id !== marketId))
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('market_id', marketId)
-      const result = await deleteMarket(fd)
+      const result = await deleteMarket(marketId)
       if (result?.error) { setError(result.error) }
     })
   }
 
   function handleVerify(attendanceId: string, marketId: string) {
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('attendance_id', attendanceId)
-      await verifyAttendance(fd)
+      await verifyAttendance(attendanceId)
       setMarkets(prev => prev.map(m => m.id === marketId ? {
         ...m,
         attending_makers: m.attending_makers.map(a =>
