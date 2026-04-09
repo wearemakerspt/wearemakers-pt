@@ -182,8 +182,12 @@ export default async function MakerDashboardPage() {
               <span>§2 — FIELD NOTES / DAILY OFFER</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span>
             </div>
-            <div style={{ padding: '12px' }}>
-              <FieldNotesEditor initialOffer={profile.digital_offer ?? ''} />
+            <div style={{ padding: '0' }}>
+              <FieldNotesEditor
+                initialOffer={profile.digital_offer ?? ''}
+                initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''}
+                initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false}
+              />
             </div>
           </div>
 

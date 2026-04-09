@@ -18,6 +18,9 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [justWentLive, setJustWentLive] = useState(false)
+  const [justWentOffline, setJustWentOffline] = useState(false)
+  const [offlineMarketName, setOfflineMarketName] = useState<string | null>(null)
+  const [sessionDuration, setSessionDuration] = useState<string | null>(null)
   const [selectedMarketId, setSelectedMarketId] = useState<string>(
     todayMarkets[0]?.market.id ?? ''
   )
@@ -28,6 +31,7 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
     (um.market.status === 'live' || um.market.status === 'community_live' || um.market.status === 'scheduled')
   )
   const selectedMarket = todayMarkets.find(um => um.market.id === selectedMarketId)
+  const [stallLabel, setStallLabel] = useState('')
 
   function handleGoLive() {
     if (!selectedMarketId) { setError('Select a market first'); return }
@@ -35,7 +39,7 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
     startTransition(async () => {
       const fd = new FormData()
       fd.set('market_id', selectedMarketId)
-      fd.set('stall_label', '')
+      fd.set('stall_label', stallLabel.trim())
       const result = await checkInToMarket(fd)
       if (result?.error) { setError(result.error) }
       else {
@@ -50,14 +54,71 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
     const checkin = activeCheckins.find(c => c.market.id === selectedMarketId) ?? activeCheckins[0]
     if (!checkin) return
     setError(null)
+
+    // Calculate session duration
+    const checkedInAt = new Date(checkin.checked_in_at)
+    const now = new Date()
+    const mins = Math.round((now.getTime() - checkedInAt.getTime()) / 60000)
+    const dur = mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`
+
     startTransition(async () => {
       const result = await checkOutOfMarket(checkin.attendance_id)
       if (result?.error) { setError(result.error) }
-      else { setIsActive(false) }
+      else {
+        setOfflineMarketName(checkin.market.space.name)
+        setSessionDuration(dur)
+        setIsActive(false)
+        setJustWentOffline(true)
+        setTimeout(() => setJustWentOffline(false), 3500)
+      }
     })
   }
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+
+  // ── Check-out confirmation overlay ───────────────────────
+  if (justWentOffline) {
+    return (
+      <div style={{ background: 'var(--INK)', padding: '32px 20px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', border: '4px solid rgba(240,236,224,.3)', padding: '12px 28px', marginBottom: '20px', transform: 'rotate(-1deg)', boxShadow: '4px 4px 0 rgba(0,0,0,.4)' }}>
+          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '52px', color: 'rgba(240,236,224,.9)', letterSpacing: '-0.02em', lineHeight: 0.9, textTransform: 'uppercase' }}>
+            OFFLINE
+          </div>
+          <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: 'rgba(240,236,224,.4)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '4px' }}>
+            OFF THE MAP
+          </div>
+        </div>
+
+        <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', color: 'rgba(240,236,224,.8)', textTransform: 'uppercase', letterSpacing: '-0.01em', marginBottom: '6px' }}>
+          SESSION ENDED
+        </div>
+
+        {offlineMarketName && (
+          <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: 'rgba(240,236,224,.45)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+            {offlineMarketName}
+          </div>
+        )}
+
+        {sessionDuration && (
+          <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '32px', color: 'rgba(240,236,224,.6)', marginBottom: '20px' }}>
+            {sessionDuration}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxWidth: '280px', margin: '0 auto' }}>
+          {[
+            '✓ Removed from the live map',
+            '✓ Attendance recorded',
+            '✓ Session logged to your history',
+          ].map((line, i) => (
+            <div key={i} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.4)', textAlign: 'left' }}>
+              {line}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   // ── Full-screen GO LIVE confirmation overlay ──────────────
   if (justWentLive) {
@@ -180,6 +241,27 @@ export default function LiveToggle({ initialIsActive, displayName, activeCheckin
                   </button>
                 )
               })}
+            </div>
+          )}
+
+          {/* Stall reference — shown when a market is selected */}
+          {availableMarkets.length > 0 && selectedMarketId && (
+            <div style={{ marginTop: '10px' }}>
+              <label style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '6px' }}>
+                STALL REFERENCE (optional)
+              </label>
+              <input
+                type="text"
+                value={stallLabel}
+                onChange={e => setStallLabel(e.target.value)}
+                placeholder="e.g. A-7, Unit 3, Row B"
+                style={{
+                  width: '100%', background: 'transparent',
+                  border: 'none', borderBottom: '1px dashed rgba(24,22,20,.3)',
+                  padding: '7px 0', fontFamily: 'var(--MONO)', fontSize: '15px',
+                  color: 'var(--INK)', outline: 'none',
+                }}
+              />
             </div>
           )}
         </div>

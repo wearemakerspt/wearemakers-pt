@@ -220,3 +220,62 @@ export async function saveBrandProfile(formData: FormData) {
   revalidatePath('/dashboard/maker')
   return { success: true }
 }
+
+// ── Private Field Notes ───────────────────────────────────────
+
+/**
+ * Save private field notes — only visible to the maker, never shown publicly.
+ */
+export async function savePrivateNotes(formData: FormData) {
+  const notes = (formData.get('private_notes') as string | null)?.trim() ?? null
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Store in bio_i18n._private_notes
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('bio_i18n')
+    .eq('id', user.id)
+    .single()
+
+  const bio_i18n = { ...(existing?.bio_i18n ?? {}), _private_notes: notes ?? '' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ bio_i18n, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/maker')
+  return { success: true }
+}
+
+// ── Offer Toggle ──────────────────────────────────────────────
+
+/**
+ * Toggle the offer on or off without clearing the offer text.
+ */
+export async function toggleOffer(formData: FormData) {
+  const isActive = formData.get('offer_active') === 'true'
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('bio_i18n')
+    .eq('id', user.id)
+    .single()
+
+  const bio_i18n = { ...(existing?.bio_i18n ?? {}), _offer_active: isActive }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ bio_i18n, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/maker')
+  return { success: true }
+}
