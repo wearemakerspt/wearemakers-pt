@@ -95,8 +95,15 @@ export default async function BrandPage({ params }: Props) {
         {/* Active offer — show if offer exists and not explicitly deactivated */}
         {brand.digital_offer && (brand.bio_i18n as any)?._offer_active !== false && (
           <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#e6e0d0' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              ✦ TODAY'S OFFER
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                ✦ {brand.is_live ? "TODAY'S OFFER" : 'CURRENT OFFER'}
+              </div>
+              {brand.is_live && (
+                <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', background: '#1a5c30', color: '#fff', padding: '2px 6px' }}>
+                  LIVE NOW
+                </span>
+              )}
             </div>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '17px', color: '#181614', lineHeight: 1.6, fontStyle: 'italic' }}>
               {brand.digital_offer}

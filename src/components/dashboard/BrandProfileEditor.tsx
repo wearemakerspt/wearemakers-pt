@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { saveBrandProfile } from '@/app/dashboard/maker/actions'
 
 interface Props {
@@ -8,8 +9,7 @@ interface Props {
   initialBio: string | null
   initialInstagram: string | null
   initialSlug: string | null
-  initialCategory?: string | null
-  initialPriceRange?: string | null  // stored as JSON array string or single value
+  initialCategory?: string | null  // stored as JSON array string or single value
 }
 
 const CATEGORIES = [
@@ -17,12 +17,13 @@ const CATEGORIES = [
   'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
   'Food', 'Accessories', 'Handmade',
   'Gifts for Him', 'Gifts for Her', 'Gifts Under €20',
-  "Men's Accessories", 'T-shirts & Hoodies', 'Other',
+  'Men's Accessories', 'T-shirts & Hoodies', 'Other',
 ]
 
 export default function BrandProfileEditor({
   initialName, initialBio, initialInstagram, initialSlug, initialCategory, initialPriceRange
 }: Props) {
+  const router = useRouter()
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
@@ -45,13 +46,24 @@ export default function BrandProfileEditor({
   const [isPending, startTransition] = useTransition()
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  // Track saved slug locally so VIEW PUBLIC PROFILE appears immediately after save
+  const [savedSlug, setSavedSlug] = useState(initialSlug)
+  const [savedCategory, setSavedCategory] = useState(
+    initialCategory ? initialCategory.split(',').map((c: string) => c.trim()).filter(Boolean) : [] as string[]
+  )
 
   async function handleSubmit(formData: FormData) {
     setError(null); setSaved(false)
     startTransition(async () => {
       const result = await saveBrandProfile(formData)
       if (result?.error) { setError(result.error) }
-      else { setSaved(true); setTimeout(() => setSaved(false), 3000) }
+      else {
+        setSaved(true)
+        setSavedSlug(slug) // update immediately — VIEW PUBLIC PROFILE appears
+        setSavedCategory(categories)
+        setTimeout(() => setSaved(false), 3000)
+        router.refresh() // re-render server components (onboarding banner updates)
+      }
     })
   }
 
