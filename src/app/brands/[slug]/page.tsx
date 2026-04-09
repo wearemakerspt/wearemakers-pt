@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getBrandBySlug } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
+import SaveBrandButton from '@/components/ui/SaveBrandButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,20 @@ function formatDate(d: string) {
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params
   const [brand, user] = await Promise.all([getBrandBySlug(slug), getCurrentUser()])
+
+  // Check if visitor has saved this brand
+  let initialSaved = false
+  if (user && brand) {
+    const { createClient: createServer } = await import('@/lib/supabase/server')
+    const supabase = await createServer()
+    const { data } = await supabase
+      .from('saved_brands')
+      .select('id')
+      .eq('visitor_id', user.id)
+      .eq('brand_id', brand.id)
+      .single()
+    initialSaved = !!data
+  }
   if (!brand) notFound()
 
   const initials = brand.display_name.slice(0, 2).toUpperCase()
@@ -63,6 +78,16 @@ export default async function BrandPage({ params }: Props) {
               <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
             </a>
           )}
+          {/* Save to Circuit */}
+          <div style={{ marginTop: '12px' }}>
+            <SaveBrandButton
+              brandId={brand.id}
+              brandName={brand.display_name}
+              initialSaved={initialSaved}
+              userId={user?.id ?? null}
+              size="lg"
+            />
+          </div>
         </div>
 
         {/* Categories + price range strip */}

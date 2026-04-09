@@ -35,6 +35,11 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
           MARKETS
         </Link>
 
+        {/* Circuit */}
+        <Link href="/circuit" className="mh-cell">
+          CIRCUIT
+        </Link>
+
         {/* Brands */}
         <Link href="/brands" className="mh-cell" style={{ display: 'none' }}>
           BRANDS
