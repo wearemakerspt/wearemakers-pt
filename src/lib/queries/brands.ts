@@ -109,9 +109,6 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
           id, title, status, event_date, starts_at,
           space:spaces (id, name, address)
         )
-      ),
-      gems (
-        id, name, category, description, address, is_approved
       )
     `)
     .eq('slug', slug)
