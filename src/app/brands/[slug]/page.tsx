@@ -207,12 +207,7 @@ export default async function BrandPage({ params }: Props) {
               INSTAGRAM →
             </a>
           )}
-          <Link
-            href="/auth/register"
-            style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#f0ece0', color: '#181614', border: '3px solid #181614', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}
-          >
-            + SAVE BRAND
-          </Link>
+
         </div>
 
         {/* Back */}
