@@ -86,6 +86,37 @@ export async function checkInToMarket(formData: FormData) {
   )
 
   if (error) return { error: error.message }
+
+  // ── Fan out push notifications to saved visitors ──────────
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, slug')
+      .eq('id', user.id)
+      .single()
+
+    const { data: market } = await supabase
+      .from('markets')
+      .select('title, space:spaces(name)')
+      .eq('id', marketId)
+      .single()
+
+    if (profile && market) {
+      const marketName = (market.space as any)?.name ?? market.title
+      // Fire and forget — don't block check-in if push fails
+      fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          makerId: user.id,
+          marketName,
+          brandName: profile.display_name,
+          brandSlug: profile.slug,
+        }),
+      }).catch(() => {}) // silent fail
+    }
+  } catch { /* push is best-effort */ }
+
   revalidatePath('/dashboard/maker')
   return { success: true }
 }
