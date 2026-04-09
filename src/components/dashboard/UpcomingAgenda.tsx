@@ -187,7 +187,7 @@ export default function UpcomingAgenda({ markets }: Props) {
 
           {/* Actions */}
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '5px', padding: '0 10px' }}>
-            {isRange && !compact && (
+            {isRange && (
               <button onClick={() => setExpandedRangeId(isExpanded ? null : um.market.id)}
                 style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.5)', background: 'transparent', border: '1px dashed rgba(24,22,20,.3)', padding: '5px 8px', cursor: 'pointer' }}>
                 {isExpanded ? 'HIDE' : 'DAYS'}
@@ -213,7 +213,7 @@ export default function UpcomingAgenda({ markets }: Props) {
         </div>
 
         {/* Day picker for range markets */}
-        {isRange && isExpanded && !compact && (
+        {isRange && isExpanded && (
           <div style={{ borderTop: '1px dashed rgba(24,22,20,.15)', background: 'var(--P2)', padding: '10px 14px' }}>
             <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)', marginBottom: '8px' }}>
               SELECT WHICH DAYS YOU'LL BE THERE
