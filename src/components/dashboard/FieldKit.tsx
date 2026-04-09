@@ -26,28 +26,39 @@ export default function FieldKit({ displayName, slug, category, instagramHandle,
   useEffect(() => {
     if (!slug) return
 
+    // Only load once
+    if (document.getElementById('qrcode-script')) {
+      setQrReady(true)
+      renderQRPreview()
+      return
+    }
+
     const script = document.createElement('script')
+    script.id = 'qrcode-script'
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
     script.onload = () => {
       setQrReady(true)
-      // Render preview QR
-      const container = document.getElementById('qr-preview-container')
-      if (container) {
-        container.innerHTML = ''
-        // @ts-ignore
-        new QRCode(container, {
-          text: profileUrl,
-          width: 160,
-          height: 160,
-          colorDark: '#181614',
-          colorLight: '#f0ece0',
-          correctLevel: 2, // QRCode.CorrectLevel.H
-        })
-      }
+      renderQRPreview()
     }
     document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
+    // No cleanup — keep script loaded for PDF generation
   }, [slug, profileUrl])
+
+  function renderQRPreview() {
+    const container = document.getElementById('qr-preview-container')
+    if (container) {
+      container.innerHTML = ''
+      // @ts-ignore
+      new QRCode(container, {
+        text: profileUrl,
+        width: 160,
+        height: 160,
+        colorDark: '#181614',
+        colorLight: '#f0ece0',
+        correctLevel: 2,
+      })
+    }
+  }
 
   async function generatePDF() {
     if (!qrReady || !slug) return
@@ -55,14 +66,17 @@ export default function FieldKit({ displayName, slug, category, instagramHandle,
     setError(null)
 
     try {
-      // Load jsPDF
-      await new Promise<void>((resolve, reject) => {
-        const s = document.createElement('script')
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-        s.onload = () => resolve()
-        s.onerror = () => reject(new Error('Failed to load jsPDF'))
-        document.head.appendChild(s)
-      })
+      // Load jsPDF (only once)
+      if (!document.getElementById('jspdf-script')) {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement('script')
+          s.id = 'jspdf-script'
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+          s.onload = () => resolve()
+          s.onerror = () => reject(new Error('Failed to load jsPDF'))
+          document.head.appendChild(s)
+        })
+      }
 
       // Generate QR as data URL via canvas
       const qrCanvas = document.createElement('canvas')
