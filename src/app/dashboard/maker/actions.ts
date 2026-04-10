@@ -205,6 +205,41 @@ export async function toggleAttendanceIntent(formData: FormData) {
 /**
  * Update the maker's brand profile fields.
  */
+// ── DeepL translation helper ──────────────────────────────────────────────
+async function translateBio(text: string): Promise<Record<string, string>> {
+  const DEEPL_KEY = process.env.DEEPL_API_KEY
+  if (!DEEPL_KEY || !text.trim()) return {}
+
+  const langs = ['EN-GB', 'ES', 'DE', 'FR', 'IT']
+  const keys = ['en', 'es', 'de', 'fr', 'it']
+  const translations: Record<string, string> = {}
+
+  try {
+    await Promise.all(
+      langs.map(async (lang, i) => {
+        const res = await fetch('https://api-free.deepl.com/v2/translate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `DeepL-Auth-Key ${DEEPL_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: [text],
+            source_lang: 'PT',
+            target_lang: lang,
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          translations[keys[i]] = data.translations?.[0]?.text ?? ''
+        }
+      })
+    )
+  } catch { /* silent — translation is best-effort */ }
+
+  return translations
+}
+
 export async function saveBrandProfile(formData: FormData) {
   const display_name = (formData.get('display_name') as string)?.trim()
   const bio = (formData.get('bio') as string)?.trim() || null

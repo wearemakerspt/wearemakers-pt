@@ -34,6 +34,19 @@ export default async function BrandPage({ params }: Props) {
   const [brand, user] = await Promise.all([getBrandBySlug(slug), getCurrentUser()])
   if (!brand) notFound()
 
+  // Detect visitor language from Accept-Language header
+  const { headers } = await import('next/headers')
+  const acceptLang = (await headers()).get('accept-language') ?? ''
+  const lang = (['pt', 'en', 'es', 'de', 'fr', 'it'].find(l =>
+    acceptLang.toLowerCase().includes(l)
+  )) ?? 'pt'
+
+  // Serve bio in visitor's language if translation exists
+  const bio_i18n = brand.bio_i18n as any
+  const localeBio = lang !== 'pt' && bio_i18n?.[lang]
+    ? bio_i18n[lang]
+    : brand.bio
+
   // Check if visitor has saved this brand
   let initialSaved = false
   if (user) {
@@ -115,7 +128,7 @@ export default async function BrandPage({ params }: Props) {
         <div style={{ padding: '20px 16px', borderBottom: '3px solid #181614' }}>
           {brand.bio && (
             <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#181614', lineHeight: 1.75, marginBottom: 0 }}>
-              {brand.bio}
+              {localeBio}
             </p>
           )}
         </div>
