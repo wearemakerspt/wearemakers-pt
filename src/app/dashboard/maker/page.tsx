@@ -162,6 +162,8 @@ export default async function MakerDashboardPage() {
               initialSlug={profile.slug ?? null}
               initialCategory={(profile.bio_i18n as any)?._category ?? null}
               initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
+              initialAvatarUrl={profile.avatar_url ?? null}
+              userId={profile.id}
             />
           </div>
 

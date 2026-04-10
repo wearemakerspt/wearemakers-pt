@@ -1,80 +1,86 @@
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/lib/queries/auth'
-import LoginForm from '@/components/auth/LoginForm'
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { signIn } from '@/app/auth/actions'
 
 export const metadata: Metadata = {
-  title: 'Access Circuit',
-  description: 'Sign in to WEAREMAKERS.PT — Maker and Curator login.',
+  title: 'Sign In — WEAREMAKERS.PT',
   robots: { index: false, follow: false },
 }
 
-interface Props {
-  searchParams: Promise<{ next?: string; error?: string }>
-}
-
-export default async function LoginPage({ searchParams }: Props) {
-  const { next, error } = await searchParams
-
-  // Already logged in — skip to dashboard
-  const user = await getCurrentUser()
-  if (user) {
-    redirect(next ?? '/')
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { error?: string; next?: string }
+}) {
+  const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+  const inputStyle = {
+    width: '100%', background: 'var(--P)', border: '2px solid var(--INK)',
+    padding: '12px 14px', fontFamily: 'var(--MONO)', fontSize: '16px',
+    color: 'var(--INK)', outline: 'none', boxSizing: 'border-box' as const,
   }
 
   return (
-    <main className="min-h-dvh bg-parchment flex flex-col items-center justify-center p-6">
-      {/* 4px viewport border */}
-      <div className="fixed inset-1 border-4 border-ink pointer-events-none z-50" />
+    <main style={{ background: 'var(--INK)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
 
-      <div className="w-full max-w-md">
-        {/* Wordmark */}
-        <div className="mb-8">
-          <a
-            href="/journal"
-            className="font-display font-black text-4xl uppercase tracking-tight leading-none text-ink hover:text-stamp transition-colors"
-          >
-            WE ARE<span className="text-stamp">MAKERS.PT</span>
-          </a>
-          <p className="font-tag text-xs tracking-widest uppercase text-ink/40 mt-2">
-            Lisbon Street Markets · Maker & Curator Portal
-          </p>
+        {/* Logo */}
+        <div style={{ marginBottom: '32px' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '36px', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.9, color: 'var(--P)' }}>
+              WEAREMAKERS<span style={{ color: 'var(--RED)' }}>.PT</span>
+            </div>
+          </Link>
+          <div style={{ ...T, fontSize: '10px', color: 'rgba(240,236,224,.3)', marginTop: '6px' }}>
+            Lisbon Street Markets · Maker &amp; Curator Portal
+          </div>
         </div>
 
-        {/* Header */}
-        <div className="border-4 border-ink shadow-hard mb-8">
-          <div className="bg-ink px-5 py-4">
-            <p className="font-tag text-xs tracking-widest uppercase text-stamp">
-              ACCESS CIRCUIT
-            </p>
-            <h1 className="font-display font-black text-5xl uppercase tracking-tight leading-none text-parchment mt-1">
-              SIGN IN
-            </h1>
+        {/* Form card */}
+        <div style={{ background: 'var(--P)', border: '3px solid var(--P)', boxShadow: '8px 8px 0 0 var(--RED)' }}>
+          <div style={{ background: 'var(--RED)', padding: '10px 16px', borderBottom: '3px solid var(--INK)' }}>
+            <div style={{ ...T, fontWeight: 700, color: 'var(--P)' }}>SIGN IN</div>
           </div>
 
-          <div className="bg-parchment p-5">
-            {error && (
-              <div className="mb-4 border-l-4 border-stamp bg-red-50 px-4 py-3">
-                <p className="font-tag text-xs tracking-wide uppercase text-stamp font-bold">
-                  {decodeURIComponent(error)}
-                </p>
+          <form action={signIn} style={{ padding: '20px' }}>
+            {searchParams.next && (
+              <input type="hidden" name="next" value={searchParams.next} />
+            )}
+
+            {searchParams.error && (
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700 }}>
+                ✗ {searchParams.error === 'invalid_credentials' ? 'Invalid email or password.' : searchParams.error}
               </div>
             )}
 
-            <LoginForm redirectTo={next} />
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>
+                EMAIL ADDRESS *
+              </label>
+              <input type="email" name="email" required autoComplete="email" placeholder="your@email.com" style={inputStyle} />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>
+                PASSWORD *
+              </label>
+              <input type="password" name="password" required autoComplete="current-password" placeholder="••••••••••••" style={inputStyle} />
+            </div>
+
+            <button type="submit" style={{ ...T, fontWeight: 700, fontSize: '12px', width: '100%', padding: '14px', background: 'var(--INK)', color: 'var(--P)', border: '3px solid var(--INK)', cursor: 'pointer', boxShadow: '4px 4px 0 0 var(--RED)' }}>
+              ENTER THE CIRCUIT →
+            </button>
+          </form>
+
+          <div style={{ padding: '14px 20px', borderTop: '1px dashed rgba(24,22,20,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Link href="/auth/register" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', textDecoration: 'none' }}>
+              No account? Apply for access →
+            </Link>
           </div>
         </div>
 
-        {/* Register link */}
-        <p className="font-tag text-xs tracking-wide uppercase text-center text-ink/40">
-          No account?{' '}
-          <a
-            href="/auth/register"
-            className="text-ink border-b-2 border-ink/20 hover:border-stamp hover:text-stamp transition-colors"
-          >
-            Apply for access →
-          </a>
-        </p>
+        <div style={{ marginTop: '20px', textAlign: 'center', ...T, fontSize: '9px', color: 'rgba(240,236,224,.2)' }}>
+          WEAREMAKERS.PT · LISBON · FREE FOR MAKERS &amp; CURATORS
+        </div>
       </div>
     </main>
   )
