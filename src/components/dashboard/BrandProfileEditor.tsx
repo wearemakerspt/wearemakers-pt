@@ -82,6 +82,18 @@ export default function BrandProfileEditor({
     <div style={{ background: 'var(--P)', padding: '16px' }}>
       <form action={handleSubmit}>
 
+        {/* Avatar photo upload */}
+        {userId && (
+          <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
+            <AvatarUpload
+              currentUrl={avatarUrl ?? null}
+              userId={userId}
+              displayName={name || initialName}
+              onUpload={url => setAvatarUrl(url || null)}
+            />
+          </div>
+        )}
+
         {/* Brand name */}
         <div style={dividerStyle}>
           <label style={labelStyle}>BRAND / DISPLAY NAME *</label>
