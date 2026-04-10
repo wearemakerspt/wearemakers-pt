@@ -18,7 +18,7 @@ const CATEGORIES = [
   'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
   'Food', 'Accessories', 'Handmade',
   'Gifts for Him', 'Gifts for Her', 'Gifts Under €20',
-  'Men's Accessories', 'T-shirts & Hoodies', 'Other',
+  "Men's Accessories", 'T-shirts & Hoodies', 'Other',
 ]
 
 export default function BrandProfileEditor({
