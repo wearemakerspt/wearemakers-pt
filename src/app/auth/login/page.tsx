@@ -1,17 +1,18 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { signIn } from '@/app/auth/actions'
+import { signInWithPassword } from '@/app/auth/actions'
 
 export const metadata: Metadata = {
   title: 'Sign In — WEAREMAKERS.PT',
   robots: { index: false, follow: false },
 }
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; next?: string }
+  searchParams: Promise<{ error?: string; next?: string }>
 }) {
+  const params = await searchParams
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
   const inputStyle = {
     width: '100%', background: 'var(--P)', border: '2px solid var(--INK)',
@@ -41,14 +42,14 @@ export default function LoginPage({
             <div style={{ ...T, fontWeight: 700, color: 'var(--P)' }}>SIGN IN</div>
           </div>
 
-          <form action={signIn} style={{ padding: '20px' }}>
-            {searchParams.next && (
-              <input type="hidden" name="next" value={searchParams.next} />
+          <form action={signInWithPassword} style={{ padding: '20px' }}>
+            {params.next && (
+              <input type="hidden" name="next" value={params.next} />
             )}
 
-            {searchParams.error && (
+            {params.error && (
               <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700 }}>
-                ✗ {searchParams.error === 'invalid_credentials' ? 'Invalid email or password.' : searchParams.error}
+                ✗ {params.error === 'invalid_credentials' ? 'Invalid email or password.' : params.error}
               </div>
             )}
 

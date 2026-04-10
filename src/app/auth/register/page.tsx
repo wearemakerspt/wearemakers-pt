@@ -7,11 +7,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function RegisterPage({
+export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: { error?: string; success?: string }
+  searchParams: Promise<{ error?: string; success?: string }>
 }) {
+  const params = await searchParams
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
   const inputStyle = {
     width: '100%', background: 'var(--P)', border: '2px solid var(--INK)',
@@ -19,7 +20,7 @@ export default function RegisterPage({
     color: 'var(--INK)', outline: 'none', boxSizing: 'border-box' as const,
   }
 
-  if (searchParams.success) {
+  if (params.success) {
     return (
       <main style={{ background: 'var(--INK)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>
@@ -62,9 +63,9 @@ export default function RegisterPage({
 
           <form action={signUp} style={{ padding: '20px' }}>
 
-            {searchParams.error && (
+            {params.error && (
               <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700 }}>
-                ✗ {searchParams.error}
+                ✗ {params.error}
               </div>
             )}
 
