@@ -10,7 +10,10 @@ interface Props {
   initialBio: string | null
   initialInstagram: string | null
   initialSlug: string | null
-  initialCategory?: string | null  // stored as JSON array string or single value
+  initialCategory?: string | null
+  initialPriceRange?: string | null
+  initialAvatarUrl?: string | null
+  userId?: string
 }
 
 const CATEGORIES = [
