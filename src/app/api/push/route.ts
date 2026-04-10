@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
             'Authorization': `vapid t=${vapidToken},k=${VAPID_PUBLIC_KEY}`,
             'TTL': '86400',
           },
-          body,
+          body: new Uint8Array(body),
         })
 
         if (res.ok || res.status === 201) {
