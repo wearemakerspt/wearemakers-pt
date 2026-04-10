@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import AvatarUpload from '@/components/dashboard/AvatarUpload'
 import { saveBrandProfile } from '@/app/dashboard/maker/actions'
 
 interface Props {
@@ -9,8 +10,7 @@ interface Props {
   initialBio: string | null
   initialInstagram: string | null
   initialSlug: string | null
-  initialCategory?: string | null
-  initialPriceRange?: string | null  // stored as JSON array string or single value
+  initialCategory?: string | null  // stored as JSON array string or single value
 }
 
 const CATEGORIES = [
@@ -18,13 +18,15 @@ const CATEGORIES = [
   'Glass', 'Woodwork', 'Zines', 'Books', 'Art & Prints',
   'Food', 'Accessories', 'Handmade',
   'Gifts for Him', 'Gifts for Her', 'Gifts Under €20',
-  "Men's Accessories", 'T-shirts & Hoodies', 'Other',
+  'Men's Accessories', 'T-shirts & Hoodies', 'Other',
 ]
 
 export default function BrandProfileEditor({
-  initialName, initialBio, initialInstagram, initialSlug, initialCategory, initialPriceRange
+  initialName, initialBio, initialInstagram, initialSlug, initialCategory, initialPriceRange,
+  initialAvatarUrl, userId
 }: Props) {
   const router = useRouter()
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
