@@ -37,10 +37,10 @@ export default async function AdminDashboardPage() {
     top20Res,
   ] = await Promise.all([
     supabase.from('spaces').select('*').order('name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, created_at, bio_i18n').eq('role', 'maker').order('display_name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, created_at').eq('role', 'curator').order('display_name'),
-    supabase.from('markets').select('*, space:spaces(name), curator:profiles(display_name)').order('event_date', { ascending: false }).limit(50),
-    supabase.from('profiles').select('id, display_name, created_at').eq('role', 'visitor').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, created_at').in('role', ['curator']).order('display_name'),
+    supabase.from('markets').select('*, space:spaces(name), curator:profiles(display_name)').order('event_date', { ascending: false }),
+    supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
     supabase.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name)').order('created_at', { ascending: false }),
     supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
   ])
