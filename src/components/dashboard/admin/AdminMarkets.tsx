@@ -1,6 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { adminSetMarketStatus, adminAssignCurator } from '@/app/dashboard/admin/actions'
+import { adminSetMarketStatus } from '@/app/dashboard/admin/actions'
 
 export default function AdminMarkets({ markets, spaces, curators }: { markets: any[]; spaces: any[]; curators: any[] }) {
   const [list, setList] = useState(markets)
