@@ -283,7 +283,22 @@ export async function saveBrandProfile(formData: FormData) {
     .eq('id', user.id)
 
   if (error) return { error: error.message }
+
+  // ── Auto-translate bio via DeepL (background, non-blocking) ──
+  if (bio) {
+    const userId = user.id
+    translateBio(bio).then(async (translations) => {
+      if (Object.keys(translations).length === 0) return
+      const { createClient: createBgClient } = await import('@/lib/supabase/server')
+      const supabaseBg = await createBgClient()
+      const { data: cur } = await supabaseBg.from('profiles').select('bio_i18n').eq('id', userId).single()
+      const merged = { ...(cur?.bio_i18n ?? {}), ...translations }
+      await supabaseBg.from('profiles').update({ bio_i18n: merged }).eq('id', userId)
+    }).catch(() => {/* silent */})
+  }
+
   revalidatePath('/dashboard/maker')
+  revalidatePath('/brands')
   return { success: true }
 }
 
