@@ -30,6 +30,14 @@ export default async function JournalIndexPage() {
       <SiteHeader user={user} />
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
 
+        {/* Inline hover CSS — avoids need for client component */}
+        <style>{`
+          .journal-row { transition: background 0.1s; }
+          .journal-row:hover { background: var(--P3) !important; }
+          .journal-row:hover .journal-arrow { color: var(--RED) !important; }
+          .journal-row:hover .journal-title { color: var(--RED) !important; }
+        `}</style>
+
         {/* Masthead */}
         <div style={{ borderBottom: '3px solid var(--INK)', padding: '0 16px' }}>
           <div style={{ borderTop: '2px solid var(--INK)', borderBottom: '2px solid var(--INK)', margin: '16px 0 10px', padding: '8px 0', textAlign: 'center' }}>
@@ -60,9 +68,8 @@ export default async function JournalIndexPage() {
               <li key={article.id} style={{ borderBottom: '3px solid var(--INK)' }}>
                 <Link
                   href={`/journal/${article.slug}`}
+                  className="journal-row"
                   style={{ textDecoration: 'none', display: 'flex', gap: '16px', padding: '20px 16px', background: i % 2 === 0 ? 'var(--P)' : 'var(--P2)' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--P3)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? 'var(--P)' : 'var(--P2)'}
                 >
                   {/* Issue number */}
                   <span style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '56px', color: 'rgba(24,22,20,.07)', lineHeight: 1, flexShrink: 0, width: '56px', textAlign: 'right', alignSelf: 'flex-start' }}>
@@ -83,7 +90,7 @@ export default async function JournalIndexPage() {
                       )}
                     </div>
 
-                    <h2 style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: 'clamp(24px,5vw,36px)', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: 'var(--INK)', marginBottom: '10px' }}>
+                    <h2 className="journal-title" style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: 'clamp(24px,5vw,36px)', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: 'var(--INK)', marginBottom: '10px' }}>
                       {article.title}
                     </h2>
 
@@ -97,7 +104,7 @@ export default async function JournalIndexPage() {
                   </div>
 
                   {/* Arrow */}
-                  <div style={{ ...T, fontSize: '18px', color: 'rgba(24,22,20,.18)', alignSelf: 'center', flexShrink: 0 }}>→</div>
+                  <div className="journal-arrow" style={{ fontFamily: 'var(--TAG)', fontSize: '18px', color: 'rgba(24,22,20,.18)', alignSelf: 'center', flexShrink: 0 }}>→</div>
                 </Link>
               </li>
             ))}
