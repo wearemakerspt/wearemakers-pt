@@ -2,7 +2,7 @@ import { getCuratorSpotlightBrands, getLiveIds } from '@/lib/queries/spotlight'
 import BrandCollection from '@/components/ui/BrandCollection'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({
   params,
@@ -37,7 +37,8 @@ export default async function CuratorSpotlightPage({
       brands={brands}
       liveIds={liveIds}
       title={curator.display_name}
-      subtitle={`Curator spotlight · ${brands.length} maker${brands.length !== 1 ? 's' : ''} selected`}
+      kicker="CURATOR SPOTLIGHT"
+      subtitle={`${brands.length} maker${brands.length !== 1 ? 's' : ''} selected`}
     />
   )
 }
