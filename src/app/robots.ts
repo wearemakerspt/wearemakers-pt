@@ -1,21 +1,38 @@
 import type { MetadataRoute } from 'next'
-import { absoluteUrl } from '@/lib/utils'
 
 export default function robots(): MetadataRoute.Robots {
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://wearemakers.pt'
+
   return {
     rules: [
       {
+        // All bots — index public pages, block private ones
         userAgent: '*',
-        allow: '/',
+        allow: [
+          '/',
+          '/markets',
+          '/markets/',
+          '/brands',
+          '/brands/',
+          '/journal',
+          '/journal/',
+          '/circuit',
+          '/pitch',
+          '/espacos',
+          '/welcome',
+        ],
         disallow: [
-          '/auth/',
           '/dashboard/',
-          '/maker/',
-          '/curator/',
+          '/dashboard/maker',
+          '/dashboard/curator',
+          '/dashboard/admin',
+          '/auth/',
+          '/auth/login',
+          '/auth/register',
           '/api/',
         ],
       },
     ],
-    sitemap: absoluteUrl('/sitemap.xml'),
+    sitemap: `${base}/sitemap.xml`,
   }
 }
