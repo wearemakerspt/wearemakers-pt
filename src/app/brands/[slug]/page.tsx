@@ -63,6 +63,10 @@ export default async function BrandPage({ params }: Props) {
     } catch { /* ignore — saved state defaults to false */ }
   }
 
+  // Determine active offer — only show if offer exists and not deactivated
+  const offerActive = bio_i18n?._offer_active !== false
+  const activeOffer = brand.digital_offer && offerActive ? brand.digital_offer : null
+
   const initials = brand.display_name.slice(0, 2).toUpperCase()
 
   return (
@@ -93,8 +97,9 @@ export default async function BrandPage({ params }: Props) {
               <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
             </a>
           )}
-          {/* Save to Circuit */}
-          <div style={{ marginTop: '12px' }}>
+
+          {/* Save to Circuit — passes offer so modal triggers on save */}
+          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <SaveBrandButton
               brandId={brand.id}
               brandName={brand.display_name}
@@ -102,41 +107,48 @@ export default async function BrandPage({ params }: Props) {
               userId={user?.id ?? null}
               size="lg"
               dark={true}
+              digitalOffer={activeOffer}
             />
+            {activeOffer && !initialSaved && (
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(240,236,224,.4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: '#c8291a' }}>✦</span>
+                SAVE TO UNLOCK OFFER
+              </div>
+            )}
           </div>
         </div>
 
         {/* Categories + price range strip */}
-        {((brand.bio_i18n as any)?._category || (brand.bio_i18n as any)?._price_range) && (
+        {(bio_i18n?._category || bio_i18n?._price_range) && (
           <div style={{ padding: '10px 16px', borderBottom: '3px solid #181614', background: '#e6e0d0', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {(brand.bio_i18n as any)?._category && (
-              (brand.bio_i18n as any)._category.split(',').map((cat: string) => cat.trim()).filter(Boolean).map((cat: string) => (
+            {bio_i18n?._category && (
+              bio_i18n._category.split(',').map((cat: string) => cat.trim()).filter(Boolean).map((cat: string) => (
                 <span key={cat} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '4px 10px', border: '2px solid #181614', color: '#181614', background: '#f0ece0' }}>
                   {cat}
                 </span>
               ))
             )}
-            {(brand.bio_i18n as any)?._price_range && (
+            {bio_i18n?._price_range && (
               <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '4px 10px', border: '2px solid #c8291a', color: '#c8291a', background: 'rgba(200,41,26,.06)' }}>
-                {(brand.bio_i18n as any)._price_range}
+                {bio_i18n._price_range}
               </span>
             )}
           </div>
         )}
 
         {/* Bio */}
-        <div style={{ padding: '20px 16px', borderBottom: '3px solid #181614' }}>
-          {brand.bio && (
+        {localeBio && (
+          <div style={{ padding: '20px 16px', borderBottom: '3px solid #181614' }}>
             <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#181614', lineHeight: 1.75, marginBottom: 0 }}>
               {localeBio}
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Active offer — show if offer exists and not explicitly deactivated */}
-        {brand.digital_offer && (brand.bio_i18n as any)?._offer_active !== false && (
-          <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#e6e0d0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+        {/* Active offer — visible in page body (also triggers as modal on save) */}
+        {activeOffer && (
+          <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#181614' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                 ✦ {brand.is_live ? "TODAY'S OFFER" : 'CURRENT OFFER'}
               </div>
@@ -146,8 +158,14 @@ export default async function BrandPage({ params }: Props) {
                 </span>
               )}
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '17px', color: '#181614', lineHeight: 1.6, fontStyle: 'italic' }}>
-              {brand.digital_offer}
+            {/* Stamp treatment */}
+            <div style={{ padding: '20px', background: 'rgba(240,236,224,.04)', border: '2px dashed rgba(240,236,224,.12)', textAlign: 'center', marginBottom: '10px' }}>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(20px,5vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#f0ece0', lineHeight: 1.2 }}>
+                {activeOffer}
+              </div>
+            </div>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.3)', lineHeight: 1.6 }}>
+              Save this brand to your Circuit — offer unlocks automatically.
             </div>
           </div>
         )}
@@ -183,13 +201,13 @@ export default async function BrandPage({ params }: Props) {
         )}
 
         {/* Hidden Gems */}
-        {brand.gems.length > 0 && (
+        {brand.gems && brand.gems.length > 0 && (
           <div>
             <div style={{ padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614', fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ width: '3px', height: '12px', background: '#c8291a', display: 'inline-block' }} />
               HIDDEN GEMS
             </div>
-            {brand.gems.map(g => (
+            {brand.gems.map((g: any) => (
               <div key={g.id} style={{ borderBottom: '2px solid #181614', display: 'flex', gap: 0, minHeight: '64px' }}>
                 <div style={{ width: '52px', flexShrink: 0, background: '#181614', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', borderRight: '2px solid #181614' }}>
                   {GEM_ICONS[g.category] ?? '◈'}
@@ -209,7 +227,7 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Save / Instagram actions */}
+        {/* Instagram action */}
         <div style={{ padding: '16px', borderTop: '3px solid #181614', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {brand.instagram_handle && (
             <a
@@ -221,7 +239,6 @@ export default async function BrandPage({ params }: Props) {
               INSTAGRAM →
             </a>
           )}
-
         </div>
 
         {/* Back */}
