@@ -26,7 +26,6 @@ export default async function AdminDashboardPage() {
 
   const supabase = await createClient()
 
-  // Fetch all data in parallel
   const [
     spacesRes,
     makersRes,
@@ -37,11 +36,11 @@ export default async function AdminDashboardPage() {
     top20Res,
   ] = await Promise.all([
     supabase.from('spaces').select('*').order('name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, created_at').in('role', ['curator']).order('display_name'),
-    supabase.from('markets').select('*, space:spaces(name), curator:profiles(display_name)').order('event_date', { ascending: false }),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
+    supabase.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
     supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
-    supabase.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name)').order('created_at', { ascending: false }),
+    supabase.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
     supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
   ])
 
@@ -53,10 +52,13 @@ export default async function AdminDashboardPage() {
   const gems = gemsRes.data ?? []
   const top20 = top20Res.data ?? []
 
-  // Searchable makers for top20 and market assignment
   const searchableMakers = makers
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+
+  const pendingMakers = makers.filter((m: any) => !m.is_approved)
+  const pendingCurators = curators.filter((c: any) => !c.is_approved)
+  const pendingGems = gems.filter((g: any) => !g.is_approved)
 
   return (
     <>
@@ -80,10 +82,11 @@ export default async function AdminDashboardPage() {
               { label: 'CURATORS', value: curators.length },
               { label: 'MARKETS', value: markets.length },
               { label: 'VISITORS', value: visitors.length },
-              { label: 'GEMS', value: gems.filter((g: any) => !g.is_approved).length, sub: 'PENDING' },
-            ].map((s, i) => (
-              <div key={i} style={{ padding: '8px 14px', borderRight: '1px solid rgba(240,236,224,.1)', minWidth: '80px' }}>
-                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', color: 'var(--P)', lineHeight: 1 }}>
+              { label: 'PENDING', value: pendingMakers.length + pendingCurators.length, sub: 'APPROVALS' },
+              { label: 'GEMS', value: pendingGems.length, sub: 'PENDING' },
+            ].map((s, i, arr) => (
+              <div key={i} style={{ padding: '8px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(240,236,224,.1)' : 'none', minWidth: '80px' }}>
+                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', color: (s.sub === 'APPROVALS' || s.sub === 'PENDING') && s.value > 0 ? 'var(--RED)' : 'var(--P)', lineHeight: 1 }}>
                   {String(s.value).padStart(2, '0')}
                 </div>
                 <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.3)', marginTop: '2px' }}>
@@ -96,6 +99,7 @@ export default async function AdminDashboardPage() {
 
         {/* Sections */}
         <div style={{ padding: '12px' }}>
+
           <Section num="§1" title="SPACES & LOCATIONS" ref_code="ADM-001">
             <AdminSpaces spaces={spaces} />
           </Section>
@@ -104,11 +108,11 @@ export default async function AdminDashboardPage() {
             <AdminMarkets markets={markets} spaces={spaces} curators={curators} />
           </Section>
 
-          <Section num="§3" title="MAKERS" ref_code="ADM-003">
+          <Section num="§3" title={`MAKERS${pendingMakers.length > 0 ? ` — ${pendingMakers.length} PENDING` : ''}`} ref_code="ADM-003">
             <AdminMakers makers={makers} />
           </Section>
 
-          <Section num="§4" title="CURATORS" ref_code="ADM-004">
+          <Section num="§4" title={`CURATORS${pendingCurators.length > 0 ? ` — ${pendingCurators.length} PENDING` : ''}`} ref_code="ADM-004">
             <AdminCurators curators={curators} spaces={spaces} />
           </Section>
 
@@ -116,8 +120,8 @@ export default async function AdminDashboardPage() {
             <AdminVisitors visitors={visitors} />
           </Section>
 
-          <Section num="§6" title="HIDDEN GEMS — APPROVAL QUEUE" ref_code="ADM-006">
-            <AdminGems gems={gems} />
+          <Section num="§6" title={`HIDDEN GEMS${pendingGems.length > 0 ? ` — ${pendingGems.length} PENDING` : ''}`} ref_code="ADM-006">
+            <AdminGems gems={gems} spaces={spaces} />
           </Section>
 
           <Section num="§7" title="WAM TOP 20 — FEATURED MAKERS" ref_code="ADM-007">
@@ -127,6 +131,7 @@ export default async function AdminDashboardPage() {
           <Section num="§8" title="PUSH NOTIFICATIONS" ref_code="ADM-008">
             <AdminPush />
           </Section>
+
         </div>
       </main>
     </>
