@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import SiteHeader from '@/components/ui/SiteHeader'
 import AdminSpaces from '@/components/dashboard/admin/AdminSpaces'
 import AdminMakers from '@/components/dashboard/admin/AdminMakers'
@@ -26,6 +27,12 @@ export default async function AdminDashboardPage() {
 
   const supabase = await createClient()
 
+  // Service role client — bypasses RLS for admin-only queries
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   const [
     spacesRes,
     makersRes,
@@ -40,7 +47,8 @@ export default async function AdminDashboardPage() {
     supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
     supabase.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
     supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
-    supabase.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
+    // Use service client for gems — bypasses RLS to show pending gems from all makers
+    serviceClient.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
     supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
   ])
 
