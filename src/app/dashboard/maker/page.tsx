@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { getMakerDashboardData } from '@/lib/queries/maker'
+import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import LiveToggle from '@/components/dashboard/LiveToggle'
 import FieldNotesEditor from '@/components/dashboard/FieldNotesEditor'
@@ -11,6 +12,7 @@ import RecentAttendance from '@/components/dashboard/RecentAttendance'
 import BrandProfileEditor from '@/components/dashboard/BrandProfileEditor'
 import FieldKit from '@/components/dashboard/FieldKit'
 import PendingApproval from '@/components/dashboard/PendingApproval'
+import GemSubmissionForm from '@/components/dashboard/GemSubmissionForm'
 
 export const metadata: Metadata = {
   title: 'Field Transmitter — Maker Dashboard',
@@ -26,8 +28,7 @@ export default async function MakerDashboardPage() {
 
   const profile = user.profile!
 
-  // ── Approval gate ──────────────────────────────────────────
-  // Admins bypass. Makers must be approved before accessing dashboard.
+  // Approval gate
   if (profile.role !== 'admin' && !profile.is_approved) {
     return (
       <PendingApproval
@@ -37,7 +38,21 @@ export default async function MakerDashboardPage() {
     )
   }
 
-  const { activeCheckins, recentAttendance, upcomingMarkets } = await getMakerDashboardData(user.id)
+  const supabase = await createClient()
+
+  // Fetch dashboard data + spaces + maker's gems in parallel
+  const [{ activeCheckins, recentAttendance, upcomingMarkets }, spacesRes, gemsRes] = await Promise.all([
+    getMakerDashboardData(user.id),
+    supabase.from('spaces').select('id, name, parish').eq('is_active', true).order('name'),
+    supabase.from('gems')
+      .select('id, name, category, description, is_approved, space:spaces(name)')
+      .eq('vetted_by', user.id)
+      .order('is_approved', { ascending: false }),
+  ])
+
+  const spaces = spacesRes.data ?? []
+  const existingGems = gemsRes.data ?? []
+
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
   const isLive = activeCheckins.length > 0
@@ -49,10 +64,12 @@ export default async function MakerDashboardPage() {
     !!(profile.bio_i18n as any)?._price_range,
   ].filter(Boolean).length
 
+  const WO = { margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }
+  const WO_HDR: React.CSSProperties = { background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+
   return (
     <>
       <SiteHeader user={user} liveCount={isLive ? 1 : 0} />
-
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
 
         {/* ── Black header ── */}
@@ -61,7 +78,6 @@ export default async function MakerDashboardPage() {
             MAKER DASHBOARD · FIELD TRANSMITTER · WO#WM-2026-{profile.id.slice(-6).toUpperCase()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
-            {/* Avatar */}
             <div style={{ width: '64px', height: '64px', flexShrink: 0, border: '3px solid rgba(240,236,224,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,236,224,.08)', overflow: 'hidden' }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt={profile.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -84,8 +100,6 @@ export default async function MakerDashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* Stats row */}
           <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(240,236,224,.1)', paddingTop: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'MARKETS ATTENDED', value: recentAttendance.length, sub: 'LAST 30 DAYS' },
@@ -94,15 +108,9 @@ export default async function MakerDashboardPage() {
               { label: isLive ? 'LIVE' : 'OFFLINE', value: '', sub: isLive ? 'ON MAP NOW' : 'NOT VISIBLE' },
             ].map((s, i) => (
               <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 3 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
-                <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '28px', color: i === 3 && isLive ? 'var(--RED)' : 'var(--P)', lineHeight: 1 }}>
-                  {s.value}
-                </div>
-                <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', color: 'rgba(240,236,224,.35)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>
-                  {s.label}
-                </div>
-                <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', color: 'rgba(240,236,224,.2)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {s.sub}
-                </div>
+                <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '28px', color: i === 3 && isLive ? 'var(--RED)' : 'var(--P)', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', color: 'rgba(240,236,224,.35)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
+                <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', color: 'rgba(240,236,224,.2)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{s.sub}</div>
               </div>
             ))}
           </div>
@@ -118,7 +126,6 @@ export default async function MakerDashboardPage() {
           </div>
         </div>
 
-        {/* ── Work order sections ── */}
         <div style={{ padding: '0' }}>
 
           {/* Onboarding banner */}
@@ -157,11 +164,8 @@ export default async function MakerDashboardPage() {
           )}
 
           {/* §0 Brand Profile */}
-          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§0 — BRAND PROFILE</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span>
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§0 — BRAND PROFILE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span></div>
             <BrandProfileEditor
               initialName={profile.display_name}
               initialBio={profile.bio ?? null}
@@ -175,72 +179,44 @@ export default async function MakerDashboardPage() {
           </div>
 
           {/* §1 Live Toggle */}
-          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§1 — TRANSMISSION STATUS</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span>
-            </div>
-            <div style={{ padding: '0' }}>
-              <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§1 — TRANSMISSION STATUS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span></div>
+            <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
           </div>
 
           {/* §2 Field Notes */}
-          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§2 — FIELD NOTES / DAILY OFFER</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span>
-            </div>
-            <div style={{ padding: '0' }}>
-              <FieldNotesEditor
-                initialOffer={profile.digital_offer ?? ''}
-                initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''}
-                initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false}
-              />
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§2 — FIELD NOTES / DAILY OFFER</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span></div>
+            <FieldNotesEditor
+              initialOffer={profile.digital_offer ?? ''}
+              initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''}
+              initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false}
+            />
           </div>
 
           {/* §3 Check-in panel */}
           {activeCheckins.length > 0 && (
-            <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-              <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span>§3 — ACTIVE CHECK-INS</span>
-                <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span>
-              </div>
-              <div style={{ padding: '0' }}>
-                <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
-              </div>
+            <div className="wo" style={WO}>
+              <div style={WO_HDR}><span>§3 — ACTIVE CHECK-INS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span></div>
+              <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
             </div>
           )}
 
           {/* §4 Upcoming agenda */}
-          <div className="wo" style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§4 — UPCOMING AGENDA</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span>
-            </div>
-            <div style={{ padding: '0' }}>
-              <UpcomingAgenda markets={upcomingMarkets} />
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§4 — UPCOMING AGENDA</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span></div>
+            <UpcomingAgenda markets={upcomingMarkets} />
           </div>
 
           {/* §5 Recent attendance */}
-          <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§5 — RECENT ATTENDANCE</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
-            </div>
-            <div style={{ padding: '0' }}>
-              <RecentAttendance attendance={recentAttendance} />
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§5 — RECENT ATTENDANCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span></div>
+            <RecentAttendance attendance={recentAttendance} />
           </div>
 
           {/* §6 Field Kit */}
-          <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>§6 — FIELD KIT · STALL CARD</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span>
-            </div>
+          <div className="wo" style={WO}>
+            <div style={WO_HDR}><span>§6 — FIELD KIT · STALL CARD</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span></div>
             <FieldKit
               displayName={profile.display_name}
               slug={profile.slug ?? null}
@@ -248,6 +224,15 @@ export default async function MakerDashboardPage() {
               instagramHandle={profile.instagram_handle ?? null}
               priceRange={(profile.bio_i18n as any)?._price_range ?? null}
             />
+          </div>
+
+          {/* §7 Hidden Gems */}
+          <div className="wo" style={{ ...WO, margin: '12px 12px 12px' }}>
+            <div style={WO_HDR}>
+              <span>§7 — HIDDEN GEMS · SUBMIT A RECOMMENDATION</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-007</span>
+            </div>
+            <GemSubmissionForm spaces={spaces} existingGems={existingGems} />
           </div>
 
         </div>
