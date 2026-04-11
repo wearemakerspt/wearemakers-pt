@@ -66,14 +66,14 @@ export interface NearbyGem {
   category: string
   description: string | null
   address: string | null
-  distance_metres: number
+  distance_metres: number | null
   vetted_by_name: string
   vetted_by_slug: string | null
 }
 
 export interface MarketsByMonth {
-  monthKey: string        // e.g. "2026-04"
-  monthLabel: string      // e.g. "APRIL 2026"
+  monthKey: string
+  monthLabel: string
   isCurrentMonth: boolean
   markets: MarketSummary[]
 }
@@ -168,10 +168,6 @@ export async function getAllMarkets(): Promise<MarketSummary[]> {
     .sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
 }
 
-/**
- * Markets grouped by month — for the /markets calendar view.
- * Returns only scheduled/live markets from today onwards.
- */
 export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
@@ -193,7 +189,6 @@ export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
 
   const now = new Date()
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-
   const monthMap = new Map<string, MarketSummary[]>()
 
   for (const m of data as any[]) {
@@ -260,9 +255,55 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
   if (!markets || markets.length === 0) return null
 
   const m = markets[0] as any
+  const spaceId = m.space?.id
 
-  const { data: gems } = await supabase
-    .rpc('gems_near_space', { p_space_id: m.space?.id, radius_metres: 500 })
+  // ── Hybrid gems fetch ─────────────────────────────────────
+  // 1. Try gems_near_space() PostGIS function (uses real coordinates)
+  // 2. Fall back to direct near_space_id match (for gems with missing coords)
+  let gems: NearbyGem[] = []
+
+  if (spaceId) {
+    const { data: rpcGems } = await supabase
+      .rpc('gems_near_space', { p_space_id: spaceId, radius_metres: 600 })
+
+    if (rpcGems && rpcGems.length > 0) {
+      // PostGIS found gems within radius
+      gems = rpcGems.map((g: any) => ({
+        gem_id: g.gem_id,
+        gem_name: g.gem_name,
+        category: g.category,
+        description: g.description ?? null,
+        address: g.address ?? null,
+        distance_metres: Math.round(g.distance_metres),
+        vetted_by_name: g.vetted_by_name ?? '',
+        vetted_by_slug: g.vetted_by_slug ?? null,
+      }))
+    } else {
+      // Fallback: fetch by near_space_id directly (no distance calc)
+      const { data: fallbackGems } = await supabase
+        .from('gems')
+        .select(`
+          id, name, category, description, address, lat, lng,
+          vetted_by:profiles!gems_vetted_by_fkey (display_name, slug)
+        `)
+        .eq('near_space_id', spaceId)
+        .eq('is_approved', true)
+        .order('name')
+
+      if (fallbackGems && fallbackGems.length > 0) {
+        gems = fallbackGems.map((g: any) => ({
+          gem_id: g.id,
+          gem_name: g.name,
+          category: g.category,
+          description: g.description ?? null,
+          address: g.address ?? null,
+          distance_metres: null, // no coords available
+          vetted_by_name: g.vetted_by?.display_name ?? '',
+          vetted_by_slug: g.vetted_by?.slug ?? null,
+        }))
+      }
+    }
+  }
 
   return {
     id: m.id,
@@ -287,15 +328,57 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
       stall_label: a.stall_label ?? null,
       checked_in_at: a.checked_in_at,
     })),
-    gems: (gems ?? []).map((g: any) => ({
-      gem_id: g.gem_id,
-      gem_name: g.gem_name,
-      category: g.category,
-      description: g.description ?? null,
-      address: g.address ?? null,
-      distance_metres: Math.round(g.distance_metres),
-      vetted_by_name: g.vetted_by_name,
-      vetted_by_slug: g.vetted_by_slug ?? null,
-    })),
+    gems,
   }
+}
+
+// ── All approved gems — for /gems directory ───────────────────
+
+export interface GemWithSpace {
+  id: string
+  name: string
+  category: string
+  description: string | null
+  address: string | null
+  lat: number | null
+  lng: number | null
+  distance_metres: number | null
+  space_id: string
+  space_name: string
+  space_parish: string | null
+  vetted_by_name: string
+  vetted_by_slug: string | null
+}
+
+export async function getAllGems(): Promise<GemWithSpace[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('gems')
+    .select(`
+      id, name, category, description, address, lat, lng,
+      near_space_id,
+      space:spaces!gems_near_space_id_fkey (id, name, parish),
+      vetted_by:profiles!gems_vetted_by_fkey (display_name, slug)
+    `)
+    .eq('is_approved', true)
+    .order('name')
+
+  if (error || !data) return []
+
+  return (data as any[]).map(g => ({
+    id: g.id,
+    name: g.name,
+    category: g.category,
+    description: g.description ?? null,
+    address: g.address ?? null,
+    lat: g.lat ?? null,
+    lng: g.lng ?? null,
+    distance_metres: null,
+    space_id: g.space?.id ?? g.near_space_id ?? '',
+    space_name: g.space?.name ?? '',
+    space_parish: g.space?.parish ?? null,
+    vetted_by_name: g.vetted_by?.display_name ?? '',
+    vetted_by_slug: g.vetted_by?.slug ?? null,
+  }))
 }

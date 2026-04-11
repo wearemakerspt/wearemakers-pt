@@ -39,7 +39,7 @@ export default async function MarketDetailPage({ params }: Props) {
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 
         {/* Dark header */}
-        <div style={{ background: '#181614', padding: '16px 16px', borderBottom: '3px solid #181614' }}>
+        <div style={{ background: '#181614', padding: '16px', borderBottom: '3px solid #181614' }}>
           <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '6px' }}>
             {market.space.name.toUpperCase()} · {(market.space.parish ?? '').toUpperCase()}
           </div>
@@ -47,7 +47,7 @@ export default async function MarketDetailPage({ params }: Props) {
             {market.title}
           </div>
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, fontSize: '15px', color: 'rgba(240,236,224,.7)' }}>
-            Today {market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
+            {new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} · {market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
           </div>
           {market.space.address && (
             <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', color: 'rgba(240,236,224,.45)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '4px' }}>
@@ -66,15 +66,23 @@ export default async function MarketDetailPage({ params }: Props) {
           >
             DIRECTIONS →
           </a>
-          {user && (
-            <Link
-              href="/auth/login"
-              style={{ flex: 1, fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '12px 8px', background: '#f0ece0', color: '#181614', textDecoration: 'none', textAlign: 'center', display: 'block' }}
-            >
-              + ADD TO PLAN
-            </Link>
-          )}
+          <Link
+            href="/gems"
+            style={{ flex: 1, fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '12px 8px', background: '#f0ece0', color: '#181614', textDecoration: 'none', textAlign: 'center', display: 'block' }}
+          >
+            HIDDEN GEMS →
+          </Link>
         </div>
+
+        {/* Status badge */}
+        {isLive && (
+          <div style={{ background: '#1a5c30', padding: '8px 16px', borderBottom: '3px solid #181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#fff' }}>
+              OPEN NOW · {market.checkin_count} MAKERS LIVE
+            </span>
+          </div>
+        )}
 
         {/* Makers checked in */}
         <div>
@@ -99,23 +107,22 @@ export default async function MarketDetailPage({ params }: Props) {
               <Link
                 key={mk.maker_id}
                 href={`/brands/${mk.maker_slug ?? mk.maker_id}`}
-                style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '12px', alignItems: 'center', padding: '12px 14px', borderBottom: '2px solid #181614', background: '#f0ece0', transition: 'background 0.06s' }}
-                className="hover:bg-parchment-2"
+                style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '12px', alignItems: 'center', padding: '12px 14px', borderBottom: '2px solid #181614', background: '#f0ece0' }}
               >
-                {/* Avatar */}
                 <div style={{ width: '44px', height: '44px', flexShrink: 0, background: '#181614', border: '3px solid #181614', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '16px', color: '#c8291a', overflow: 'hidden', position: 'relative' }}>
                   {mk.avatar_url
                     ? <img src={mk.avatar_url} alt={mk.maker_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                     : mk.maker_name.slice(0, 2).toUpperCase()
                   }
                 </div>
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
                     <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1 }}>
                       {mk.maker_name}
                     </div>
-                    {mk.is_verified && <span className="badge-pro">✦ PRO</span>}
+                    {mk.is_verified && (
+                      <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#181614', border: '1px solid #181614', padding: '1px 5px' }}>✦ PRO</span>
+                    )}
                   </div>
                   {mk.stall_label && (
                     <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', color: 'rgba(24,22,20,.38)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -144,10 +151,10 @@ export default async function MarketDetailPage({ params }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614' }}>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ width: '3px', height: '12px', background: '#c8291a', display: 'inline-block' }} />
-                HIDDEN GEMS
+                HIDDEN GEMS NEARBY
               </div>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', color: '#c8291a', fontWeight: 700 }}>
-                {market.gems.length} NEARBY
+                {market.gems.length} PLACES
               </div>
             </div>
             {market.gems.map(g => (
@@ -156,25 +163,32 @@ export default async function MarketDetailPage({ params }: Props) {
                   {GEM_ICONS[g.category] ?? '◈'}
                 </div>
                 <div style={{ padding: '10px 12px', flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
                     <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614' }}>
                       {g.gem_name}
                     </div>
-                    <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, border: '2px solid #181614', padding: '1px 6px', color: '#181614' }}>
-                      {g.distance_metres}m
-                    </span>
+                    {g.distance_metres !== null && (
+                      <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, border: '1px solid rgba(24,22,20,.3)', padding: '1px 6px', color: 'rgba(24,22,20,.5)' }}>
+                        {g.distance_metres}m
+                      </span>
+                    )}
                   </div>
                   {g.description && (
-                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '12px', color: 'rgba(24,22,20,.5)', lineHeight: 1.4, fontStyle: 'italic' }}>
+                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '12px', color: 'rgba(24,22,20,.5)', lineHeight: 1.4, fontStyle: 'italic', marginBottom: '3px' }}>
                       {g.description}
                     </div>
                   )}
-                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(24,22,20,.32)', marginTop: '3px', letterSpacing: '0.06em' }}>
+                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(24,22,20,.32)', letterSpacing: '0.06em' }}>
                     rec by {g.vetted_by_name}
                   </div>
                 </div>
               </div>
             ))}
+            <div style={{ padding: '12px 16px', borderBottom: '2px solid #181614', background: '#e8e0d0' }}>
+              <Link href="/gems" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c8291a', textDecoration: 'none' }}>
+                SEE ALL HIDDEN GEMS →
+              </Link>
+            </div>
           </div>
         )}
 

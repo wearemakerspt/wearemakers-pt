@@ -298,10 +298,6 @@ export async function toggleOffer(formData: FormData) {
 
 // ── Hidden Gems Submission ────────────────────────────────────
 
-/**
- * Maker submits a Hidden Gem for admin approval.
- * Gem is created with is_approved = false and goes into admin §6 queue.
- */
 export async function submitGem(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
   const category = formData.get('category') as string
@@ -339,8 +335,26 @@ export async function submitGem(formData: FormData) {
     lat: lat ?? 0,
     lng: lng ?? 0,
     vetted_by: user.id,
-    is_approved: false, // goes into admin approval queue
+    is_approved: false,
   })
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/maker')
+  return { success: true }
+}
+
+// ── Hidden Gems Delete ────────────────────────────────────────
+
+export async function deleteGem(gemId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('gems')
+    .delete()
+    .eq('id', gemId)
+    .eq('vetted_by', user.id)
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/maker')
