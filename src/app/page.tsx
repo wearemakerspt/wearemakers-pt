@@ -3,8 +3,10 @@ import Link from 'next/link'
 import { getLiveMarkets, getAllMarkets } from '@/lib/queries/markets'
 import { getAllBrands } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
+import { getCuratorSpotlights } from '@/lib/queries/spotlight'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
+import SpotlightCarousel from '@/components/ui/SpotlightCarousel'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,11 +30,12 @@ function formatDate() {
 }
 
 export default async function HomePage() {
-  const [liveMarkets, allMarkets, allBrands, user] = await Promise.all([
+  const [liveMarkets, allMarkets, allBrands, user, curatorCards] = await Promise.all([
     getLiveMarkets(),
     getAllMarkets(),
     getAllBrands(),
     getCurrentUser(),
+    getCuratorSpotlights(),
   ])
 
   const greeting = getGreeting()
@@ -98,6 +101,11 @@ export default async function HomePage() {
             ))}
           </section>
         )}
+
+        {/* ── Spotlight Carousel — WAM TOP 20 + Curator picks ── */}
+        <div style={{ padding: '0 14px' }}>
+          <SpotlightCarousel curatorCards={curatorCards} />
+        </div>
 
         {/* ── Live Brands scroll ── */}
         {liveBrands.length > 0 && (

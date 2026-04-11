@@ -54,11 +54,11 @@ export default function SpotlightPins({ slots: initialSlots, searchableMakers }:
 
       <div style={{ borderLeft: '3px solid var(--RED)', paddingLeft: '10px', marginBottom: '14px' }}>
         <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6 }}>
-          Pin up to 3 makers to the homepage spotlight carousel. {pinnedCount}/3 slots used.
+          Pin up to 20 makers to the homepage spotlight carousel. {pinnedCount}/20 slots used.
         </div>
       </div>
 
-      {/* 3 slots */}
+      {/* 20 slots */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
         {slots.map(slot => (
           <div key={slot.position} style={{ border: `2px solid ${slot.pinned ? 'var(--INK)' : 'rgba(24,22,20,.2)'}`, background: slot.pinned ? 'var(--INK)' : 'var(--P2)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -101,7 +101,7 @@ export default function SpotlightPins({ slots: initialSlots, searchableMakers }:
       {pinningTo !== null && (
         <div style={{ border: '2px solid var(--INK)', background: 'var(--P2)', padding: '12px' }}>
           <div style={{ ...T, fontWeight: 700, color: 'rgba(24,22,20,.5)', marginBottom: '8px' }}>
-            PINNING TO SLOT {pinningTo} — SEARCH MAKERS
+            PINNING TO SLOT {String(pinningTo).padStart(2, '0')} — SEARCH MAKERS
           </div>
           <input
             type="text"
