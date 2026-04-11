@@ -4,6 +4,7 @@ import { getLiveMarkets, getAllMarkets } from '@/lib/queries/markets'
 import { getAllBrands } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { getCuratorSpotlights } from '@/lib/queries/spotlight'
+import { getAllArticles } from '@/lib/queries/journal'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import SpotlightCarousel from '@/components/ui/SpotlightCarousel'
@@ -29,18 +30,51 @@ function formatDate() {
   }).toUpperCase()
 }
 
+// ── Weather ──────────────────────────────────────────────────────────────────
+// Open-Meteo, free, no API key, Lisbon coords
+async function getLisbonWeather(): Promise<{ temp: number; message: string } | null> {
+  try {
+    const res = await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=38.7169&longitude=-9.1395&current=temperature_2m,weather_code&timezone=Europe/Lisbon',
+      { next: { revalidate: 1800 } } // cache 30 min
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const temp = Math.round(data.current.temperature_2m)
+    const code = data.current.weather_code as number
+
+    let message: string
+    if (code <= 2) {
+      message = 'Perfect day for the markets.'
+    } else if (code <= 51) {
+      message = 'Check if your market is live before heading out.'
+    } else {
+      message = "It's raining in Lisbon. Confirm your market is live today."
+    }
+
+    return { temp, message }
+  } catch {
+    return null
+  }
+}
+
 export default async function HomePage() {
-  const [liveMarkets, allMarkets, allBrands, user, curatorCards] = await Promise.all([
+  const [liveMarkets, allMarkets, allBrands, user, curatorCards, articles, weather] = await Promise.all([
     getLiveMarkets(),
     getAllMarkets(),
     getAllBrands(),
     getCurrentUser(),
     getCuratorSpotlights(),
+    getAllArticles(),
+    getLisbonWeather(),
   ])
 
   const greeting = getGreeting()
   const liveBrands = allBrands.filter(b => b.is_live)
   const scheduledMarkets = allMarkets.filter(m => m.status === 'scheduled').slice(0, 4)
+  const latestArticles = articles.slice(0, 2)
+
+  const T = { fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase' as const }
 
   return (
     <>
@@ -62,6 +96,38 @@ export default async function HomePage() {
           </Link>
           <span className="greeting-prefs">SET PREFERENCES</span>
         </div>
+
+        {/* ── Weather strip ── */}
+        {weather && (
+          <div style={{
+            borderBottom: '3px solid var(--INK)',
+            background: 'var(--INK)',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--TAG)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'rgba(240,236,224,.35)',
+              flexShrink: 0,
+            }}>
+              LISBON · {weather.temp}°C
+            </div>
+            <div style={{ width: '1px', height: '12px', background: 'rgba(240,236,224,.15)', flexShrink: 0 }} />
+            <div style={{
+              fontFamily: 'var(--MONO)',
+              fontSize: '12px',
+              color: 'rgba(240,236,224,.6)',
+              lineHeight: 1.4,
+            }}>
+              {weather.message}
+            </div>
+          </div>
+        )}
 
         {/* ── Live markets ── */}
         {liveMarkets.length > 0 && (
@@ -174,15 +240,157 @@ export default async function HomePage() {
           </div>
         )}
 
+        {/* ── Journal teaser ── */}
+        {latestArticles.length > 0 && (
+          <section>
+            <div style={{ padding: '14px 14px 0', borderTop: '3px solid var(--INK)', borderBottom: '2px solid var(--INK)' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ ...T, color: 'var(--INK)', opacity: 0.38, marginBottom: '4px' }}>FROM THE JOURNAL</div>
+                  <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: 'var(--INK)' }}>
+                    NEIGHBOURHOOD LOOPS
+                  </div>
+                </div>
+                <Link href="/journal" style={{ ...T, fontSize: '10px', color: 'var(--INK)', opacity: 0.5, textDecoration: 'none' }}>
+                  ALL ARTICLES →
+                </Link>
+              </div>
+            </div>
+            {latestArticles.map((article, i) => (
+              <Link
+                key={article.id}
+                href={`/journal/${article.slug}`}
+                style={{ textDecoration: 'none', display: 'block', borderBottom: '2px solid var(--INK)' }}
+              >
+                <div style={{
+                  padding: '14px',
+                  background: i === 0 ? 'var(--P)' : 'var(--P2)',
+                  display: 'flex',
+                  gap: '14px',
+                  alignItems: 'flex-start',
+                }}>
+                  <span style={{
+                    fontFamily: 'var(--LOGO)',
+                    fontWeight: 900,
+                    fontSize: '48px',
+                    color: 'rgba(24,22,20,.07)',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                    width: '48px',
+                    textAlign: 'right',
+                  }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...T, fontSize: '9px', color: 'var(--RED)', fontWeight: 700, marginBottom: '5px' }}>
+                      {article.kicker}
+                    </div>
+                    <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.95, color: 'var(--INK)', marginBottom: '6px' }}>
+                      {article.title}
+                    </div>
+                    <div style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'rgba(24,22,20,.5)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                      {article.dek}
+                    </div>
+                  </div>
+                  <div style={{ ...T, fontSize: '14px', color: 'rgba(24,22,20,.2)', flexShrink: 0, alignSelf: 'center' }}>→</div>
+                </div>
+              </Link>
+            ))}
+          </section>
+        )}
+
         {/* ── Footer CTA ── */}
         <div style={{ background: 'var(--INK)', padding: '32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '11px', color: 'rgba(240,236,224,.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             REGISTER YOUR BRAND — IT'S FREE
           </div>
-          <Link href="/auth/register" className="btn-red">
+          <Link href="/welcome/maker" className="btn-red">
             JOIN WEAREMAKERS.PT →
           </Link>
         </div>
+
+        {/* ── Footer ── */}
+        <footer style={{ background: 'var(--INK)', borderTop: '1px solid rgba(240,236,224,.08)', padding: '32px 16px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '28px', marginBottom: '28px' }}>
+
+            {/* Brand */}
+            <div>
+              <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--RED)', marginBottom: '6px' }}>
+                WEAREMAKERS<span style={{ color: 'rgba(240,236,224,.4)' }}>.PT</span>
+              </div>
+              <div style={{ fontFamily: 'var(--MONO)', fontSize: '11px', color: 'rgba(240,236,224,.3)', lineHeight: 1.6, marginBottom: '12px' }}>
+                The real Lisbon isn't behind glass.
+              </div>
+              <a href="mailto:info@wearemakers.pt" style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.25)', textDecoration: 'none' }}>
+                info@wearemakers.pt
+              </a>
+            </div>
+
+            {/* Platform */}
+            <div>
+              <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(240,236,224,.2)', marginBottom: '12px' }}>
+                PLATFORM
+              </div>
+              {[
+                { label: 'Live Markets', href: '/markets' },
+                { label: 'All Brands', href: '/brands' },
+                { label: 'The Journal', href: '/journal' },
+                { label: 'My Circuit', href: '/circuit' },
+              ].map(l => (
+                <Link key={l.href} href={l.href} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.35)', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Join */}
+            <div>
+              <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(240,236,224,.2)', marginBottom: '12px' }}>
+                JOIN
+              </div>
+              {[
+                { label: 'I\'m a Maker', href: '/welcome/maker' },
+                { label: 'I\'m a Curator', href: '/welcome/curator' },
+                { label: 'I have a Space', href: '/espacos' },
+                { label: 'For Makers & Curators', href: '/pitch' },
+              ].map(l => (
+                <Link key={l.href} href={l.href} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.35)', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Contact */}
+            <div>
+              <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(240,236,224,.2)', marginBottom: '12px' }}>
+                CONTACT
+              </div>
+              {[
+                { label: 'General', href: 'mailto:info@wearemakers.pt' },
+                { label: 'Spaces & Parishes', href: 'mailto:espacos@wearemakers.pt' },
+                { label: 'Press', href: 'mailto:press@wearemakers.pt' },
+              ].map(l => (
+                <a key={l.href} href={l.href} style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.35)', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div style={{ borderTop: '1px solid rgba(240,236,224,.06)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)' }}>
+              © 2026 WEAREMAKERS.PT — LISBON, PORTUGAL
+            </div>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              {['Privacy', 'Terms', 'Instagram'].map(l => (
+                <span key={l} style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)', cursor: 'pointer' }}>
+                  {l}
+                </span>
+              ))}
+            </div>
+          </div>
+        </footer>
 
       </div>
     </>
