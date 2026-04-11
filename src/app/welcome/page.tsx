@@ -1,26 +1,16 @@
 'use client'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const GRAIN = `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
 
 export default function WelcomePage() {
   const router = useRouter()
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    // If already welcomed, skip to homepage
-    if (localStorage.getItem('wam_welcomed')) {
-      router.replace('/')
-      return
-    }
-    // Fade in
-    const t = setTimeout(() => setVisible(true), 80)
-    return () => clearTimeout(t)
-  }, [router])
 
   function handleRole(role: 'visitor' | 'maker' | 'curator') {
-    localStorage.setItem('wam_welcomed', '1')
+    // Mark as welcomed so splash doesn't trigger again
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wam_welcomed', '1')
+    }
     if (role === 'visitor') {
       router.push('/')
     } else {
@@ -29,7 +19,9 @@ export default function WelcomePage() {
   }
 
   function handleExplore() {
-    localStorage.setItem('wam_welcomed', '1')
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wam_welcomed', '1')
+    }
     router.push('/')
   }
 
@@ -39,8 +31,6 @@ export default function WelcomePage() {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       padding: '32px 24px',
-      opacity: visible ? 1 : 0,
-      transition: 'opacity 0.5s ease',
       zIndex: 99999,
     }}>
 
@@ -124,7 +114,6 @@ export default function WelcomePage() {
                   cursor: 'pointer',
                   textAlign: 'left',
                   boxShadow: btn.primary ? '4px 4px 0 0 rgba(232,52,26,0.3)' : 'none',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
                 onMouseEnter={e => {
                   if (!btn.primary) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(240,235,225,0.5)'
@@ -164,13 +153,13 @@ export default function WelcomePage() {
             textTransform: 'uppercase',
             color: 'rgba(240,235,225,0.25)',
             textAlign: 'left',
-            transition: 'color 0.15s',
           }}
           onMouseEnter={e => (e.currentTarget.style.color = 'rgba(240,235,225,0.5)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'rgba(240,235,225,0.25)')}
         >
           Just explore the app →
         </button>
+
       </div>
     </div>
   )
