@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import SplashScreen from '@/components/ui/SplashScreen'
+import MobileTabBar from '@/components/ui/MobileTabBar'
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body>
         <SplashScreen />
         {children}
+	<MobileTabBar />
       </body>
     </html>
   )

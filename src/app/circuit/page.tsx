@@ -14,38 +14,58 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-function formatTime(t: string) { return t.slice(0, 5) }
+const GEM_ICONS: Record<string, string> = {
+  coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈'
+}
 
 export default async function CircuitPage() {
   const user = await getCurrentUser()
   const supabase = await createClient()
 
   let savedBrands: any[] = []
+  let savedGems: any[] = []
 
   if (user) {
-    const { data } = await supabase
-      .from('saved_brands')
-      .select(`
-        brand_id,
-        saved_at,
-        brand:profiles (
-          id, display_name, slug, bio, bio_i18n,
-          instagram_handle, is_verified, digital_offer, avatar_url,
-          attendance (
-            id, checked_out_at,
-            market:markets (
-              id, event_date, starts_at, ends_at, status,
-              space:spaces ( name, parish )
+    const [brandsRes, gemsRes] = await Promise.all([
+      supabase
+        .from('saved_brands')
+        .select(`
+          brand_id,
+          saved_at,
+          brand:profiles (
+            id, display_name, slug, bio, bio_i18n,
+            instagram_handle, is_verified, digital_offer, avatar_url,
+            attendance (
+              id, checked_out_at,
+              market:markets (
+                id, event_date, starts_at, ends_at, status,
+                space:spaces ( name, parish )
+              )
             )
           )
-        )
-      `)
-      .eq('visitor_id', user.id)
-      .order('saved_at', { ascending: false })
+        `)
+        .eq('visitor_id', user.id)
+        .order('saved_at', { ascending: false }),
 
-    savedBrands = (data ?? []).map((row: any) => {
+      supabase
+        .from('saved_gems')
+        .select(`
+          gem_id,
+          saved_at,
+          gem:gems (
+            id, name, category, description, address,
+            near_space_id,
+            space:spaces ( name, parish )
+          )
+        `)
+        .eq('visitor_id', user.id)
+        .order('saved_at', { ascending: false }),
+    ])
+
+    const today = new Date().toISOString().split('T')[0]
+
+    savedBrands = (brandsRes.data ?? []).map((row: any) => {
       const brand = row.brand
-      const today = new Date().toISOString().split('T')[0]
       const liveCheckin = (brand?.attendance ?? []).find((a: any) =>
         !a.checked_out_at &&
         a.market?.event_date === today &&
@@ -60,6 +80,10 @@ export default async function CircuitPage() {
         saved_at: row.saved_at,
       }
     }).filter(Boolean)
+
+    savedGems = (gemsRes.data ?? [])
+      .map((row: any) => row.gem)
+      .filter(Boolean)
   }
 
   const liveNow = savedBrands.filter(b => b.is_live)
@@ -87,10 +111,9 @@ export default async function CircuitPage() {
           <div style={{ display: 'flex', gap: 0, borderTop: '1px solid rgba(240,236,224,.1)', paddingTop: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'BRANDS', value: savedBrands.length, active: liveNow.length > 0, sub: liveNow.length > 0 ? `${liveNow.length} LIVE NOW` : 'SAVED' },
-              { label: 'MARKETS', value: 0, sub: 'COMING SOON' },
-              { label: 'GEMS', value: 0, sub: 'COMING SOON' },
+              { label: 'GEMS', value: savedGems.length, active: false, sub: 'SAVED PLACES' },
             ].map((s, i) => (
-              <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 2 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
+              <div key={i} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 1 ? '1px solid rgba(240,236,224,.1)' : 'none' }}>
                 <div style={{ fontFamily: 'var(--MONO)', fontWeight: 800, fontSize: '28px', color: s.active ? 'var(--RED)' : 'var(--P)', lineHeight: 1 }}>
                   {s.value}
                 </div>
@@ -127,17 +150,14 @@ export default async function CircuitPage() {
                 </Link>
               </div>
             </div>
-
-            {/* What is the Circuit */}
             <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', background: 'var(--P)', padding: '16px' }}>
               <div style={{ ...T, fontWeight: 700, color: 'var(--INK)', marginBottom: '14px' }}>WHAT IS THE CIRCUIT?</div>
               {[
                 { icon: '♥', label: 'SAVE BRANDS', desc: 'Tap ♡ on any brand profile to save them to your Circuit.' },
-                { icon: '📍', label: 'SAVE MARKETS', desc: 'Save markets to your agenda — get notified when they open.' },
                 { icon: '◆', label: 'SAVE GEMS', desc: 'Hidden cafés, studios and bars recommended by makers.' },
                 { icon: '🔔', label: 'GET NOTIFIED', desc: 'Push notifications when saved brands go live. Never miss them.' },
               ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', gap: '14px', paddingBottom: '12px', marginBottom: '12px', borderBottom: i < 3 ? '1px dashed rgba(24,22,20,.15)' : 'none' }}>
+                <div key={i} style={{ display: 'flex', gap: '14px', paddingBottom: '12px', marginBottom: '12px', borderBottom: i < 2 ? '1px dashed rgba(24,22,20,.15)' : 'none' }}>
                   <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '24px', width: '32px', flexShrink: 0, lineHeight: 1 }}>{item.icon}</div>
                   <div>
                     <div style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--INK)', marginBottom: '3px' }}>{item.label}</div>
@@ -150,17 +170,22 @@ export default async function CircuitPage() {
         )}
 
         {/* ── Empty circuit ── */}
-        {user && savedBrands.length === 0 && (
+        {user && savedBrands.length === 0 && savedGems.length === 0 && (
           <div style={{ margin: '12px', border: '3px solid var(--INK)', background: 'var(--P)', padding: '32px 20px', textAlign: 'center', boxShadow: 'var(--SHD-SM)' }}>
             <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', color: 'rgba(24,22,20,.15)', marginBottom: '12px' }}>
               YOUR CIRCUIT IS EMPTY
             </div>
             <div style={{ fontFamily: 'var(--MONO)', fontSize: '15px', color: 'rgba(24,22,20,.45)', lineHeight: 1.6, marginBottom: '20px', maxWidth: '360px', margin: '0 auto 20px' }}>
-              Browse brands and tap ♡ to save them here. You'll be notified when they go live at a market.
+              Browse brands and tap ♡ to save them. Discover hidden gems and save your favourites.
             </div>
-            <Link href="/brands" style={{ ...T, fontWeight: 700, fontSize: '11px', color: 'var(--P)', background: 'var(--INK)', border: '3px solid var(--INK)', padding: '12px 22px', textDecoration: 'none', display: 'inline-block', boxShadow: 'var(--SHD)' }}>
-              BROWSE BRANDS →
-            </Link>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/brands" style={{ ...T, fontWeight: 700, fontSize: '11px', color: 'var(--P)', background: 'var(--INK)', border: '3px solid var(--INK)', padding: '12px 22px', textDecoration: 'none', display: 'inline-block', boxShadow: 'var(--SHD)' }}>
+                BROWSE BRANDS →
+              </Link>
+              <Link href="/gems" style={{ ...T, fontWeight: 700, fontSize: '11px', color: 'var(--INK)', background: 'transparent', border: '3px solid var(--INK)', padding: '12px 22px', textDecoration: 'none', display: 'inline-block' }}>
+                DISCOVER GEMS →
+              </Link>
+            </div>
           </div>
         )}
 
@@ -177,7 +202,7 @@ export default async function CircuitPage() {
 
         {/* ── Not live ── */}
         {notLive.length > 0 && (
-          <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
             <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>NOT HERE TODAY</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>{notLive.length} TRACKED</span>
@@ -186,14 +211,62 @@ export default async function CircuitPage() {
           </div>
         )}
 
+        {/* ── Saved Gems ── */}
+        {savedGems.length > 0 && (
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>◆ MY GEMS</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>{savedGems.length} SAVED</span>
+            </div>
+            {savedGems.map((gem: any) => {
+              const googleQuery = encodeURIComponent(`${gem.name}${gem.address ? ', ' + gem.address : ''}, Lisbon`)
+              const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${googleQuery}`
+
+              return (
+                <div key={gem.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderBottom: '2px solid rgba(24,22,20,.1)', background: 'var(--P)' }}>
+                  <div style={{ width: '44px', height: '44px', flexShrink: 0, background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                    {GEM_ICONS[gem.category] ?? '◈'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1, marginBottom: '3px' }}>
+                      {gem.name}
+                    </div>
+                    <div style={{ fontFamily: 'var(--TAG)', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)' }}>
+                      {gem.category.toUpperCase()} · NEAR {(gem.space as any)?.name?.toUpperCase() ?? ''}
+                    </div>
+                    {gem.description && (
+                      <div style={{ fontFamily: 'var(--MONO)', fontSize: '12px', color: 'rgba(24,22,20,.5)', fontStyle: 'italic', marginTop: '3px' }}>
+                        {gem.description}
+                      </div>
+                    )}
+                  </div>
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontFamily: 'var(--TAG)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--INK)', border: '1px solid rgba(24,22,20,.2)', padding: '5px 10px', textDecoration: 'none', flexShrink: 0 }}
+                  >
+                    MAP →
+                  </a>
+                </div>
+              )
+            })}
+            <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(24,22,20,.08)' }}>
+              <Link href="/gems" style={{ fontFamily: 'var(--TAG)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--RED)', textDecoration: 'none' }}>
+                DISCOVER MORE GEMS →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* ── Discover more ── */}
         {user && (
-          <div style={{ margin: '0 12px 12px', padding: '14px', borderTop: 'none', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ margin: '12px 12px 12px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <Link href="/brands" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--INK)', background: 'var(--P)', border: '2px solid var(--INK)', padding: '10px 16px', textDecoration: 'none', display: 'inline-block' }}>
               DISCOVER BRANDS →
             </Link>
-            <Link href="/markets" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'rgba(24,22,20,.5)', background: 'transparent', border: '2px solid rgba(24,22,20,.2)', padding: '10px 16px', textDecoration: 'none', display: 'inline-block' }}>
-              BROWSE MARKETS →
+            <Link href="/gems" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'rgba(24,22,20,.5)', background: 'transparent', border: '2px solid rgba(24,22,20,.2)', padding: '10px 16px', textDecoration: 'none', display: 'inline-block' }}>
+              DISCOVER GEMS →
             </Link>
           </div>
         )}
@@ -205,7 +278,6 @@ export default async function CircuitPage() {
 
 function BrandRow({ brand, userId }: { brand: any; userId: string | null }) {
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
-  const initials = brand.display_name.slice(0, 2).toUpperCase()
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 14px', borderBottom: '2px solid rgba(24,22,20,.1)', background: brand.is_live ? 'rgba(200,41,26,.03)' : 'var(--P)' }}>
@@ -213,7 +285,7 @@ function BrandRow({ brand, userId }: { brand: any; userId: string | null }) {
         <div style={{ width: '52px', height: '52px', background: 'var(--INK)', border: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', color: 'var(--RED)', position: 'relative', overflow: 'hidden' }}>
           {brand.avatar_url
             ? <img src={brand.avatar_url} alt={brand.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            : initials}
+            : brand.display_name.slice(0, 2).toUpperCase()}
           {brand.is_live && (
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'var(--GRN)', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '7px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff', padding: '2px 4px', textAlign: 'center' }}>LIVE</div>
           )}
