@@ -26,6 +26,13 @@ export interface Profile {
   is_verified: boolean
   verified_since: string | null
   digital_offer: string | null
+  // Approval gate — added Session 5
+  is_approved: boolean
+  applied_at: string | null
+  // Curator organisation fields — added Session 5
+  organisation_name: string | null
+  organisation_role: string | null
+  organisation_url: string | null
   created_at: string
   updated_at: string
 }
@@ -129,19 +136,18 @@ export interface CuratorFeaturedMaker {
 }
 
 // ── Journal ───────────────────────────────────────────────────
-// These types back the `journal_articles` table added in the journal migration.
 export interface JournalArticle {
   id: string
-  slug: string                // URL path: /journal/the-arroios-maker-loop
+  slug: string
   title: string
-  kicker: string              // e.g. "NEIGHBORHOOD LOOPS"
-  dek: string                 // Sub-headline / standfirst
-  lede: string                // Opening paragraph (displayed large)
-  body_md: string             // Full article body in Markdown
+  kicker: string
+  dek: string
+  lede: string
+  body_md: string
   pull_quote: string | null
   author_name: string
   cover_image_url: string | null
-  featured_makers: string[]   // Array of maker slugs mentioned
+  featured_makers: string[]
   tags: string[]
   is_published: boolean
   published_at: string | null
