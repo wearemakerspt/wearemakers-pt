@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
 import SiteHeader from '@/components/ui/SiteHeader'
 import AdminSpaces from '@/components/dashboard/admin/AdminSpaces'
 import AdminMakers from '@/components/dashboard/admin/AdminMakers'
@@ -27,12 +26,6 @@ export default async function AdminDashboardPage() {
 
   const supabase = await createClient()
 
-  // Service role client — bypasses RLS for admin-only queries
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
   const [
     spacesRes,
     makersRes,
@@ -43,13 +36,28 @@ export default async function AdminDashboardPage() {
     top20Res,
   ] = await Promise.all([
     supabase.from('spaces').select('*').order('name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
-    supabase.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
-    supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
-    // Use service client for gems — bypasses RLS to show pending gems from all makers
-    serviceClient.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
-    supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
+    supabase.from('profiles')
+      .select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n')
+      .in('role', ['maker', 'admin'])
+      .order('display_name'),
+    supabase.from('profiles')
+      .select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at')
+      .in('role', ['curator'])
+      .order('display_name'),
+    supabase.from('markets')
+      .select('*, space:spaces(name), curator:profiles(id, display_name)')
+      .order('event_date', { ascending: false }),
+    supabase.from('profiles')
+      .select('id, display_name, created_at')
+      .in('role', ['visitor'])
+      .order('created_at', { ascending: false }),
+    // No joins on gems — avoids RLS blocking nested profile select
+    supabase.from('gems')
+      .select('id, name, category, description, address, lat, lng, is_approved, vetted_by, near_space_id, created_at')
+      .order('created_at', { ascending: false }),
+    supabase.from('wam_top20')
+      .select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)')
+      .order('position'),
   ])
 
   const spaces = spacesRes.data ?? []
@@ -57,13 +65,20 @@ export default async function AdminDashboardPage() {
   const curators = curatorsRes.data ?? []
   const markets = marketsRes.data ?? []
   const visitors = visitorsRes.data ?? []
-  const gems = gemsRes.data ?? []
   const top20 = top20Res.data ?? []
 
+  // Manually enrich gems with space name and vetted_by name
+  const rawGems = gemsRes.data ?? []
+  const spaceMap = new Map(spaces.map((s: any) => [s.id, s.name]))
+  const makerMap = new Map([...makers, ...curators].map((p: any) => [p.id, p.display_name]))
+  const gems = rawGems.map((g: any) => ({
+    ...g,
+    space: { name: spaceMap.get(g.near_space_id) ?? '', id: g.near_space_id },
+    vetted_by: { display_name: makerMap.get(g.vetted_by) ?? g.vetted_by?.slice(0, 8) ?? '' },
+  }))
+
   const searchableMakers = makers
-
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
-
   const pendingMakers = makers.filter((m: any) => !m.is_approved)
   const pendingCurators = curators.filter((c: any) => !c.is_approved)
   const pendingGems = gems.filter((g: any) => !g.is_approved)
@@ -82,7 +97,6 @@ export default async function AdminDashboardPage() {
             WAM ADMIN
           </h1>
 
-          {/* Stats strip */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '2px solid rgba(240,236,224,.1)', overflow: 'hidden' }}>
             {[
               { label: 'SPACES', value: spaces.length },
@@ -105,7 +119,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Sections */}
         <div style={{ padding: '12px' }}>
 
           <Section num="§1" title="SPACES & LOCATIONS" ref_code="ADM-001">
