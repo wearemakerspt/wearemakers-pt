@@ -10,6 +10,7 @@ import UpcomingAgenda from '@/components/dashboard/UpcomingAgenda'
 import RecentAttendance from '@/components/dashboard/RecentAttendance'
 import BrandProfileEditor from '@/components/dashboard/BrandProfileEditor'
 import FieldKit from '@/components/dashboard/FieldKit'
+import PendingApproval from '@/components/dashboard/PendingApproval'
 
 export const metadata: Metadata = {
   title: 'Field Transmitter — Maker Dashboard',
@@ -24,6 +25,18 @@ export default async function MakerDashboardPage() {
   if (user.profile?.role !== 'maker' && user.profile?.role !== 'admin') redirect('/')
 
   const profile = user.profile!
+
+  // ── Approval gate ──────────────────────────────────────────
+  // Admins bypass. Makers must be approved before accessing dashboard.
+  if (profile.role !== 'admin' && !profile.is_approved) {
+    return (
+      <PendingApproval
+        role="maker"
+        displayName={profile.display_name ?? 'Maker'}
+      />
+    )
+  }
+
   const { activeCheckins, recentAttendance, upcomingMarkets } = await getMakerDashboardData(user.id)
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
@@ -108,7 +121,7 @@ export default async function MakerDashboardPage() {
         {/* ── Work order sections ── */}
         <div style={{ padding: '0' }}>
 
-          {/* Onboarding banner — shown when profile is incomplete */}
+          {/* Onboarding banner */}
           {!isProfileComplete && (
             <div style={{ margin: '12px 12px 0', border: '3px solid var(--RED)', background: 'rgba(200,41,26,.06)', padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -120,17 +133,11 @@ export default async function MakerDashboardPage() {
                   <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6, marginBottom: '12px' }}>
                     Visitors can't find you until your profile is complete. Fill in §0 below to appear on the platform.
                   </div>
-                  {/* Progress bar */}
                   <div style={{ marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.5)' }}>PROFILE STRENGTH</span>
-                      <span style={{ fontFamily: 'var(--TAG)', fontSize: '10px', fontWeight: 700, color: 'var(--RED)' }}>{profileCompleteness}/4</span>
-                    </div>
                     <div style={{ height: '4px', background: 'rgba(24,22,20,.1)', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${(profileCompleteness / 4) * 100}%`, background: profileCompleteness >= 3 ? 'var(--GRN)' : 'var(--RED)', transition: 'width .3s' }} />
                     </div>
                   </div>
-                  {/* Checklist */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {[
                       { label: 'Bio — describe your work', done: !!profile.bio },
@@ -218,17 +225,15 @@ export default async function MakerDashboardPage() {
           </div>
 
           {/* §5 Recent attendance */}
-          {true && (
-            <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
-              <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span>§5 — RECENT ATTENDANCE</span>
-                <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
-              </div>
-              <div style={{ padding: '0' }}>
-                <RecentAttendance attendance={recentAttendance} />
-              </div>
+          <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div className="wo-hdr" style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', borderBottom: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>§5 — RECENT ATTENDANCE</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span>
             </div>
-          )}
+            <div style={{ padding: '0' }}>
+              <RecentAttendance attendance={recentAttendance} />
+            </div>
+          </div>
 
           {/* §6 Field Kit */}
           <div className="wo" style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>

@@ -8,6 +8,7 @@ import MarketLedger from '@/components/dashboard/MarketLedger'
 import SpotlightPins from '@/components/dashboard/SpotlightPins'
 import ActivityLog from '@/components/dashboard/ActivityLog'
 import PromoKit from '@/components/dashboard/PromoKit'
+import PendingApproval from '@/components/dashboard/PendingApproval'
 
 export const metadata: Metadata = {
   title: 'Command Center — Curator Dashboard',
@@ -22,6 +23,18 @@ export default async function CuratorDashboardPage() {
   if (!['curator', 'admin'].includes(user.profile?.role ?? '')) redirect('/')
 
   const profile = user.profile!
+
+  // ── Approval gate ──────────────────────────────────────────
+  // Admins bypass. Curators must be approved before accessing dashboard.
+  if (profile.role !== 'admin' && !profile.is_approved) {
+    return (
+      <PendingApproval
+        role="curator"
+        displayName={profile.display_name ?? 'Curator'}
+      />
+    )
+  }
+
   const { ownMarkets, spaces, featuredSlots, recentActivityLog, searchableMakers } =
     await getCuratorDashboardData(user.id)
 
@@ -31,7 +44,6 @@ export default async function CuratorDashboardPage() {
   const totalCheckins = ownMarkets.reduce((sum, m) => sum + m.checkin_count, 0)
   const featuredCount = featuredSlots.filter(s => s.pinned !== null).length
 
-  // Live makers across all live markets (for Promo Kit)
   const liveMakers = liveNow.flatMap(m => m.attending_makers)
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
@@ -72,7 +84,7 @@ export default async function CuratorDashboardPage() {
               { label: 'LIVE NOW', value: liveNow.length, sub: liveNow.length > 0 ? liveNow.map(m => m.space.name).join(' · ') : 'NONE ACTIVE', highlight: liveNow.length > 0 },
               { label: 'TODAY', value: todayMarkets.length, sub: todayMarkets.length > 0 ? todayMarkets.map(m => m.space.name).join(' · ') : 'NO MARKETS' },
               { label: 'TOTAL CHECK-INS', value: totalCheckins, sub: 'ALL MARKETS' },
-              { label: "CURATOR'S CHOICE", value: `${featuredCount}/3`, sub: featuredCount === 3 ? 'SPOTLIGHT FULL' : 'SLOTS AVAILABLE' },
+              { label: "CURATOR'S CHOICE", value: `${featuredCount}/20`, sub: featuredCount === 20 ? 'SPOTLIGHT FULL' : 'SLOTS AVAILABLE' },
             ].map((stat, i) => (
               <div key={i} style={{ flex: 1, padding: '10px 14px', borderRight: '2px solid rgba(240,236,224,.1)', minWidth: '80px' }}>
                 <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '24px', lineHeight: 1, marginBottom: '4px', color: stat.highlight ? 'var(--RED)' : 'var(--P)' }}>
