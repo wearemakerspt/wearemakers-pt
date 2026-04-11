@@ -71,33 +71,26 @@ export interface NearbyGem {
   vetted_by_slug: string | null
 }
 
+export interface MarketsByMonth {
+  monthKey: string        // e.g. "2026-04"
+  monthLabel: string      // e.g. "APRIL 2026"
+  isCurrentMonth: boolean
+  markets: MarketSummary[]
+}
+
 // ── Queries ────────────────────────────────────────────────────
 
-/**
- * All markets with status live or community_live today.
- * Used on the homepage Live Now section.
- */
 export async function getLiveMarkets(): Promise<LiveMarket[]> {
   const supabase = await createClient()
 
   const { data: markets, error } = await supabase
     .from('markets')
     .select(`
-      id,
-      title,
-      status,
-      starts_at,
-      ends_at,
-      space:spaces (
-        id, name, address, parish, lat, lng
-      ),
-      curator:profiles!markets_curator_id_fkey (
-        id, display_name, slug
-      ),
+      id, title, status, starts_at, ends_at,
+      space:spaces (id, name, address, parish, lat, lng),
+      curator:profiles!markets_curator_id_fkey (id, display_name, slug),
       attendance (
-        id,
-        stall_label,
-        checked_in_at,
+        id, stall_label, checked_in_at,
         maker:profiles!attendance_maker_id_fkey (
           id, display_name, slug, instagram_handle,
           avatar_url, is_verified, digital_offer
@@ -137,10 +130,6 @@ export async function getLiveMarkets(): Promise<LiveMarket[]> {
   }))
 }
 
-/**
- * All markets — for the /markets directory.
- * Returns live + scheduled + community_live, sorted by status then date.
- */
 export async function getAllMarkets(): Promise<MarketSummary[]> {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
@@ -161,7 +150,7 @@ export async function getAllMarkets(): Promise<MarketSummary[]> {
   if (error || !data) return []
 
   const statusOrder: Record<string, number> = {
-    live: 0, community_live: 1, scheduled: 2, cancelled: 3
+    live: 0, community_live: 1, scheduled: 2, cancelled: 3,
   }
 
   return (data as any[])
@@ -180,15 +169,69 @@ export async function getAllMarkets(): Promise<MarketSummary[]> {
 }
 
 /**
- * Single market with full maker list and nearby gems.
+ * Markets grouped by month — for the /markets calendar view.
+ * Returns only scheduled/live markets from today onwards.
  */
+export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
+  const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('markets')
+    .select(`
+      id, title, status, event_date, starts_at, ends_at,
+      space:spaces (id, name, address, parish, lat, lng),
+      curator:profiles!markets_curator_id_fkey (id, display_name, slug),
+      attendance (id)
+    `)
+    .in('status', ['live', 'community_live', 'scheduled'])
+    .gte('event_date', today)
+    .order('event_date', { ascending: true })
+    .limit(120)
+
+  if (error || !data) return []
+
+  const now = new Date()
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+  const monthMap = new Map<string, MarketSummary[]>()
+
+  for (const m of data as any[]) {
+    const [year, month] = m.event_date.split('-')
+    const key = `${year}-${month}`
+    if (!monthMap.has(key)) monthMap.set(key, [])
+    monthMap.get(key)!.push({
+      id: m.id,
+      title: m.title,
+      status: m.status,
+      event_date: m.event_date,
+      starts_at: m.starts_at,
+      ends_at: m.ends_at,
+      checkin_count: m.attendance?.length ?? 0,
+      space: m.space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
+      curator: m.curator ?? null,
+    })
+  }
+
+  const result: MarketsByMonth[] = []
+  for (const [key, markets] of monthMap.entries()) {
+    const [year, month] = key.split('-')
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1)
+    result.push({
+      monthKey: key,
+      monthLabel: date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }).toUpperCase(),
+      isCurrentMonth: key === currentMonthKey,
+      markets,
+    })
+  }
+
+  return result
+}
+
 export async function getMarketBySlug(slug: string): Promise<MarketDetail | null> {
   const supabase = await createClient()
 
-  // slug format: {space-slug}--{date}  e.g. lx-factory--2026-04-12
-  // OR just market id as fallback
   const parts = slug.split('--')
-  const spaceSlug = parts[0]
   const eventDate = parts[1]
 
   let query = supabase
@@ -218,7 +261,6 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
 
   const m = markets[0] as any
 
-  // Fetch nearby gems via function
   const { data: gems } = await supabase
     .rpc('gems_near_space', { p_space_id: m.space?.id, radius_metres: 500 })
 
