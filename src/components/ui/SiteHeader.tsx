@@ -8,6 +8,8 @@ interface Props {
 }
 
 export default function SiteHeader({ user, liveCount = 0 }: Props) {
+  const role = user?.profile?.role
+
   return (
     <header id="masthead" style={{ display: 'flex' }}>
       {/* Logo */}
@@ -24,6 +26,7 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
 
       {/* Right cells */}
       <div className="mh-right">
+
         {/* Live counter */}
         <Link href="/" className="mh-cell live-cell">
           <span className="pdot" />
@@ -35,21 +38,32 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
           MARKETS
         </Link>
 
-        {/* Circuit */}
-        <Link href="/circuit" className="mh-cell">
-          CIRCUIT
+        {/* Brands */}
+        <Link href="/brands" className="mh-cell">
+          BRANDS
         </Link>
 
-        {/* Brands */}
-        <Link href="/brands" className="mh-cell" style={{ display: 'none' }}>
-          BRANDS
+        {/* Journal */}
+        <Link href="/journal" className="mh-cell">
+          JOURNAL
+        </Link>
+
+        {/* Circuit — only when logged in or always visible */}
+        <Link href="/circuit" className="mh-cell">
+          CIRCUIT
         </Link>
 
         {/* Auth */}
         {user ? (
           <>
             <Link
-              href={`/dashboard/${user.profile?.role === 'curator' ? 'curator' : 'maker'}`}
+              href={
+                role === 'admin'
+                  ? '/dashboard/admin'
+                  : role === 'curator'
+                  ? '/dashboard/curator'
+                  : '/dashboard/maker'
+              }
               className="mh-cell"
             >
               {user.profile?.display_name?.split(' ')[0].toUpperCase() ?? 'DASHBOARD'}
@@ -61,9 +75,14 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
             </form>
           </>
         ) : (
-          <Link href="/auth/login" className="mh-cell inv">
-            ACCESS →
-          </Link>
+          <>
+            <Link href="/welcome" className="mh-cell">
+              JOIN
+            </Link>
+            <Link href="/auth/login" className="mh-cell inv">
+              ACCESS →
+            </Link>
+          </>
         )}
       </div>
     </header>

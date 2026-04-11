@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdmin } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
 async function getAdminClient() {
@@ -14,6 +13,7 @@ async function getAdminClient() {
 }
 
 // ── Spaces ─────────────────────────────────────────────────
+
 export async function createSpace(formData: FormData) {
   const { error, supabase, user } = await getAdminClient()
   if (error || !supabase) return { error }
@@ -37,11 +37,100 @@ export async function createSpace(formData: FormData) {
   return { success: true }
 }
 
+export async function toggleSpaceActive(spaceId: string, active: boolean) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('spaces').update({ is_active: active }).eq('id', spaceId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function deleteSpace(spaceId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('spaces').delete().eq('id', spaceId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+// ── Markets ────────────────────────────────────────────────
+
+export async function adminSetMarketStatus(marketId: string, status: string) {
+  const { error, supabase, user } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('markets').update({
+    status,
+    admin_override: true,
+    open_reason: 'admin_override',
+    opened_by: user!.id,
+    opened_at: new Date().toISOString(),
+  }).eq('id', marketId)
+  revalidatePath('/dashboard/admin')
+}
+
+export async function adminCreateMarket(formData: FormData) {
+  const { error, supabase, user } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const spaceId = formData.get('space_id') as string
+  const eventDate = formData.get('event_date') as string
+  const startsAt = formData.get('starts_at') as string
+  const endsAt = formData.get('ends_at') as string
+  const curatorId = (formData.get('curator_id') as string) || null
+  const status = (formData.get('status') as string) || 'scheduled'
+
+  if (!spaceId || !eventDate || !startsAt || !endsAt) {
+    return { error: 'Space, date and times are required' }
+  }
+
+  // Get space name for title
+  const { data: space } = await supabase.from('spaces').select('name').eq('id', spaceId).single()
+  const title = `${space?.name ?? 'Market'} — ${eventDate}`
+
+  const { error: e } = await supabase.from('markets').insert({
+    space_id: spaceId,
+    curator_id: curatorId,
+    title,
+    event_date: eventDate,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    status,
+    open_reason: status === 'live' ? 'admin_override' : null,
+    opened_by: status === 'live' ? user!.id : null,
+    opened_at: status === 'live' ? new Date().toISOString() : null,
+    admin_override: status === 'live',
+    checkin_threshold: 3,
+  })
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function adminAssignCurator(marketId: string, curatorId: string | null) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('markets').update({ curator_id: curatorId || null }).eq('id', marketId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function adminDeleteMarket(marketId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('markets').delete().eq('id', marketId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
 // ── Makers ─────────────────────────────────────────────────
+
 export async function toggleVerifiedBadge(makerId: string, verified: boolean) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
-  await supabase.from('profiles').update({ is_verified: verified, verified_since: verified ? new Date().toISOString() : null }).eq('id', makerId)
+  await supabase.from('profiles').update({
+    is_verified: verified,
+    verified_since: verified ? new Date().toISOString() : null,
+  }).eq('id', makerId)
   revalidatePath('/dashboard/admin')
 }
 
@@ -59,7 +148,27 @@ export async function deleteMaker(makerId: string) {
   revalidatePath('/dashboard/admin')
 }
 
+export async function approveMaker(makerId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('profiles').update({
+    is_approved: true,
+    is_active: true,
+  }).eq('id', makerId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function rejectMaker(makerId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('profiles').delete().eq('id', makerId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
 // ── Curators ───────────────────────────────────────────────
+
 export async function deleteCurator(curatorId: string) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
@@ -70,26 +179,33 @@ export async function deleteCurator(curatorId: string) {
 export async function assignCuratorToSpace(curatorId: string, spaceId: string) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
-  // Update markets to assign this curator to this space
-  await supabase.from('markets').update({ curator_id: curatorId }).eq('space_id', spaceId).is('curator_id', null)
+  await supabase.from('markets').update({ curator_id: curatorId })
+    .eq('space_id', spaceId)
+    .is('curator_id', null)
   revalidatePath('/dashboard/admin')
 }
 
-// ── Markets ────────────────────────────────────────────────
-export async function adminSetMarketStatus(marketId: string, status: string) {
-  const { error, supabase, user } = await getAdminClient()
+export async function approveCurator(curatorId: string) {
+  const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
-  await supabase.from('markets').update({
-    status,
-    admin_override: true,
-    open_reason: 'admin_override',
-    opened_by: user!.id,
-    opened_at: new Date().toISOString(),
-  }).eq('id', marketId)
+  await supabase.from('profiles').update({
+    is_approved: true,
+    is_active: true,
+  }).eq('id', curatorId)
   revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function rejectCurator(curatorId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('profiles').delete().eq('id', curatorId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
 }
 
 // ── Visitors ───────────────────────────────────────────────
+
 export async function deleteVisitor(visitorId: string) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
@@ -98,11 +214,11 @@ export async function deleteVisitor(visitorId: string) {
 }
 
 export async function downloadVisitorEmails() {
-  // Handled client-side in component
   return { success: true }
 }
 
 // ── Gems ───────────────────────────────────────────────────
+
 export async function approveGem(gemId: string) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
@@ -117,11 +233,47 @@ export async function rejectGem(gemId: string) {
   revalidatePath('/dashboard/admin')
 }
 
+export async function adminCreateGem(formData: FormData) {
+  const { error, supabase, user } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const name = (formData.get('name') as string)?.trim()
+  const spaceId = formData.get('space_id') as string
+  const category = formData.get('category') as string
+  const description = (formData.get('description') as string)?.trim()
+  const address = (formData.get('address') as string)?.trim()
+  const lat = parseFloat(formData.get('lat') as string)
+  const lng = parseFloat(formData.get('lng') as string)
+
+  if (!name || !spaceId || !category) return { error: 'Name, space and category are required' }
+
+  const { error: e } = await supabase.from('gems').insert({
+    name,
+    near_space_id: spaceId,
+    category,
+    description: description || null,
+    address: address || null,
+    lat: lat || 0,
+    lng: lng || 0,
+    vetted_by: user!.id,
+    is_approved: true, // Admin-created gems are auto-approved
+  })
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
 // ── WAM Top 20 ─────────────────────────────────────────────
+
 export async function setTop20(makerId: string, position: number) {
   const { error, supabase, user } = await getAdminClient()
   if (error || !supabase) return { error }
-  await supabase.from('wam_top20').upsert({ position, maker_id: makerId, pinned_by: user!.id, pinned_at: new Date().toISOString() }, { onConflict: 'position' })
+  await supabase.from('wam_top20').upsert({
+    position,
+    maker_id: makerId,
+    pinned_by: user!.id,
+    pinned_at: new Date().toISOString(),
+  }, { onConflict: 'position' })
   revalidatePath('/dashboard/admin')
   return { success: true }
 }
@@ -134,6 +286,7 @@ export async function removeTop20(position: number) {
 }
 
 // ── Push Notifications ─────────────────────────────────────
+
 export async function sendAdminPush(title: string, body: string, url: string) {
   const { error } = await getAdminClient()
   if (error) return { error, sent: 0 }
