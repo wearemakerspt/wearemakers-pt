@@ -40,18 +40,23 @@ export default async function MakerDashboardPage() {
 
   const supabase = await createClient()
 
-  // Fetch dashboard data + spaces + maker's gems in parallel
   const [{ activeCheckins, recentAttendance, upcomingMarkets }, spacesRes, gemsRes] = await Promise.all([
     getMakerDashboardData(user.id),
     supabase.from('spaces').select('id, name, parish').eq('is_active', true).order('name'),
     supabase.from('gems')
-      .select('id, name, category, description, is_approved, space:spaces(name)')
+      .select('id, name, category, description, is_approved, near_space_id')
       .eq('vetted_by', user.id)
       .order('is_approved', { ascending: false }),
   ])
 
-  const spaces = spacesRes.data ?? []
-  const existingGems = gemsRes.data ?? []
+  const spaces = (spacesRes.data ?? []) as { id: string; name: string; parish: string | null }[]
+
+  // Manually join space name for display
+  const spaceMap = new Map(spaces.map(s => [s.id, s.name]))
+  const existingGems = (gemsRes.data ?? []).map(g => ({
+    ...g,
+    space: { name: spaceMap.get(g.near_space_id) ?? '' },
+  }))
 
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
@@ -118,9 +123,7 @@ export default async function MakerDashboardPage() {
 
         {/* ── Field Protocol header ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.4 }}>
-            WORK ORDER — FIELD PROTOCOL
-          </div>
+          <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.4 }}>WORK ORDER — FIELD PROTOCOL</div>
           <div style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--INK)', opacity: 0.3 }}>
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}
           </div>
@@ -134,9 +137,7 @@ export default async function MakerDashboardPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                 <div style={{ flexShrink: 0, fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '32px', color: 'var(--RED)', lineHeight: 1 }}>!</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '6px' }}>
-                    COMPLETE YOUR PROFILE TO GO LIVE
-                  </div>
+                  <div style={{ fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--RED)', marginBottom: '6px' }}>COMPLETE YOUR PROFILE TO GO LIVE</div>
                   <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6, marginBottom: '12px' }}>
                     Visitors can't find you until your profile is complete. Fill in §0 below to appear on the platform.
                   </div>
@@ -163,76 +164,57 @@ export default async function MakerDashboardPage() {
             </div>
           )}
 
-          {/* §0 Brand Profile */}
-          <div className="wo" style={WO}>
+          {/* §0 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§0 — BRAND PROFILE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span></div>
-            <BrandProfileEditor
-              initialName={profile.display_name}
-              initialBio={profile.bio ?? null}
-              initialInstagram={profile.instagram_handle ?? null}
-              initialSlug={profile.slug ?? null}
-              initialCategory={(profile.bio_i18n as any)?._category ?? null}
-              initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
-              initialAvatarUrl={profile.avatar_url ?? null}
-              userId={profile.id}
-            />
+            <BrandProfileEditor initialName={profile.display_name} initialBio={profile.bio ?? null} initialInstagram={profile.instagram_handle ?? null} initialSlug={profile.slug ?? null} initialCategory={(profile.bio_i18n as any)?._category ?? null} initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null} initialAvatarUrl={profile.avatar_url ?? null} userId={profile.id} />
           </div>
 
-          {/* §1 Live Toggle */}
-          <div className="wo" style={WO}>
+          {/* §1 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§1 — TRANSMISSION STATUS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span></div>
             <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
           </div>
 
-          {/* §2 Field Notes */}
-          <div className="wo" style={WO}>
+          {/* §2 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§2 — FIELD NOTES / DAILY OFFER</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span></div>
-            <FieldNotesEditor
-              initialOffer={profile.digital_offer ?? ''}
-              initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''}
-              initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false}
-            />
+            <FieldNotesEditor initialOffer={profile.digital_offer ?? ''} initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''} initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false} />
           </div>
 
-          {/* §3 Check-in panel */}
+          {/* §3 */}
           {activeCheckins.length > 0 && (
-            <div className="wo" style={WO}>
+            <div style={WO}>
               <div style={WO_HDR}><span>§3 — ACTIVE CHECK-INS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span></div>
               <CheckInPanel activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
             </div>
           )}
 
-          {/* §4 Upcoming agenda */}
-          <div className="wo" style={WO}>
+          {/* §4 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§4 — UPCOMING AGENDA</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span></div>
             <UpcomingAgenda markets={upcomingMarkets} />
           </div>
 
-          {/* §5 Recent attendance */}
-          <div className="wo" style={WO}>
+          {/* §5 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§5 — RECENT ATTENDANCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span></div>
             <RecentAttendance attendance={recentAttendance} />
           </div>
 
-          {/* §6 Field Kit */}
-          <div className="wo" style={WO}>
+          {/* §6 */}
+          <div style={WO}>
             <div style={WO_HDR}><span>§6 — FIELD KIT · STALL CARD</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span></div>
-            <FieldKit
-              displayName={profile.display_name}
-              slug={profile.slug ?? null}
-              category={(profile.bio_i18n as any)?._category ?? null}
-              instagramHandle={profile.instagram_handle ?? null}
-              priceRange={(profile.bio_i18n as any)?._price_range ?? null}
-            />
+            <FieldKit displayName={profile.display_name} slug={profile.slug ?? null} category={(profile.bio_i18n as any)?._category ?? null} instagramHandle={profile.instagram_handle ?? null} priceRange={(profile.bio_i18n as any)?._price_range ?? null} />
           </div>
 
           {/* §7 Hidden Gems */}
-          <div className="wo" style={{ ...WO, margin: '12px 12px 12px' }}>
+          <div style={{ ...WO, margin: '12px 12px 12px' }}>
             <div style={WO_HDR}>
               <span>§7 — HIDDEN GEMS · SUBMIT A RECOMMENDATION</span>
               <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-007</span>
             </div>
-            <GemSubmissionForm spaces={spaces} existingGems={existingGems} />
+            <GemSubmissionForm spaces={spaces} existingGems={existingGems as any} />
           </div>
 
         </div>
