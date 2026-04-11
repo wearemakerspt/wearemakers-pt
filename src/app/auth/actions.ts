@@ -28,7 +28,7 @@ export async function signInWithPassword(formData: FormData) {
   redirect(next)
 }
 
-// ── Sign In with Magic Link (email OTP) ──────────────────────
+// ── Sign In with Magic Link ───────────────────────────────────
 
 export async function signInWithMagicLink(formData: FormData) {
   const email = formData.get('email') as string
@@ -53,26 +53,22 @@ export async function signInWithMagicLink(formData: FormData) {
   redirect(`/auth/login?error=${encodeURIComponent('✓ Check your email for a sign-in link.')}`)
 }
 
-// ── Generic signUp (legacy — used by old /auth/register) ─────
+// ── Generic signUp (legacy — /auth/register) ──────────────────
 
 export async function signUp(formData: FormData) {
   const role = (formData.get('role') as string) || 'visitor'
   return signUpWithRole(formData, role, '/auth/register')
 }
 
-// ── Visitor signUp ────────────────────────────────────────────
+// ── Role-specific signUps ─────────────────────────────────────
 
 export async function signUpVisitor(formData: FormData) {
   return signUpWithRole(formData, 'visitor', '/auth/register/visitor')
 }
 
-// ── Maker signUp ──────────────────────────────────────────────
-
 export async function signUpMaker(formData: FormData) {
   return signUpWithRole(formData, 'maker', '/auth/register/maker')
 }
-
-// ── Curator signUp ────────────────────────────────────────────
 
 export async function signUpCurator(formData: FormData) {
   return signUpWithRole(formData, 'curator', '/auth/register/curator')
@@ -87,8 +83,12 @@ async function signUpWithRole(
 ) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const displayName = formData.get('display_name') as string
-  const instagramHandle = formData.get('instagram_handle') as string
+  const displayName = (formData.get('display_name') as string)?.trim()
+  const instagramHandle = (formData.get('instagram_handle') as string)?.trim() || null
+
+  // Role-specific extra fields
+  const category = (formData.get('category') as string)?.trim() || null       // maker
+  const marketName = (formData.get('market_name') as string)?.trim() || null  // curator
 
   if (!email || !password || !displayName) {
     redirect(`${errorRedirectBase}?error=${encodeURIComponent('Please fill in all required fields.')}`)
@@ -109,6 +109,8 @@ async function signUpWithRole(
         full_name: displayName,
         instagram_handle: instagramHandle,
         requested_role: role,
+        category,       // stored in user metadata for reference
+        market_name: marketName,
       },
     },
   })
@@ -117,26 +119,43 @@ async function signUpWithRole(
     redirect(`${errorRedirectBase}?error=${encodeURIComponent(error.message)}`)
   }
 
-  // Auto-confirmed (email confirmation disabled in Supabase dev)
-  if (data.session) {
-    await supabase.from('profiles').upsert(
-      {
-        id: data.user!.id,
-        display_name: displayName,
-        instagram_handle: instagramHandle || null,
-        role: 'visitor', // Admin promotes to maker/curator after review
-      },
-      { onConflict: 'id', ignoreDuplicates: true }
-    )
+  // Auto-confirmed (email confirmation disabled in Supabase)
+  if (data.session && data.user) {
+    // Build bio_i18n with category pre-populated for makers
+    const bioI18n = category ? { _category: category } : undefined
+
+    const profileData: Record<string, any> = {
+      id: data.user.id,
+      display_name: displayName,
+      instagram_handle: instagramHandle,
+      role: 'visitor', // Admin promotes to maker/curator after review
+      is_approved: false,
+      applied_at: new Date().toISOString(),
+    }
+
+    if (bioI18n) profileData.bio_i18n = bioI18n
+
+    // Store market_name as private note in bio_i18n for curators
+    if (marketName && role === 'curator') {
+      profileData.bio_i18n = {
+        ...(profileData.bio_i18n ?? {}),
+        _market_name: marketName,
+      }
+    }
+
+    await supabase.from('profiles').upsert(profileData, {
+      onConflict: 'id',
+      ignoreDuplicates: false,
+    })
+
     revalidatePath('/', 'layout')
 
-    // Role-specific post-registration destination
-    if (role === 'maker') redirect('/dashboard/maker')
-    if (role === 'curator') redirect('/dashboard/curator')
-    redirect('/')
+    // After auto-confirm, show pending approval state
+    // (is_approved = false so dashboard will show pending screen)
+    redirect(`${errorRedirectBase}?success=1`)
   }
 
-  // Email confirmation required — show success state
+  // Email confirmation required
   redirect(`${errorRedirectBase}?success=1`)
 }
 
