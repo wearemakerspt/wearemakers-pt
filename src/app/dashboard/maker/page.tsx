@@ -15,6 +15,7 @@ import FieldKit from '@/components/dashboard/FieldKit'
 import PendingApproval from '@/components/dashboard/PendingApproval'
 import GemSubmissionForm from '@/components/dashboard/GemSubmissionForm'
 import MakerAnalytics from '@/components/dashboard/MakerAnalytics'
+import MakerLeads from '@/components/dashboard/MakerLeads'
 
 export const metadata: Metadata = {
   title: 'Field Transmitter — Maker Dashboard',
@@ -30,7 +31,6 @@ export default async function MakerDashboardPage() {
 
   const profile = user.profile!
 
-  // Approval gate
   if (profile.role !== 'admin' && !profile.is_approved) {
     return (
       <PendingApproval
@@ -47,6 +47,7 @@ export default async function MakerDashboardPage() {
     spacesRes,
     gemsRes,
     analytics,
+    leadsRes,
   ] = await Promise.all([
     getMakerDashboardData(user.id),
     supabase.from('spaces').select('id, name, parish').eq('is_active', true).order('name'),
@@ -55,15 +56,19 @@ export default async function MakerDashboardPage() {
       .eq('vetted_by', user.id)
       .order('is_approved', { ascending: false }),
     getMakerAnalytics(user.id),
+    supabase.from('brand_followers')
+      .select('email, opted_in_at')
+      .eq('brand_id', user.id)
+      .order('opted_in_at', { ascending: false }),
   ])
 
   const spaces = (spacesRes.data ?? []) as { id: string; name: string; parish: string | null }[]
-
   const spaceMap = new Map(spaces.map(s => [s.id, s.name]))
   const existingGems = (gemsRes.data ?? []).map(g => ({
     ...g,
     space: { name: spaceMap.get(g.near_space_id) ?? '' },
   }))
+  const leads = (leadsRes.data ?? []) as { email: string; opted_in_at: string }[]
 
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
@@ -180,37 +185,19 @@ export default async function MakerDashboardPage() {
           {/* §0 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§0 — BRAND PROFILE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span></div>
-            <BrandProfileEditor
-              initialName={profile.display_name}
-              initialBio={profile.bio ?? null}
-              initialInstagram={profile.instagram_handle ?? null}
-              initialSlug={profile.slug ?? null}
-              initialCategory={(profile.bio_i18n as any)?._category ?? null}
-              initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
-              initialAvatarUrl={profile.avatar_url ?? null}
-              userId={profile.id}
-            />
+            <BrandProfileEditor initialName={profile.display_name} initialBio={profile.bio ?? null} initialInstagram={profile.instagram_handle ?? null} initialSlug={profile.slug ?? null} initialCategory={(profile.bio_i18n as any)?._category ?? null} initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null} initialAvatarUrl={profile.avatar_url ?? null} userId={profile.id} />
           </div>
 
           {/* §1 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§1 — TRANSMISSION STATUS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span></div>
-            <LiveToggle
-              initialIsActive={isLive}
-              displayName={profile.display_name}
-              activeCheckins={activeCheckins}
-              todayMarkets={todayMarkets}
-            />
+            <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
           </div>
 
           {/* §2 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§2 — FIELD NOTES / DAILY OFFER</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span></div>
-            <FieldNotesEditor
-              initialOffer={profile.digital_offer ?? ''}
-              initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''}
-              initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false}
-            />
+            <FieldNotesEditor initialOffer={profile.digital_offer ?? ''} initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''} initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false} />
           </div>
 
           {/* §3 */}
@@ -236,31 +223,28 @@ export default async function MakerDashboardPage() {
           {/* §6 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§6 — FIELD KIT · STALL CARD</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span></div>
-            <FieldKit
-              displayName={profile.display_name}
-              slug={profile.slug ?? null}
-              category={(profile.bio_i18n as any)?._category ?? null}
-              instagramHandle={profile.instagram_handle ?? null}
-              priceRange={(profile.bio_i18n as any)?._price_range ?? null}
-            />
+            <FieldKit displayName={profile.display_name} slug={profile.slug ?? null} category={(profile.bio_i18n as any)?._category ?? null} instagramHandle={profile.instagram_handle ?? null} priceRange={(profile.bio_i18n as any)?._price_range ?? null} />
           </div>
 
           {/* §7 Hidden Gems */}
           <div style={WO}>
-            <div style={WO_HDR}>
-              <span>§7 — HIDDEN GEMS · SUBMIT A RECOMMENDATION</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-007</span>
-            </div>
+            <div style={WO_HDR}><span>§7 — HIDDEN GEMS · SUBMIT A RECOMMENDATION</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-007</span></div>
             <GemSubmissionForm spaces={spaces} existingGems={existingGems as any} />
           </div>
 
           {/* §8 Analytics */}
+          <div style={WO}>
+            <div style={WO_HDR}><span>§8 — REACH & ANALYTICS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-008</span></div>
+            <MakerAnalytics byMarket={analytics.byMarket} summary={analytics.summary} />
+          </div>
+
+          {/* §9 Email Leads */}
           <div style={{ ...WO, margin: '12px 12px 12px' }}>
             <div style={WO_HDR}>
-              <span>§8 — REACH & ANALYTICS</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-008</span>
+              <span>§9 — EMAIL LEADS · YOUR AUDIENCE</span>
+              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-009</span>
             </div>
-            <MakerAnalytics byMarket={analytics.byMarket} summary={analytics.summary} />
+            <MakerLeads leads={leads} brandName={profile.display_name} />
           </div>
 
         </div>
