@@ -3,7 +3,26 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import AvatarUpload from '@/components/dashboard/AvatarUpload'
+import FeaturedPhotoUpload from '@/components/dashboard/FeaturedPhotoUpload'
+import BrandGalleryUpload from '@/components/dashboard/BrandGalleryUpload'
+import BrandMembersEditor from '@/components/dashboard/BrandMembersEditor'
 import { saveBrandProfile } from '@/app/dashboard/maker/actions'
+
+interface Photo {
+  id: string
+  photo_url: string
+  caption: string
+  sort_order: number
+}
+
+interface Member {
+  id: string
+  name: string
+  role: string | null
+  photo_url: string | null
+  bio: string | null
+  sort_order: number
+}
 
 interface Props {
   initialName: string
@@ -13,6 +32,9 @@ interface Props {
   initialCategory?: string | null
   initialPriceRange?: string | null
   initialAvatarUrl?: string | null
+  initialFeaturedPhotoUrl?: string | null
+  initialPhotos?: Photo[]
+  initialMembers?: Member[]
   userId?: string
 }
 
@@ -25,15 +47,16 @@ const CATEGORIES = [
 ]
 
 export default function BrandProfileEditor({
-  initialName, initialBio, initialInstagram, initialSlug, initialCategory, initialPriceRange,
-  initialAvatarUrl, userId
+  initialName, initialBio, initialInstagram, initialSlug,
+  initialCategory, initialPriceRange, initialAvatarUrl,
+  initialFeaturedPhotoUrl, initialPhotos = [], initialMembers = [],
+  userId
 }: Props) {
   const router = useRouter()
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
-  // Multi-select up to 3 categories
   const [categories, setCategories] = useState<string[]>(() => {
     if (!initialCategory) return []
     return initialCategory.split(',').map(c => c.trim()).filter(Boolean)
@@ -42,21 +65,18 @@ export default function BrandProfileEditor({
   function toggleCategory(cat: string) {
     setCategories(prev => {
       if (prev.includes(cat)) return prev.filter(c => c !== cat)
-      if (prev.length >= 3) return prev // max 3
+      if (prev.length >= 3) return prev
       return [...prev, cat]
     })
   }
+
   const [priceRange, setPriceRange] = useState(initialPriceRange ?? '')
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [savedSlug, setSavedSlug] = useState(initialSlug)
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  // Track saved slug locally so VIEW PUBLIC PROFILE appears immediately after save
-  const [savedSlug, setSavedSlug] = useState(initialSlug)
-  const [savedCategory, setSavedCategory] = useState(
-    initialCategory ? initialCategory.split(',').map((c: string) => c.trim()).filter(Boolean) : [] as string[]
-  )
 
   async function handleSubmit(formData: FormData) {
     setError(null); setSaved(false)
@@ -65,10 +85,9 @@ export default function BrandProfileEditor({
       if (result?.error) { setError(result.error) }
       else {
         setSaved(true)
-        setSavedSlug(slug) // update immediately — VIEW PUBLIC PROFILE appears
-        setSavedCategory(categories)
+        setSavedSlug(slug)
         setTimeout(() => setSaved(false), 3000)
-        router.refresh() // re-render server components (onboarding banner updates)
+        router.refresh()
       }
     })
   }
@@ -82,9 +101,10 @@ export default function BrandProfileEditor({
     <div style={{ background: 'var(--P)', padding: '16px' }}>
       <form action={handleSubmit}>
 
-        {/* Avatar photo upload */}
+        {/* ── Logo / avatar ── */}
         {userId && (
           <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
+            <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '8px' }}>LOGO / AVATAR</div>
             <AvatarUpload
               currentUrl={avatarUrl ?? null}
               userId={userId}
@@ -94,7 +114,16 @@ export default function BrandProfileEditor({
           </div>
         )}
 
-        {/* Brand name */}
+        {/* ── Featured photo ── */}
+        {userId && (
+          <FeaturedPhotoUpload
+            currentUrl={initialFeaturedPhotoUrl ?? null}
+            userId={userId}
+            onUpload={() => {}}
+          />
+        )}
+
+        {/* ── Brand name ── */}
         <div style={dividerStyle}>
           <label style={labelStyle}>BRAND / DISPLAY NAME *</label>
           <input
@@ -112,7 +141,7 @@ export default function BrandProfileEditor({
           )}
         </div>
 
-        {/* Categories — up to 3 */}
+        {/* ── Categories ── */}
         <div style={dividerStyle}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '8px' }}>
             <label style={labelStyle}>CATEGORIES — WHAT DO YOU MAKE? (pick up to 3)</label>
@@ -150,14 +179,9 @@ export default function BrandProfileEditor({
               {categories.join(' · ')}
             </div>
           )}
-          {categories.length >= 3 && (
-            <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', marginTop: '4px' }}>
-              MAX 3 CATEGORIES REACHED
-            </div>
-          )}
         </div>
 
-        {/* Bio */}
+        {/* ── Bio ── */}
         <div style={dividerStyle}>
           <label style={labelStyle}>BIO — DESCRIBE YOUR WORK (shown to visitors)</label>
           <textarea
@@ -168,12 +192,12 @@ export default function BrandProfileEditor({
             placeholder="Hand-thrown stoneware from a studio in Mouraria. Each piece is unique."
             style={{ ...fieldStyle, borderBottom: 'none', border: '1px dashed rgba(24,22,20,.3)', padding: '10px 12px', resize: 'vertical', lineHeight: 1.6 }}
           />
-          <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', marginTop: '4px', textAlign: 'right' }}>
+          <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', marginTop: '4px', textAlign: 'right' as const }}>
             {bio.length} / 400
           </div>
         </div>
 
-        {/* Price range */}
+        {/* ── Price range ── */}
         <div style={dividerStyle}>
           <label style={labelStyle}>PRICE RANGE — TYPICAL PIECE</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -205,7 +229,7 @@ export default function BrandProfileEditor({
           )}
         </div>
 
-        {/* Instagram */}
+        {/* ── Instagram ── */}
         <div style={dividerStyle}>
           <label style={labelStyle}>INSTAGRAM HANDLE</label>
           <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dashed rgba(24,22,20,.3)' }}>
@@ -222,8 +246,8 @@ export default function BrandProfileEditor({
 
         <input type="hidden" name="slug" value={slug} />
 
-        {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        {/* ── Save button ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px dashed rgba(24,22,20,.15)' }}>
           <button
             type="submit"
             disabled={isPending || !name}
@@ -240,15 +264,25 @@ export default function BrandProfileEditor({
           {error && <span style={{ ...T, fontWeight: 700, color: 'var(--RED)' }}>✗ {error}</span>}
         </div>
 
-        {initialSlug && (
-          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed rgba(24,22,20,.15)' }}>
-            <a href={`/brands/${initialSlug}`} target="_blank"
+        {savedSlug && (
+          <div style={{ marginBottom: '20px' }}>
+            <a href={`/brands/${savedSlug}`} target="_blank"
               style={{ ...T, color: 'var(--RED)', textDecoration: 'none', fontWeight: 700 }}>
               VIEW PUBLIC PROFILE →
             </a>
           </div>
         )}
       </form>
+
+      {/* ── Photo gallery — outside form, manages its own state ── */}
+      {userId && (
+        <BrandGalleryUpload brandId={userId} initialPhotos={initialPhotos} />
+      )}
+
+      {/* ── Team members — outside form, manages its own state ── */}
+      {userId && (
+        <BrandMembersEditor brandId={userId} initialMembers={initialMembers} />
+      )}
     </div>
   )
 }

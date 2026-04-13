@@ -47,16 +47,13 @@ export default async function BrandsPage() {
           {/* Filter pills */}
           <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none', padding: '12px 0 0', flexWrap: 'nowrap' }}>
             {CATEGORIES.slice(0, 6).map((cat, i) => (
-              <span
-                key={cat}
-                style={{
-                  fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
-                  letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
-                  border: '2px solid #181614', background: i === 0 ? '#c8291a' : '#f0ece0',
-                  color: i === 0 ? '#fff' : '#181614', marginRight: '6px', marginBottom: '10px',
-                  display: 'inline-block', flexShrink: 0, cursor: 'pointer',
-                }}
-              >{i === 0 ? '● LIVE NOW' : cat}</span>
+              <span key={cat} style={{
+                fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
+                letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
+                border: '2px solid #181614', background: i === 0 ? '#c8291a' : '#f0ece0',
+                color: i === 0 ? '#fff' : '#181614', marginRight: '6px', marginBottom: '10px',
+                display: 'inline-block', flexShrink: 0, cursor: 'pointer',
+              }}>{i === 0 ? '● LIVE NOW' : cat}</span>
             ))}
           </div>
         </div>
@@ -67,24 +64,17 @@ export default async function BrandsPage() {
             <BrandCard key={b.id} brand={b} view="grid" />
           ))}
           {/* Join CTA card */}
-          <Link
-            href="/auth/register"
-            style={{ textDecoration: 'none', background: '#181614', borderRight: '2px solid #181614', borderBottom: '2px solid #181614', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', aspectRatio: 'auto', minHeight: '120px' }}
-          >
+          <Link href="/auth/register" style={{ textDecoration: 'none', background: '#181614', borderRight: '2px solid #181614', borderBottom: '2px solid #181614', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', minHeight: '120px' }}>
             <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', fontWeight: 700, color: 'rgba(240,236,224,.4)', letterSpacing: '0.12em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.5, marginBottom: '8px' }}>
               SELL AT<br />LISBON<br />MARKETS?
             </div>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              JOIN FREE →
-            </div>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.1em', textTransform: 'uppercase' }}>JOIN FREE →</div>
           </Link>
         </div>
 
         {brands.length === 0 && (
           <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)' }}>
-              No brands registered yet.
-            </div>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)' }}>No brands registered yet.</div>
           </div>
         )}
       </main>

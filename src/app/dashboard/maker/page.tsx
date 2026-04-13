@@ -48,6 +48,8 @@ export default async function MakerDashboardPage() {
     gemsRes,
     analytics,
     leadsRes,
+    photosRes,
+    membersRes,
   ] = await Promise.all([
     getMakerDashboardData(user.id),
     supabase.from('spaces').select('id, name, parish').eq('is_active', true).order('name'),
@@ -60,6 +62,14 @@ export default async function MakerDashboardPage() {
       .select('email, opted_in_at')
       .eq('brand_id', user.id)
       .order('opted_in_at', { ascending: false }),
+    supabase.from('brand_photos')
+      .select('id, photo_url, caption, sort_order')
+      .eq('brand_id', user.id)
+      .order('sort_order'),
+    supabase.from('brand_members')
+      .select('id, name, role, photo_url, bio, sort_order')
+      .eq('brand_id', user.id)
+      .order('sort_order'),
   ])
 
   const spaces = (spacesRes.data ?? []) as { id: string; name: string; parish: string | null }[]
@@ -69,6 +79,8 @@ export default async function MakerDashboardPage() {
     space: { name: spaceMap.get(g.near_space_id) ?? '' },
   }))
   const leads = (leadsRes.data ?? []) as { email: string; opted_in_at: string }[]
+  const photos = (photosRes.data ?? []) as { id: string; photo_url: string; caption: string; sort_order: number }[]
+  const members = (membersRes.data ?? []) as { id: string; name: string; role: string | null; photo_url: string | null; bio: string | null; sort_order: number }[]
 
   const todayStr = new Date().toISOString().split('T')[0]
   const todayMarkets = upcomingMarkets.filter(um => um.market.event_date === todayStr)
@@ -182,25 +194,37 @@ export default async function MakerDashboardPage() {
             </div>
           )}
 
-          {/* §0 */}
+          {/* §0 Brand Profile */}
           <div style={WO}>
             <div style={WO_HDR}><span>§0 — BRAND PROFILE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-000</span></div>
-            <BrandProfileEditor initialName={profile.display_name} initialBio={profile.bio ?? null} initialInstagram={profile.instagram_handle ?? null} initialSlug={profile.slug ?? null} initialCategory={(profile.bio_i18n as any)?._category ?? null} initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null} initialAvatarUrl={profile.avatar_url ?? null} userId={profile.id} />
+            <BrandProfileEditor
+              initialName={profile.display_name}
+              initialBio={profile.bio ?? null}
+              initialInstagram={profile.instagram_handle ?? null}
+              initialSlug={profile.slug ?? null}
+              initialCategory={(profile.bio_i18n as any)?._category ?? null}
+              initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
+              initialAvatarUrl={profile.avatar_url ?? null}
+              initialFeaturedPhotoUrl={(profile as any).featured_photo_url ?? null}
+              initialPhotos={photos}
+              initialMembers={members}
+              userId={profile.id}
+            />
           </div>
 
-          {/* §1 */}
+          {/* §1 Transmission Status */}
           <div style={WO}>
             <div style={WO_HDR}><span>§1 — TRANSMISSION STATUS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span></div>
             <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
           </div>
 
-          {/* §2 */}
+          {/* §2 Field Notes */}
           <div style={WO}>
             <div style={WO_HDR}><span>§2 — FIELD NOTES / DAILY OFFER</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span></div>
             <FieldNotesEditor initialOffer={profile.digital_offer ?? ''} initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''} initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false} />
           </div>
 
-          {/* §3 */}
+          {/* §3 Active Check-ins */}
           {activeCheckins.length > 0 && (
             <div style={WO}>
               <div style={WO_HDR}><span>§3 — ACTIVE CHECK-INS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span></div>
@@ -208,19 +232,19 @@ export default async function MakerDashboardPage() {
             </div>
           )}
 
-          {/* §4 */}
+          {/* §4 Upcoming Agenda */}
           <div style={WO}>
             <div style={WO_HDR}><span>§4 — UPCOMING AGENDA</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span></div>
             <UpcomingAgenda markets={upcomingMarkets} />
           </div>
 
-          {/* §5 */}
+          {/* §5 Recent Attendance */}
           <div style={WO}>
             <div style={WO_HDR}><span>§5 — RECENT ATTENDANCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span></div>
             <RecentAttendance attendance={recentAttendance} />
           </div>
 
-          {/* §6 */}
+          {/* §6 Field Kit */}
           <div style={WO}>
             <div style={WO_HDR}><span>§6 — FIELD KIT · STALL CARD</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span></div>
             <FieldKit displayName={profile.display_name} slug={profile.slug ?? null} category={(profile.bio_i18n as any)?._category ?? null} instagramHandle={profile.instagram_handle ?? null} priceRange={(profile.bio_i18n as any)?._price_range ?? null} />
@@ -240,10 +264,7 @@ export default async function MakerDashboardPage() {
 
           {/* §9 Email Leads */}
           <div style={{ ...WO, margin: '12px 12px 12px' }}>
-            <div style={WO_HDR}>
-              <span>§9 — EMAIL LEADS · YOUR AUDIENCE</span>
-              <span style={{ opacity: 0.3, fontSize: '9px' }}>FP-009</span>
-            </div>
+            <div style={WO_HDR}><span>§9 — EMAIL LEADS · YOUR AUDIENCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-009</span></div>
             <MakerLeads leads={leads} brandName={profile.display_name} />
           </div>
 

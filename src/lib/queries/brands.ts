@@ -10,6 +10,7 @@ export interface BrandSummary {
   bio_i18n: Record<string, string>
   instagram_handle: string | null
   avatar_url: string | null
+  featured_photo_url: string | null
   is_verified: boolean
   digital_offer: string | null
   is_live: boolean
@@ -52,7 +53,7 @@ export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
     .from('profiles')
     .select(`
       id, display_name, slug, bio, bio_i18n,
-      instagram_handle, avatar_url, is_verified, digital_offer,
+      instagram_handle, avatar_url, featured_photo_url, is_verified, digital_offer,
       attendance (
         id, checked_out_at,
         market:markets (
@@ -83,6 +84,7 @@ export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
       bio_i18n: p.bio_i18n ?? {},
       instagram_handle: p.instagram_handle,
       avatar_url: p.avatar_url,
+      featured_photo_url: p.featured_photo_url ?? null,
       is_verified: p.is_verified,
       digital_offer: p.digital_offer,
       is_live: !!liveAttendance,
@@ -102,7 +104,7 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     .from('profiles')
     .select(`
       id, display_name, slug, bio, bio_i18n,
-      instagram_handle, avatar_url, is_verified, digital_offer,
+      instagram_handle, avatar_url, featured_photo_url, is_verified, digital_offer,
       attendance (
         id, checked_out_at,
         market:markets (
@@ -124,7 +126,6 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     ['live', 'community_live'].includes(a.market?.status)
   )
 
-  // Upcoming markets (next 30 days, scheduled/live)
   const upcoming = (p.attendance ?? [])
     .filter((a: any) =>
       a.market?.event_date >= today &&
@@ -151,6 +152,7 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     bio_i18n: p.bio_i18n ?? {},
     instagram_handle: p.instagram_handle,
     avatar_url: p.avatar_url,
+    featured_photo_url: p.featured_photo_url ?? null,
     is_verified: p.is_verified,
     digital_offer: p.digital_offer,
     is_live: !!liveAttendance,

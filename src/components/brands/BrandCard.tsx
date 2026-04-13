@@ -1,64 +1,76 @@
 import Link from 'next/link'
-import type { BrandSummary } from '@/lib/queries/brands'
+
+interface Brand {
+  id: string
+  display_name: string
+  slug: string | null
+  bio: string | null
+  bio_i18n: any
+  avatar_url: string | null
+  featured_photo_url?: string | null
+  is_verified: boolean
+  is_live: boolean
+  live_market_name?: string | null
+  instagram_handle?: string | null
+}
 
 interface Props {
-  brand: BrandSummary
+  brand: Brand
   view?: 'grid' | 'list'
 }
 
-export default function BrandCard({ brand: b, view = 'list' }: Props) {
-  const initials = b.display_name.slice(0, 2).toUpperCase()
+export default function BrandCard({ brand, view = 'grid' }: Props) {
+  const href = `/brands/${brand.slug ?? brand.id}`
+  const bio_i18n = brand.bio_i18n as any
+  const category = bio_i18n?._category?.split(',')[0]?.trim() ?? null
+
+  // Featured photo takes priority over avatar for the card image
+  const cardImage = brand.featured_photo_url ?? brand.avatar_url ?? null
+  const initials = brand.display_name.slice(0, 2).toUpperCase()
 
   if (view === 'grid') {
     return (
-      <Link
-        href={`/brands/${b.slug ?? b.id}`}
-        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-      >
-        <div
-          style={{
-            background: '#181614',
-            borderRight: '2px solid #181614',
-            borderBottom: '2px solid #181614',
-            cursor: 'pointer',
-          }}
-        >
-          {/* Image square */}
-          <div style={{ aspectRatio: '1', background: '#181614', position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '7px', overflow: 'hidden' }}>
-            {b.is_live && (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: '#1a5c30', color: '#fff', fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                <span style={{ fontSize: '7px' }}>●</span> LIVE
-              </div>
-            )}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(18px,5vw,26px)', color: 'rgba(240,236,224,.15)', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-              {initials}
-            </div>
-            {b.avatar_url && (
-              <img src={b.avatar_url} alt={b.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            )}
-          </div>
+      <Link href={href} style={{ textDecoration: 'none', display: 'block', borderRight: '2px solid #181614', borderBottom: '2px solid #181614', background: brand.is_live ? 'rgba(200,41,26,.03)' : '#f0ece0', position: 'relative' as const, overflow: 'hidden' }}>
 
-          {/* Info */}
-          <div style={{ background: '#f0ece0', padding: '8px 9px', borderTop: '2px solid #181614' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(14px,3.5vw,18px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {b.display_name}
-            </div>
-            {(b.bio_i18n as any)?._category && (
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {(b.bio_i18n as any)._category.split(',')[0].trim()}
-              </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-              {b.is_verified && (
-                <span className="badge-pro" style={{ fontSize: '9px', display: 'inline-block' }}>✦ PRO</span>
-              )}
-              {(b.bio_i18n as any)?._price_range && (
-                <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c8291a', border: '1px solid rgba(200,41,26,.3)', padding: '1px 5px' }}>
-                  {(b.bio_i18n as any)._price_range}
-                </span>
-              )}
-            </div>
+        {/* Live indicator bar */}
+        {brand.is_live && (
+          <div style={{ position: 'absolute' as const, top: 0, left: 0, right: 0, background: '#1a5c30', fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fff', padding: '3px 8px', zIndex: 2, textAlign: 'center' }}>
+            ● LIVE NOW {brand.live_market_name ? `AT ${brand.live_market_name.toUpperCase()}` : ''}
           </div>
+        )}
+
+        {/* Card image — featured photo or avatar or initials placeholder */}
+        <div style={{ aspectRatio: '1', overflow: 'hidden', background: '#e6e0d0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' as const }}>
+          {cardImage ? (
+            <img
+              src={cardImage}
+              alt={brand.display_name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(28px,6vw,48px)', color: 'rgba(24,22,20,.15)', letterSpacing: '-0.02em' }}>
+              {initials}
+            </span>
+          )}
+
+          {/* PRO badge overlay */}
+          {brand.is_verified && (
+            <div style={{ position: 'absolute' as const, top: brand.is_live ? '22px' : '6px', right: '6px', background: '#181614', fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f0ece0', padding: '2px 5px' }}>
+              ✦ PRO
+            </div>
+          )}
+        </div>
+
+        {/* Card body */}
+        <div style={{ padding: '10px 10px 12px', borderTop: '2px solid #181614' }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(16px,3.5vw,22px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, marginBottom: '4px' }}>
+            {brand.display_name}
+          </div>
+          {category && (
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', lineHeight: 1.3 }}>
+              {category}
+            </div>
+          )}
         </div>
       </Link>
     )
@@ -66,50 +78,18 @@ export default function BrandCard({ brand: b, view = 'list' }: Props) {
 
   // List view
   return (
-    <Link
-      href={`/brands/${b.slug ?? b.id}`}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-    >
-      <div
-        className="transition-colors hover:bg-parchment-2"
-        style={{ borderBottom: '3px solid #181614', padding: '14px', display: 'flex', gap: '14px', alignItems: 'flex-start', background: '#f0ece0', cursor: 'pointer', position: 'relative' }}
-      >
-        {/* Avatar */}
-        <div style={{ width: '56px', height: '56px', flexShrink: 0, background: '#181614', border: '3px solid #181614', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', color: '#c8291a', position: 'relative', overflow: 'hidden' }}>
-          {b.avatar_url
-            ? <img src={b.avatar_url} alt={b.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            : initials
-          }
-        </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1 }}>
-              {b.display_name}
-            </div>
-            {b.is_live && <span className="badge-live">{b.live_market_name}</span>}
-            {b.is_verified && <span className="badge-pro">✦ PRO</span>}
-          </div>
-
-          {b.bio && (
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '15px', color: 'rgba(24,22,20,.5)', lineHeight: 1.5, marginBottom: '4px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-              {b.bio}
-            </div>
-          )}
-
-          {b.instagram_handle && (
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '13px', color: '#c8291a', letterSpacing: '0.06em' }}>
-              {b.instagram_handle}
-            </div>
-          )}
-        </div>
-
-        {/* Live arrow */}
-        {b.is_live && (
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '14px', color: '#c8291a', flexShrink: 0, alignSelf: 'center' }}>→</div>
-        )}
+    <Link href={href} style={{ textDecoration: 'none', display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 14px', borderBottom: '2px solid rgba(24,22,20,.1)', background: brand.is_live ? 'rgba(200,41,26,.03)' : '#f0ece0' }}>
+      <div style={{ width: '44px', height: '44px', flexShrink: 0, border: '2px solid #181614', overflow: 'hidden', background: '#e6e0d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {cardImage
+          ? <img src={cardImage} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '16px', color: 'rgba(24,22,20,.2)' }}>{initials}</span>
+        }
       </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1 }}>{brand.display_name}</div>
+        {category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)' }}>{category}</div>}
+      </div>
+      {brand.is_live && <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '8px', fontWeight: 700, color: '#1a5c30', letterSpacing: '0.1em', textTransform: 'uppercase' }}>● LIVE</span>}
     </Link>
   )
 }
