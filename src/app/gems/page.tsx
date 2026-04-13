@@ -24,8 +24,6 @@ export default async function GemsPage() {
     <>
       <SiteHeader user={user} />
       <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
-
-        {/* Header */}
         <div style={{ background: 'var(--INK)', padding: '20px 16px', borderBottom: '3px solid var(--INK)' }}>
           <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '8px' }}>
             RECOMMENDED BY MAKERS · LISBON
@@ -37,10 +35,7 @@ export default async function GemsPage() {
             The best spots near each market — recommended by the independent makers who set up there every week.
           </p>
         </div>
-
-        {/* Client component handles filtering + rendering */}
-        <GemsClient gems={gems} />
-
+        <GemsClient gems={gems} userId={user?.id ?? null} />
       </main>
     </>
   )

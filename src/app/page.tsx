@@ -8,6 +8,7 @@ import { getAllArticles } from '@/lib/queries/journal'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import SpotlightCarousel from '@/components/ui/SpotlightCarousel'
+import InstallPrompt from '@/components/ui/InstallPrompt'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,16 +31,7 @@ function formatDate() {
   }).toUpperCase()
 }
 
-// ── Weather — Open-Meteo, free, no API key ────────────────────
-interface Weather {
-  temp: number
-  windspeed: number
-  condition: string
-  message: string
-  isGood: boolean
-}
-
-async function getLisbonWeather(): Promise<Weather | null> {
+async function getLisbonWeather(): Promise<{ temp: number; windspeed: number; condition: string; message: string; isGood: boolean } | null> {
   try {
     const res = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=38.7169&longitude=-9.1395&current=temperature_2m,weather_code,wind_speed_10m&timezone=Europe/Lisbon&wind_speed_unit=kmh',
@@ -51,28 +43,16 @@ async function getLisbonWeather(): Promise<Weather | null> {
     const windspeed = Math.round(data.current.wind_speed_10m)
     const code = data.current.weather_code as number
 
-    let condition: string
-    let message: string
-    let isGood: boolean
-
+    let condition: string, message: string, isGood: boolean
     if (code <= 2) {
-      condition = 'CLEAR SKIES'
-      message = 'PERFECT DAY FOR THE MARKETS'
-      isGood = true
+      condition = 'CLEAR SKIES'; message = 'PERFECT DAY FOR THE MARKETS'; isGood = true
     } else if (code <= 48) {
-      condition = 'OVERCAST'
-      message = 'CHECK IF YOUR MARKET IS LIVE BEFORE HEADING OUT'
-      isGood = false
+      condition = 'OVERCAST'; message = 'CHECK IF YOUR MARKET IS LIVE BEFORE HEADING OUT'; isGood = false
     } else {
-      condition = 'RAIN'
-      message = 'CONFIRM YOUR MARKET IS LIVE TODAY'
-      isGood = false
+      condition = 'RAIN'; message = 'CONFIRM YOUR MARKET IS LIVE TODAY'; isGood = false
     }
-
     return { temp, windspeed, condition, message, isGood }
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
 
 export default async function HomePage() {
@@ -89,22 +69,10 @@ export default async function HomePage() {
 
   const greeting = getGreeting()
   const liveBrands = allBrands.filter(b => b.is_live)
-
-  // Upcoming markets — next 3 scheduled, ordered by date
-  const upcomingMarkets = allMarkets
-    .filter(m => m.status === 'scheduled')
-    .slice(0, 3)
-
-  // Featured brands for hero — live first, then WAM top 20, max 4
+  const upcomingMarkets = allMarkets.filter(m => m.status === 'scheduled').slice(0, 3)
+  const top20Brands = (top20Rows as any[]).map(r => r.maker).filter(Boolean).slice(0, 4)
+  const featuredBrands = liveBrands.slice(0, 4).length > 0 ? liveBrands.slice(0, 4) : top20Brands
   const liveBrandIds = new Set(liveBrands.map(b => b.id))
-  const top20Brands = (top20Rows as any[])
-    .map(r => r.maker)
-    .filter(Boolean)
-    .slice(0, 4)
-  const featuredBrands = liveBrands.slice(0, 4).length > 0
-    ? liveBrands.slice(0, 4)
-    : top20Brands
-
   const latestArticles = articles.slice(0, 3)
 
   return (
@@ -114,11 +82,9 @@ export default async function HomePage() {
 
       <div id="scroll-area" style={{ overflowY: 'auto', flex: 1 }}>
 
-        {/* ── Greeting block — desktop has featured brands on right ── */}
+        {/* ── Greeting block ── */}
         <div className="greeting-block" style={{ position: 'relative' }}>
           <div className="greeting-date">{formatDate()} · LISBON</div>
-
-          {/* Desktop layout: greeting left, brands right */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
             <div style={{ flex: 1 }}>
               <div className="greeting-h">
@@ -139,12 +105,8 @@ export default async function HomePage() {
                   {liveBrands.length > 0 ? 'LIVE NOW' : 'FEATURED'}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {featuredBrands.slice(0, 4).map((b: any) => (
-                    <Link
-                      key={b.id}
-                      href={`/brands/${b.slug ?? b.id}`}
-                      style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(24,22,20,.04)', border: '1px solid rgba(24,22,20,.08)' }}
-                    >
+                  {featuredBrands.map((b: any) => (
+                    <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(24,22,20,.04)', border: '1px solid rgba(24,22,20,.08)' }}>
                       {b.avatar_url ? (
                         <img src={b.avatar_url} alt={b.display_name} style={{ width: '28px', height: '28px', objectFit: 'cover', border: '1px solid rgba(24,22,20,.15)', flexShrink: 0 }} />
                       ) : (
@@ -188,7 +150,7 @@ export default async function HomePage() {
                     weather.condition,
                     `WIND ${weather.windspeed} KM/H`,
                     weather.message,
-                    `${new Date().toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase()}`,
+                    new Date().toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase(),
                     weather.isGood ? 'GO FIND YOUR MAKERS →' : 'CHECK BEFORE YOU GO →',
                   ].map((item, i) => (
                     <span key={i} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: weather.isGood ? 'rgba(240,236,224,.55)' : 'rgba(240,236,224,.4)', padding: '0 24px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
@@ -270,16 +232,12 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ── Upcoming markets — max 3 ── */}
+        {/* ── Upcoming markets ── */}
         {upcomingMarkets.length > 0 && (
           <section>
             <div style={{ padding: '14px 14px 8px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614' }}>
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.38)', marginBottom: '4px' }}>
-                COMING UP
-              </div>
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.9, color: '#181614' }}>
-                UPCOMING MARKETS
-              </div>
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.38)', marginBottom: '4px' }}>COMING UP</div>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.9, color: '#181614' }}>UPCOMING MARKETS</div>
             </div>
             {upcomingMarkets.map(m => (
               <Link key={m.id} href={`/markets/${m.id}`} className="mcard">
@@ -291,9 +249,7 @@ export default async function HomePage() {
                 </div>
                 <div className="mbody">
                   <div className="mtitle">{m.title}</div>
-                  <div className="maddr">
-                    {m.space.name} · {m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}
-                  </div>
+                  <div className="maddr">{m.space.name} · {m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}</div>
                 </div>
               </Link>
             ))}
@@ -306,29 +262,23 @@ export default async function HomePage() {
         {/* ── Empty state ── */}
         {liveMarkets.length === 0 && upcomingMarkets.length === 0 && (
           <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', color: 'rgba(24,22,20,.15)', marginBottom: '12px' }}>
-              NO LIVE MARKETS
-            </div>
+            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', color: 'rgba(24,22,20,.15)', marginBottom: '12px' }}>NO LIVE MARKETS</div>
             <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)', lineHeight: 2 }}>
               Check back on the weekend.<br />Markets run Saturday and Sunday.
             </div>
           </div>
         )}
 
-        {/* ── Journal teaser — 3 articles ── */}
+        {/* ── Journal teaser ── */}
         {latestArticles.length > 0 && (
           <section>
             <div style={{ padding: '14px 14px 0', borderTop: '3px solid #181614', borderBottom: '2px solid #181614' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div>
                   <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.38)', marginBottom: '4px' }}>FROM THE JOURNAL</div>
-                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: '#181614' }}>
-                    NEIGHBOURHOOD LOOPS
-                  </div>
+                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: '#181614' }}>NEIGHBOURHOOD LOOPS</div>
                 </div>
-                <Link href="/journal" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', textDecoration: 'none' }}>
-                  ALL →
-                </Link>
+                <Link href="/journal" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', textDecoration: 'none' }}>ALL →</Link>
               </div>
             </div>
             {latestArticles.map((article, i) => (
@@ -338,15 +288,9 @@ export default async function HomePage() {
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c8291a', fontWeight: 700, marginBottom: '5px' }}>
-                      {article.kicker}
-                    </div>
-                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.95, color: '#181614', marginBottom: '6px' }}>
-                      {article.title}
-                    </div>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12px', color: 'rgba(24,22,20,.5)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
-                      {article.dek}
-                    </div>
+                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c8291a', fontWeight: 700, marginBottom: '5px' }}>{article.kicker}</div>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.95, color: '#181614', marginBottom: '6px' }}>{article.title}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '12px', color: 'rgba(24,22,20,.5)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{article.dek}</div>
                   </div>
                   <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '14px', color: 'rgba(24,22,20,.2)', flexShrink: 0, alignSelf: 'center' }}>→</div>
                 </div>
@@ -360,9 +304,7 @@ export default async function HomePage() {
           <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', color: 'rgba(240,236,224,.4)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             REGISTER YOUR BRAND — IT'S FREE
           </div>
-          <Link href="/welcome/maker" className="btn-red">
-            JOIN WEAREMAKERS.PT →
-          </Link>
+          <Link href="/welcome/maker" className="btn-red">JOIN WEAREMAKERS.PT →</Link>
         </div>
 
         {/* ── Footer ── */}
@@ -381,7 +323,7 @@ export default async function HomePage() {
             </div>
             <div>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(240,236,224,.2)', marginBottom: '12px' }}>PLATFORM</div>
-              {[{ label: 'Live Markets', href: '/markets' }, { label: 'All Brands', href: '/brands' }, { label: 'The Journal', href: '/journal' }, { label: 'My Circuit', href: '/circuit' }].map(l => (
+              {[{ label: 'Live Markets', href: '/markets' }, { label: 'All Brands', href: '/brands' }, { label: 'Hidden Gems', href: '/gems' }, { label: 'The Journal', href: '/journal' }, { label: 'My Circuit', href: '/circuit' }].map(l => (
                 <Link key={l.href} href={l.href} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(240,236,224,.35)', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>{l.label}</Link>
               ))}
             </div>
@@ -407,6 +349,9 @@ export default async function HomePage() {
             </div>
           </div>
         </footer>
+
+        {/* ── PWA Install Prompt — mobile only, shown after 3s ── */}
+        <InstallPrompt />
 
       </div>
 

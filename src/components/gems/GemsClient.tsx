@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import SaveGemButton from '@/components/ui/SaveGemButton'
 
 const GEM_ICONS: Record<string, string> = {
   coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈'
@@ -34,20 +35,19 @@ interface Gem {
 
 interface Props {
   gems: Gem[]
+  userId: string | null
 }
 
-export default function GemsClient({ gems }: Props) {
+export default function GemsClient({ gems, userId }: Props) {
   const [activeCategory, setActiveCategory] = useState('all')
 
   const T = { fontFamily: 'var(--TAG)', letterSpacing: '0.18em', textTransform: 'uppercase' as const }
 
-  // Filter — instant, in memory
   const filtered = useMemo(() =>
     activeCategory === 'all' ? gems : gems.filter(g => g.category === activeCategory),
     [gems, activeCategory]
   )
 
-  // Group by parish → space
   const grouped = useMemo(() => {
     const parishMap = new Map<string, Map<string, Gem[]>>()
     for (const gem of filtered) {
@@ -63,7 +63,7 @@ export default function GemsClient({ gems }: Props) {
 
   return (
     <div>
-      {/* Category filter — instant */}
+      {/* Category filter */}
       <div style={{ borderBottom: '3px solid var(--INK)', background: 'var(--P2)', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {CATEGORIES.map(c => (
           <button
@@ -74,11 +74,8 @@ export default function GemsClient({ gems }: Props) {
               padding: '12px 16px',
               background: activeCategory === c.value ? 'var(--INK)' : 'transparent',
               color: activeCategory === c.value ? 'var(--P)' : 'rgba(24,22,20,.5)',
-              border: 'none',
-              borderRight: '2px solid rgba(24,22,20,.1)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              whiteSpace: 'nowrap' as const,
+              border: 'none', borderRight: '2px solid rgba(24,22,20,.1)',
+              cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const,
             }}
           >
             {c.label}
@@ -87,7 +84,7 @@ export default function GemsClient({ gems }: Props) {
       </div>
 
       {/* Count */}
-      <div style={{ padding: '10px 16px', borderBottom: '2px solid rgba(24,22,20,.08)', background: 'var(--P)' }}>
+      <div style={{ padding: '10px 16px', borderBottom: '2px solid rgba(24,22,20,.08)' }}>
         <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)' }}>
           {filtered.length} GEM{filtered.length !== 1 ? 'S' : ''} · {grouped.size} NEIGHBOURHOOD{grouped.size !== 1 ? 'S' : ''}
         </div>
@@ -111,7 +108,6 @@ export default function GemsClient({ gems }: Props) {
       {/* Gems grouped by parish → space */}
       {Array.from(grouped.entries()).map(([parish, spaceMap]) => (
         <div key={parish}>
-
           {/* Parish header */}
           <div style={{ background: 'var(--INK2)', padding: '12px 16px', borderBottom: '2px solid rgba(240,236,224,.06)', borderTop: '3px solid var(--INK)' }}>
             <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.25)', marginBottom: '2px' }}>NEIGHBOURHOOD</div>
@@ -120,10 +116,8 @@ export default function GemsClient({ gems }: Props) {
             </div>
           </div>
 
-          {/* Spaces within parish */}
           {Array.from(spaceMap.entries()).map(([spaceName, spaceGems]) => (
             <div key={spaceName}>
-
               {/* Space sub-header */}
               <div style={{ padding: '8px 16px', borderBottom: '2px solid rgba(24,22,20,.1)', background: 'var(--P2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'rgba(24,22,20,.5)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -146,43 +140,39 @@ export default function GemsClient({ gems }: Props) {
                 return (
                   <div key={g.id} style={{ borderBottom: '2px solid var(--INK)', background: i % 2 === 0 ? 'var(--P)' : 'var(--P2)' }}>
                     <div style={{ display: 'flex' }}>
-
-                      {/* Category icon */}
+                      {/* Icon */}
                       <div style={{ width: '56px', flexShrink: 0, background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', borderRight: '2px solid var(--INK)', alignSelf: 'stretch' }}>
                         {GEM_ICONS[g.category] ?? '◈'}
                       </div>
 
                       {/* Content */}
-                      <div style={{ padding: '14px 14px 10px', flex: 1, minWidth: 0 }}>
-
-                        {/* Name + category */}
+                      <div style={{ padding: '14px 14px 12px', flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
                           <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1 }}>
                             {g.name}
                           </div>
-                          {g.distance_metres !== null && (
-                            <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', border: '1px solid rgba(24,22,20,.2)', padding: '2px 7px', flexShrink: 0, marginTop: '3px' }}>
-                              {g.distance_metres}m
-                            </span>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            {g.distance_metres !== null && (
+                              <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', border: '1px solid rgba(24,22,20,.2)', padding: '2px 7px' }}>
+                                {g.distance_metres}m
+                              </span>
+                            )}
+                            <SaveGemButton gemId={g.id} gemName={g.name} userId={userId} size="sm" />
+                          </div>
                         </div>
 
-                        {/* Description */}
                         {g.description && (
                           <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '8px' }}>
                             {g.description}
                           </div>
                         )}
 
-                        {/* Address */}
                         {g.address && (
                           <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span>◎</span>
-                            <span>{g.address}</span>
+                            <span>◎</span><span>{g.address}</span>
                           </div>
                         )}
 
-                        {/* Maker recommendation */}
                         {g.vetted_by_name && (
                           <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <span style={{ color: 'var(--RED)' }}>✦</span>
@@ -196,26 +186,17 @@ export default function GemsClient({ gems }: Props) {
                           </div>
                         )}
 
-                        {/* Action buttons */}
+                        {/* Actions */}
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          <a
-                            href={mapsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'var(--INK)', color: 'var(--P)', textDecoration: 'none', display: 'inline-block' }}
-                          >
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'var(--INK)', color: 'var(--P)', textDecoration: 'none', display: 'inline-block' }}>
                             DIRECTIONS →
                           </a>
-                          <a
-                            href={googleUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'transparent', color: 'rgba(24,22,20,.5)', border: '1px solid rgba(24,22,20,.2)', textDecoration: 'none', display: 'inline-block' }}
-                          >
+                          <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'transparent', color: 'rgba(24,22,20,.5)', border: '1px solid rgba(24,22,20,.2)', textDecoration: 'none', display: 'inline-block' }}>
                             SEARCH ON GOOGLE ↗
                           </a>
                         </div>
-
                       </div>
                     </div>
                   </div>
@@ -224,8 +205,8 @@ export default function GemsClient({ gems }: Props) {
             </div>
           ))}
 
-          {/* Footer CTA */}
-          {filtered.length > 0 && grouped.size > 0 && Array.from(grouped.keys()).pop() === parish && (
+          {/* Footer CTA after last parish */}
+          {Array.from(grouped.keys()).pop() === parish && filtered.length > 0 && (
             <div style={{ padding: '20px 16px', borderTop: '3px solid var(--INK)', background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div style={{ ...T, fontSize: '10px', color: 'rgba(240,236,224,.35)' }}>
                 Are you a maker? Share a place you love.
@@ -235,12 +216,11 @@ export default function GemsClient({ gems }: Props) {
               </Link>
             </div>
           )}
-
         </div>
       ))}
 
       {/* Back */}
-      <div style={{ padding: '16px', borderTop: '3px solid var(--INK)' }}>
+      <div style={{ padding: '16px', borderTop: filtered.length === 0 ? '3px solid var(--INK)' : 'none' }}>
         <Link href="/markets" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--RED)', textDecoration: 'none' }}>
           ← BACK TO MARKETS
         </Link>
