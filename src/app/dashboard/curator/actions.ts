@@ -43,7 +43,6 @@ export async function createMarket(formData: FormData) {
     return { error: 'Space and date are required.' }
   }
 
-  // Auto-generate title from space name if not provided
   const resolvedTitle = title || await (async () => {
     const { data: space } = await supabase
       .from('spaces')
@@ -85,6 +84,13 @@ export async function setMarketStatus(
   const { supabase, user, error } = await getAuthenticatedCurator()
   if (error || !user) return { error }
 
+  // Fetch market details before update (needed for cancellation notification)
+  const { data: market } = await supabase
+    .from('markets')
+    .select('id, title, space:spaces(name)')
+    .eq('id', marketId)
+    .single()
+
   const updatePayload: Record<string, unknown> = { status }
 
   if (status === 'live') {
@@ -110,9 +116,62 @@ export async function setMarketStatus(
     .from('markets')
     .update(updatePayload)
     .eq('id', marketId)
-    .eq('curator_id', user.id) // Curators can only edit their own
+    .eq('curator_id', user.id)
 
   if (updateError) return { error: updateError.message }
+
+  // ── Cancellation push notification ──────────────────────────
+  // When a market is cancelled, notify all visitors who have saved
+  // any brand that was checked in to this market today.
+  if (status === 'cancelled' && market) {
+    try {
+      const marketName = (market.space as any)?.name ?? market.title
+
+      // Find all maker IDs checked into this market
+      const { data: checkins } = await supabase
+        .from('attendance')
+        .select('maker_id')
+        .eq('market_id', marketId)
+        .is('checked_out_at', null)
+
+      if (checkins && checkins.length > 0) {
+        const makerIds = checkins.map((c: any) => c.maker_id)
+
+        // Find all visitors who have saved any of those brands
+        const { data: savedBrands } = await supabase
+          .from('saved_brands')
+          .select('visitor_id')
+          .in('brand_id', makerIds)
+
+        if (savedBrands && savedBrands.length > 0) {
+          // Get unique visitor IDs
+          const visitorIds = [...new Set(savedBrands.map((s: any) => s.visitor_id))]
+
+          // Fetch push subscriptions for those visitors
+          const { data: subscriptions } = await supabase
+            .from('push_subscriptions')
+            .select('endpoint, p256dh, auth')
+            .in('visitor_id', visitorIds)
+
+          if (subscriptions && subscriptions.length > 0) {
+            // Fire-and-forget — fan out cancellation push
+            const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://wearemakers.pt'
+            fetch(`${SITE_URL}/api/push/broadcast`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: `${marketName} cancelled`,
+                body: 'This market has been cancelled for today. Check the app for alternative markets.',
+                url: '/markets',
+              }),
+            }).catch(() => {})
+          }
+        }
+      }
+    } catch {
+      // Push notification failure must never block the status update
+    }
+  }
 
   revalidatePath('/dashboard/curator')
   return { success: true }
@@ -129,7 +188,7 @@ export async function deleteMarket(marketId: string) {
     .delete()
     .eq('id', marketId)
     .eq('curator_id', user.id)
-    .eq('status', 'scheduled') // Can only delete unstarted markets
+    .eq('status', 'scheduled')
 
   if (deleteError) return { error: deleteError.message }
 
@@ -148,7 +207,6 @@ export async function pinFeaturedMaker(formData: FormData) {
 
   if (!makerId) return { error: 'No maker selected.' }
 
-  // The Postgres trigger will raise an exception if already at 3 pins
   const { error: insertError } = await supabase
     .from('curator_featured_makers')
     .insert({
@@ -159,7 +217,6 @@ export async function pinFeaturedMaker(formData: FormData) {
     })
 
   if (insertError) {
-    // Postgres trigger fires: "Curator may pin at most 3 Featured Makers at a time."
     if (insertError.message.includes('at most 3')) {
       return { error: 'Spotlight is full. Unpin a maker first.' }
     }
@@ -188,7 +245,7 @@ export async function unpinFeaturedMaker(featuredId: string) {
   return { success: true }
 }
 
-// ── Verify Attendance (mark as confirmed) ─────────────────────
+// ── Verify Attendance ─────────────────────────────────────────
 
 export async function verifyAttendance(attendanceId: string) {
   const { supabase, user, error } = await getAuthenticatedCurator()
