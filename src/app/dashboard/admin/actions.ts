@@ -83,7 +83,6 @@ export async function adminCreateMarket(formData: FormData) {
     return { error: 'Space, date and times are required' }
   }
 
-  // Get space name for title
   const { data: space } = await supabase.from('spaces').select('name').eq('id', spaceId).single()
   const title = `${space?.name ?? 'Market'} — ${eventDate}`
 
@@ -256,7 +255,7 @@ export async function adminCreateGem(formData: FormData) {
     lat: lat || 0,
     lng: lng || 0,
     vetted_by: user!.id,
-    is_approved: true, // Admin-created gems are auto-approved
+    is_approved: true,
   })
   if (e) return { error: e.message }
   revalidatePath('/dashboard/admin')
@@ -303,4 +302,120 @@ export async function sendAdminPush(title: string, body: string, url: string) {
   } catch {
     return { sent: 0 }
   }
+}
+
+// ── Journal Articles ───────────────────────────────────────
+
+export async function createArticle(formData: FormData) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const title = (formData.get('title') as string)?.trim()
+  if (!title) return { error: 'Title is required' }
+
+  const slug = title
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  const tagsRaw = (formData.get('tags') as string)?.trim()
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : []
+  const isPublished = formData.get('is_published') === 'on'
+
+  const { error: e } = await supabase.from('journal_articles').insert({
+    slug,
+    title,
+    kicker: (formData.get('kicker') as string)?.trim() || null,
+    dek: (formData.get('dek') as string)?.trim() || null,
+    lede: (formData.get('lede') as string)?.trim() || null,
+    body_md: (formData.get('body_md') as string)?.trim() || null,
+    pull_quote: (formData.get('pull_quote') as string)?.trim() || null,
+    author_name: (formData.get('author_name') as string)?.trim() || 'WAM Editorial',
+    cover_image_url: (formData.get('cover_image_url') as string)?.trim() || null,
+    tags,
+    is_published: isPublished,
+    published_at: isPublished ? new Date().toISOString() : null,
+    seo_title: (formData.get('seo_title') as string)?.trim() || null,
+    seo_description: (formData.get('seo_description') as string)?.trim() || null,
+  })
+
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/journal')
+  return { success: true }
+}
+
+export async function updateArticle(articleId: string, formData: FormData) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const title = (formData.get('title') as string)?.trim()
+  if (!title) return { error: 'Title is required' }
+
+  const tagsRaw = (formData.get('tags') as string)?.trim()
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : []
+  const isPublished = formData.get('is_published') === 'on'
+
+  const { data: current } = await supabase
+    .from('journal_articles')
+    .select('is_published, published_at')
+    .eq('id', articleId)
+    .single()
+
+  const { error: e } = await supabase.from('journal_articles').update({
+    title,
+    kicker: (formData.get('kicker') as string)?.trim() || null,
+    dek: (formData.get('dek') as string)?.trim() || null,
+    lede: (formData.get('lede') as string)?.trim() || null,
+    body_md: (formData.get('body_md') as string)?.trim() || null,
+    pull_quote: (formData.get('pull_quote') as string)?.trim() || null,
+    author_name: (formData.get('author_name') as string)?.trim() || 'WAM Editorial',
+    cover_image_url: (formData.get('cover_image_url') as string)?.trim() || null,
+    tags,
+    is_published: isPublished,
+    published_at: isPublished && !current?.published_at
+      ? new Date().toISOString()
+      : current?.published_at ?? null,
+    seo_title: (formData.get('seo_title') as string)?.trim() || null,
+    seo_description: (formData.get('seo_description') as string)?.trim() || null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', articleId)
+
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/journal')
+  return { success: true }
+}
+
+export async function deleteArticle(articleId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('journal_articles').delete().eq('id', articleId)
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/journal')
+  return { success: true }
+}
+
+export async function toggleArticlePublished(articleId: string, publish: boolean) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const { data: current } = await supabase
+    .from('journal_articles')
+    .select('published_at')
+    .eq('id', articleId)
+    .single()
+
+  await supabase.from('journal_articles').update({
+    is_published: publish,
+    published_at: publish && !current?.published_at
+      ? new Date().toISOString()
+      : current?.published_at ?? null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', articleId)
+
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/journal')
+  return { success: true }
 }

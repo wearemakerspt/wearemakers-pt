@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import SiteHeader from '@/components/ui/SiteHeader'
 import AdminSpaces from '@/components/dashboard/admin/AdminSpaces'
 import AdminMakers from '@/components/dashboard/admin/AdminMakers'
@@ -11,6 +12,7 @@ import AdminVisitors from '@/components/dashboard/admin/AdminVisitors'
 import AdminGems from '@/components/dashboard/admin/AdminGems'
 import AdminPush from '@/components/dashboard/admin/AdminPush'
 import AdminTop20 from '@/components/dashboard/admin/AdminTop20'
+import AdminJournal from '@/components/dashboard/admin/AdminJournal'
 
 export const metadata: Metadata = {
   title: 'Admin — WEAREMAKERS.PT',
@@ -26,6 +28,11 @@ export default async function AdminDashboardPage() {
 
   const supabase = await createClient()
 
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   const [
     spacesRes,
     makersRes,
@@ -34,30 +41,16 @@ export default async function AdminDashboardPage() {
     visitorsRes,
     gemsRes,
     top20Res,
+    articlesRes,
   ] = await Promise.all([
     supabase.from('spaces').select('*').order('name'),
-    supabase.from('profiles')
-      .select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n')
-      .in('role', ['maker', 'admin'])
-      .order('display_name'),
-    supabase.from('profiles')
-      .select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at')
-      .in('role', ['curator'])
-      .order('display_name'),
-    supabase.from('markets')
-      .select('*, space:spaces(name), curator:profiles(id, display_name)')
-      .order('event_date', { ascending: false }),
-    supabase.from('profiles')
-      .select('id, display_name, created_at')
-      .in('role', ['visitor'])
-      .order('created_at', { ascending: false }),
-    // No joins on gems — avoids RLS blocking nested profile select
-    supabase.from('gems')
-      .select('id, name, category, description, address, lat, lng, is_approved, vetted_by, near_space_id, created_at')
-      .order('created_at', { ascending: false }),
-    supabase.from('wam_top20')
-      .select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)')
-      .order('position'),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
+    supabase.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
+    supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
+    serviceClient.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
+    supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
+    supabase.from('journal_articles').select('id, slug, title, kicker, dek, lede, body_md, pull_quote, author_name, cover_image_url, tags, is_published, published_at, seo_title, seo_description, created_at').order('created_at', { ascending: false }),
   ])
 
   const spaces = spacesRes.data ?? []
@@ -66,8 +59,9 @@ export default async function AdminDashboardPage() {
   const markets = marketsRes.data ?? []
   const visitors = visitorsRes.data ?? []
   const top20 = top20Res.data ?? []
+  const articles = articlesRes.data ?? []
 
-  // Manually enrich gems with space name and vetted_by name
+  // Enrich gems
   const rawGems = gemsRes.data ?? []
   const spaceMap = new Map(spaces.map((s: any) => [s.id, s.name]))
   const makerMap = new Map([...makers, ...curators].map((p: any) => [p.id, p.display_name]))
@@ -82,6 +76,7 @@ export default async function AdminDashboardPage() {
   const pendingMakers = makers.filter((m: any) => !m.is_approved)
   const pendingCurators = curators.filter((c: any) => !c.is_approved)
   const pendingGems = gems.filter((g: any) => !g.is_approved)
+  const publishedArticles = articles.filter((a: any) => a.is_published)
 
   return (
     <>
@@ -97,6 +92,7 @@ export default async function AdminDashboardPage() {
             WAM ADMIN
           </h1>
 
+          {/* Stats strip */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, border: '2px solid rgba(240,236,224,.1)', overflow: 'hidden' }}>
             {[
               { label: 'SPACES', value: spaces.length },
@@ -106,6 +102,7 @@ export default async function AdminDashboardPage() {
               { label: 'VISITORS', value: visitors.length },
               { label: 'PENDING', value: pendingMakers.length + pendingCurators.length, sub: 'APPROVALS' },
               { label: 'GEMS', value: pendingGems.length, sub: 'PENDING' },
+              { label: 'ARTICLES', value: publishedArticles.length, sub: 'PUBLISHED' },
             ].map((s, i, arr) => (
               <div key={i} style={{ padding: '8px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(240,236,224,.1)' : 'none', minWidth: '80px' }}>
                 <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', color: (s.sub === 'APPROVALS' || s.sub === 'PENDING') && s.value > 0 ? 'var(--RED)' : 'var(--P)', lineHeight: 1 }}>
@@ -119,6 +116,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
+        {/* Sections */}
         <div style={{ padding: '12px' }}>
 
           <Section num="§1" title="SPACES & LOCATIONS" ref_code="ADM-001">
@@ -151,6 +149,10 @@ export default async function AdminDashboardPage() {
 
           <Section num="§8" title="PUSH NOTIFICATIONS" ref_code="ADM-008">
             <AdminPush />
+          </Section>
+
+          <Section num="§9" title={`JOURNAL — ${publishedArticles.length} PUBLISHED · ${articles.length - publishedArticles.length} DRAFT`} ref_code="ADM-009">
+            <AdminJournal articles={articles as any} />
           </Section>
 
         </div>
