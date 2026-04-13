@@ -33,6 +33,10 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()
 }
 
+function cleanWhatsapp(raw: string): string {
+  return raw.replace(/[^0-9+]/g, '')
+}
+
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params
   const [brand, user] = await Promise.all([getBrandBySlug(slug), getCurrentUser()])
@@ -70,6 +74,9 @@ export default async function BrandPage({ params }: Props) {
   const offerActive = bio_i18n?._offer_active !== false
   const activeOffer = brand.digital_offer && offerActive ? brand.digital_offer : null
   const liveMarketId = brand.is_live ? (brand as any).live_market_id ?? null : null
+  const shopUrl = (brand as any).shop_url ?? null
+  const whatsapp = (brand as any).whatsapp ?? null
+  const whatsappLink = whatsapp ? `https://wa.me/${cleanWhatsapp(whatsapp)}` : null
 
   return (
     <>
@@ -78,7 +85,7 @@ export default async function BrandPage({ params }: Props) {
 
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 
-        {/* Dark brand header — logo always shown here */}
+        {/* ── Dark brand header ── */}
         <div style={{ background: '#181614', padding: '20px 16px', borderBottom: '3px solid #181614' }}>
           <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '12px' }}>
             BRAND MANIFESTO · WEAREMAKERS.PT
@@ -86,13 +93,11 @@ export default async function BrandPage({ params }: Props) {
 
           {/* Avatar + name row */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '10px', flexWrap: 'wrap' }}>
-            {/* Avatar / logo */}
             {brand.avatar_url && (
               <div style={{ width: '72px', height: '72px', flexShrink: 0, border: '3px solid rgba(240,236,224,.15)', overflow: 'hidden', background: 'rgba(240,236,224,.06)' }}>
                 <img src={brand.avatar_url} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
-
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
                 <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(40px,12vw,72px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#f0ece0' }}>
@@ -101,8 +106,6 @@ export default async function BrandPage({ params }: Props) {
                 {brand.is_live && <span className="badge-live">{brand.live_market_name}</span>}
                 {brand.is_verified && <span className="badge-pro">✦ PRO</span>}
               </div>
-
-              {/* Instagram */}
               {brand.instagram_handle && (
                 <InstagramTapTracker
                   brandId={brand.id} handle={brand.instagram_handle}
@@ -116,13 +119,50 @@ export default async function BrandPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Save button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Action buttons row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
             <SaveBrandButton
               brandId={brand.id} brandName={brand.display_name}
               initialSaved={initialSaved} userId={user?.id ?? null}
               size="lg" dark={true} digitalOffer={activeOffer}
             />
+
+            {shopUrl && (
+              <a
+                href={shopUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
+                  letterSpacing: '0.14em', textTransform: 'uppercase',
+                  background: 'transparent', color: '#f0ece0',
+                  border: '2px solid rgba(240,236,224,.35)',
+                  padding: '10px 18px', textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: '7px',
+                }}
+              >
+                🛒 SHOP ONLINE →
+              </a>
+            )}
+
+            {whatsappLink && (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
+                  letterSpacing: '0.14em', textTransform: 'uppercase',
+                  background: '#1a5c30', color: '#fff',
+                  border: '2px solid #1a5c30',
+                  padding: '10px 18px', textDecoration: 'none',
+                  display: 'inline-flex', alignItems: 'center', gap: '7px',
+                }}
+              >
+                💬 WHATSAPP →
+              </a>
+            )}
+
             {activeOffer && !initialSaved && (
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(240,236,224,.4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ color: '#c8291a' }}>✦</span> SAVE TO UNLOCK OFFER
@@ -131,7 +171,7 @@ export default async function BrandPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Categories + price range */}
+        {/* ── Categories + price range ── */}
         {(bio_i18n?._category || bio_i18n?._price_range) && (
           <div style={{ padding: '10px 16px', borderBottom: '3px solid #181614', background: '#e6e0d0', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {bio_i18n?._category && bio_i18n._category.split(',').map((cat: string) => cat.trim()).filter(Boolean).map((cat: string) => (
@@ -143,14 +183,14 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Bio */}
+        {/* ── Bio ── */}
         {localeBio && (
           <div style={{ padding: '20px 16px', borderBottom: '3px solid #181614' }}>
             <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#181614', lineHeight: 1.75, marginBottom: 0 }}>{localeBio}</p>
           </div>
         )}
 
-        {/* Active offer */}
+        {/* ── Active offer ── */}
         {activeOffer && (
           <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#181614' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -168,12 +208,12 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Photo gallery — lightbox enabled */}
+        {/* ── Photo gallery — lightbox ── */}
         {photos.length > 0 && (
           <BrandGallery photos={photos as any} />
         )}
 
-        {/* Meet the team */}
+        {/* ── Meet the team ── */}
         {members.length > 0 && (
           <div>
             <div style={{ padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614', fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -198,7 +238,7 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Where to find me */}
+        {/* ── Where to find me ── */}
         {brand.upcoming_markets.length > 0 && (
           <div>
             <div style={{ padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614', fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px', background: '#181614' }}>
@@ -218,7 +258,7 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Hidden Gems */}
+        {/* ── Hidden Gems ── */}
         {brand.gems && brand.gems.length > 0 && (
           <div>
             <div style={{ padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614', fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -236,8 +276,8 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Instagram action */}
-        <div style={{ padding: '16px', borderTop: '3px solid #181614', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {/* ── Bottom action bar ── */}
+        <div style={{ padding: '16px', borderTop: '3px solid #181614', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
           {brand.instagram_handle && (
             <InstagramTapTracker
               brandId={brand.id} handle={brand.instagram_handle}
@@ -247,9 +287,21 @@ export default async function BrandPage({ params }: Props) {
               INSTAGRAM →
             </InstagramTapTracker>
           )}
+          {shopUrl && (
+            <a href={shopUrl} target="_blank" rel="noopener noreferrer"
+              style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#181614', color: '#f0ece0', border: '3px solid #181614', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}>
+              🛒 SHOP ONLINE →
+            </a>
+          )}
+          {whatsappLink && (
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
+              style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#1a5c30', color: '#fff', border: '3px solid #1a5c30', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}>
+              💬 WHATSAPP →
+            </a>
+          )}
         </div>
 
-        {/* Back */}
+        {/* ── Back ── */}
         <div style={{ padding: '12px 16px', borderTop: '3px solid #181614' }}>
           <Link href="/brands" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>← ALL BRANDS</Link>
         </div>

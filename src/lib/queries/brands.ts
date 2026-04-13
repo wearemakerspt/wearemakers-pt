@@ -18,6 +18,8 @@ export interface BrandSummary {
 }
 
 export interface BrandDetail extends BrandSummary {
+  shop_url: string | null
+  whatsapp: string | null
   upcoming_markets: UpcomingMarketSlot[]
   gems: BrandGem[]
 }
@@ -41,10 +43,6 @@ export interface BrandGem {
 
 // ── Queries ────────────────────────────────────────────────────
 
-/**
- * All maker brands for the directory.
- * Includes live status from today's attendance.
- */
 export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
@@ -93,9 +91,6 @@ export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
   })
 }
 
-/**
- * Single brand profile by slug.
- */
 export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDetail | null> {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
@@ -104,7 +99,8 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     .from('profiles')
     .select(`
       id, display_name, slug, bio, bio_i18n,
-      instagram_handle, avatar_url, featured_photo_url, is_verified, digital_offer,
+      instagram_handle, avatar_url, featured_photo_url,
+      is_verified, digital_offer, shop_url, whatsapp,
       attendance (
         id, checked_out_at,
         market:markets (
@@ -155,6 +151,8 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     featured_photo_url: p.featured_photo_url ?? null,
     is_verified: p.is_verified,
     digital_offer: p.digital_offer,
+    shop_url: p.shop_url ?? null,
+    whatsapp: p.whatsapp ?? null,
     is_live: !!liveAttendance,
     live_market_name: liveAttendance?.market?.title ?? null,
     upcoming_markets: upcoming,

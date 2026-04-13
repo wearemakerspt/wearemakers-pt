@@ -35,6 +35,8 @@ interface Props {
   initialFeaturedPhotoUrl?: string | null
   initialPhotos?: Photo[]
   initialMembers?: Member[]
+  initialShopUrl?: string | null
+  initialWhatsapp?: string | null
   userId?: string
 }
 
@@ -50,6 +52,7 @@ export default function BrandProfileEditor({
   initialName, initialBio, initialInstagram, initialSlug,
   initialCategory, initialPriceRange, initialAvatarUrl,
   initialFeaturedPhotoUrl, initialPhotos = [], initialMembers = [],
+  initialShopUrl, initialWhatsapp,
   userId
 }: Props) {
   const router = useRouter()
@@ -57,6 +60,8 @@ export default function BrandProfileEditor({
   const [name, setName] = useState(initialName)
   const [bio, setBio] = useState(initialBio ?? '')
   const [instagram, setInstagram] = useState(initialInstagram ?? '')
+  const [shopUrl, setShopUrl] = useState(initialShopUrl ?? '')
+  const [whatsapp, setWhatsapp] = useState(initialWhatsapp ?? '')
   const [categories, setCategories] = useState<string[]>(() => {
     if (!initialCategory) return []
     return initialCategory.split(',').map(c => c.trim()).filter(Boolean)
@@ -244,6 +249,44 @@ export default function BrandProfileEditor({
           </div>
         </div>
 
+        {/* ── Online shop URL ── */}
+        <div style={dividerStyle}>
+          <label style={labelStyle}>ONLINE SHOP URL (optional)</label>
+          <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dashed rgba(24,22,20,.3)' }}>
+            <span style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'rgba(24,22,20,.3)', paddingBottom: '8px', paddingTop: '8px', marginRight: '8px', flexShrink: 0 }}>🛒</span>
+            <input
+              name="shop_url"
+              value={shopUrl}
+              onChange={e => setShopUrl(e.target.value)}
+              placeholder="https://yourshop.com"
+              type="url"
+              style={{ ...fieldStyle, borderBottom: 'none', flex: 1, fontSize: '14px' }}
+            />
+          </div>
+          {shopUrl && (
+            <div style={{ ...T, fontSize: '9px', color: 'var(--GRN)', marginTop: '4px', fontWeight: 700 }}>✓ SHOP ONLINE BUTTON WILL APPEAR ON YOUR PROFILE</div>
+          )}
+        </div>
+
+        {/* ── WhatsApp ── */}
+        <div style={dividerStyle}>
+          <label style={labelStyle}>WHATSAPP NUMBER (optional — include country code)</label>
+          <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px dashed rgba(24,22,20,.3)' }}>
+            <span style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'rgba(24,22,20,.3)', paddingBottom: '8px', paddingTop: '8px', marginRight: '8px', flexShrink: 0 }}>💬</span>
+            <input
+              name="whatsapp"
+              value={whatsapp}
+              onChange={e => setWhatsapp(e.target.value.replace(/[^0-9+]/g, ''))}
+              placeholder="+351912345678"
+              type="tel"
+              style={{ ...fieldStyle, borderBottom: 'none', flex: 1, fontSize: '14px' }}
+            />
+          </div>
+          {whatsapp && (
+            <div style={{ ...T, fontSize: '9px', color: 'var(--GRN)', marginTop: '4px', fontWeight: 700 }}>✓ WHATSAPP BUTTON WILL APPEAR ON YOUR PROFILE</div>
+          )}
+        </div>
+
         <input type="hidden" name="slug" value={slug} />
 
         {/* ── Save button ── */}
@@ -274,12 +317,12 @@ export default function BrandProfileEditor({
         )}
       </form>
 
-      {/* ── Photo gallery — outside form, manages its own state ── */}
+      {/* ── Photo gallery — outside form ── */}
       {userId && (
         <BrandGalleryUpload brandId={userId} initialPhotos={initialPhotos} />
       )}
 
-      {/* ── Team members — outside form, manages its own state ── */}
+      {/* ── Team members — outside form ── */}
       {userId && (
         <BrandMembersEditor brandId={userId} initialMembers={initialMembers} />
       )}

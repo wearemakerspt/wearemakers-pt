@@ -63,7 +63,6 @@ export async function checkInToMarket(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  // Fan out push notifications
   try {
     const { data: profile } = await supabase
       .from('profiles')
@@ -196,6 +195,8 @@ export async function saveBrandProfile(formData: FormData) {
   const display_name = (formData.get('display_name') as string)?.trim()
   const bio = (formData.get('bio') as string)?.trim() || null
   const instagram_handle = (formData.get('instagram_handle') as string)?.trim() || null
+  const shop_url = (formData.get('shop_url') as string)?.trim() || null
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null
   const slug = display_name
     ? display_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     : null
@@ -222,7 +223,16 @@ export async function saveBrandProfile(formData: FormData) {
 
   const { error } = await supabase
     .from('profiles')
-    .update({ display_name, bio, instagram_handle, slug, bio_i18n, updated_at: new Date().toISOString() })
+    .update({
+      display_name,
+      bio,
+      instagram_handle,
+      slug,
+      bio_i18n,
+      shop_url,
+      whatsapp,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -315,7 +325,6 @@ export async function submitGem(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Check maker hasn't already submitted 3 gems for this space
   const { data: existing } = await supabase
     .from('gems')
     .select('id')

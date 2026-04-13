@@ -206,25 +206,27 @@ export default async function MakerDashboardPage() {
               initialPriceRange={(profile.bio_i18n as any)?._price_range ?? null}
               initialAvatarUrl={profile.avatar_url ?? null}
               initialFeaturedPhotoUrl={(profile as any).featured_photo_url ?? null}
+              initialShopUrl={(profile as any).shop_url ?? null}
+              initialWhatsapp={(profile as any).whatsapp ?? null}
               initialPhotos={photos}
               initialMembers={members}
               userId={profile.id}
             />
           </div>
 
-          {/* §1 Transmission Status */}
+          {/* §1 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§1 — TRANSMISSION STATUS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-001</span></div>
             <LiveToggle initialIsActive={isLive} displayName={profile.display_name} activeCheckins={activeCheckins} todayMarkets={todayMarkets} />
           </div>
 
-          {/* §2 Field Notes */}
+          {/* §2 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§2 — FIELD NOTES / DAILY OFFER</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-002</span></div>
             <FieldNotesEditor initialOffer={profile.digital_offer ?? ''} initialPrivateNotes={(profile.bio_i18n as any)?._private_notes ?? ''} initialOfferActive={(profile.bio_i18n as any)?._offer_active !== false} />
           </div>
 
-          {/* §3 Active Check-ins */}
+          {/* §3 */}
           {activeCheckins.length > 0 && (
             <div style={WO}>
               <div style={WO_HDR}><span>§3 — ACTIVE CHECK-INS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-003</span></div>
@@ -232,37 +234,37 @@ export default async function MakerDashboardPage() {
             </div>
           )}
 
-          {/* §4 Upcoming Agenda */}
+          {/* §4 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§4 — UPCOMING AGENDA</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-004</span></div>
             <UpcomingAgenda markets={upcomingMarkets} />
           </div>
 
-          {/* §5 Recent Attendance */}
+          {/* §5 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§5 — RECENT ATTENDANCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-005</span></div>
             <RecentAttendance attendance={recentAttendance} />
           </div>
 
-          {/* §6 Field Kit */}
+          {/* §6 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§6 — FIELD KIT · STALL CARD</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-006</span></div>
             <FieldKit displayName={profile.display_name} slug={profile.slug ?? null} category={(profile.bio_i18n as any)?._category ?? null} instagramHandle={profile.instagram_handle ?? null} priceRange={(profile.bio_i18n as any)?._price_range ?? null} />
           </div>
 
-          {/* §7 Hidden Gems */}
+          {/* §7 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§7 — HIDDEN GEMS · SUBMIT A RECOMMENDATION</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-007</span></div>
             <GemSubmissionForm spaces={spaces} existingGems={existingGems as any} />
           </div>
 
-          {/* §8 Analytics */}
+          {/* §8 */}
           <div style={WO}>
             <div style={WO_HDR}><span>§8 — REACH & ANALYTICS</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-008</span></div>
             <MakerAnalytics byMarket={analytics.byMarket} summary={analytics.summary} />
           </div>
 
-          {/* §9 Email Leads */}
+          {/* §9 */}
           <div style={{ ...WO, margin: '12px 12px 12px' }}>
             <div style={WO_HDR}><span>§9 — EMAIL LEADS · YOUR AUDIENCE</span><span style={{ opacity: 0.3, fontSize: '9px' }}>FP-009</span></div>
             <MakerLeads leads={leads} brandName={profile.display_name} />
