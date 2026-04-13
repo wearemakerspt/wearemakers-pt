@@ -11,8 +11,8 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
   const role = user?.profile?.role
 
   return (
-    <header id="masthead" style={{ display: 'flex' }}>
-      {/* Logo */}
+    <header id="masthead" style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 200 }}>
+      {/* Logo — always visible */}
       <Link href="/" className="mh-logo">
         <span className="mh-logo-text">
           WEARE<span className="mh-logo-pt">MAKERS.PT</span>
@@ -24,8 +24,8 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
         Lisbon Street Markets · Independent Makers
       </div>
 
-      {/* Right cells */}
-      <div className="mh-right">
+      {/* Right cells — hidden on mobile, shown on desktop */}
+      <div className="mh-right mh-desktop-only">
 
         {/* Live counter */}
         <Link href="/" className="mh-cell live-cell">
@@ -34,11 +34,10 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
         </Link>
 
         <Link href="/markets" className="mh-cell">MARKETS</Link>
-        <Link href="/spaces" className="mh-cell">SPACES</Link>
         <Link href="/brands" className="mh-cell">BRANDS</Link>
         <Link href="/journal" className="mh-cell">JOURNAL</Link>
         <Link href="/gems" className="mh-cell">GEMS</Link>
-        <Link href="/circuit" className="mh-cell">CIRCUIT</Link>
+        <Link href="/circuit" className="mh-cell">MY CIRCUIT</Link>
 
         {/* Auth */}
         {user ? (
@@ -51,7 +50,7 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
               }
               className="mh-cell"
             >
-              {user.profile?.display_name?.split(' ')[0].toUpperCase() ?? 'DASHBOARD'}
+              DASHBOARD
             </Link>
             <form action={signOut} style={{ display: 'flex' }}>
               <button type="submit" className="mh-cell inv">EXIT</button>
@@ -62,6 +61,17 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
             <Link href="/welcome" className="mh-cell">JOIN</Link>
             <Link href="/auth/login" className="mh-cell inv">ACCESS →</Link>
           </>
+        )}
+      </div>
+
+      {/* Mobile right — login/exit only */}
+      <div className="mh-mobile-auth">
+        {user ? (
+          <form action={signOut} style={{ display: 'flex' }}>
+            <button type="submit" className="mh-cell inv" style={{ fontSize: '10px', padding: '0 12px' }}>EXIT</button>
+          </form>
+        ) : (
+          <Link href="/auth/login" className="mh-cell inv" style={{ fontSize: '10px', padding: '0 12px' }}>ACCESS →</Link>
         )}
       </div>
     </header>

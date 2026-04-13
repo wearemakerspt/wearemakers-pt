@@ -406,6 +406,151 @@ a { color: inherit; text-decoration: none; }
 .wam-tab-active .wam-tab-label { color: var(--RED); font-weight: 700; }
 
 @media (max-width: 767px) {
-  .wam-mobile-nav { display: flex !important; }
+  /* overridden by mobile overhaul section below */
+}
+
+/* ============================================================
+   MOBILE OVERHAUL — append to end of globals.css
+   ============================================================ */
+
+/* ── Sticky header ── */
+#masthead {
+  position: sticky !important;
+  top: 0;
+  z-index: 200;
+}
+
+/* ── Hide nav links on mobile, show logo only ── */
+@media (max-width: 767px) {
+  .mh-desktop-only { display: none !important; }
+  .mh-tagline { display: none !important; }
+  .mh-mobile-auth { display: flex; align-items: stretch; margin-left: auto; }
+
+  /* Smaller logo on mobile */
+  .mh-logo-text { font-size: 20px !important; }
+  #masthead { height: 52px; }
+}
+
+@media (min-width: 768px) {
+  .mh-desktop-only { display: flex !important; }
+  .mh-mobile-auth { display: none !important; }
+}
+
+/* ── Floating bottom tab bar ── */
+.wam-mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 9000;
+  background: var(--INK);
+  border: 2px solid rgba(240,236,224,0.12);
+  border-radius: 0; /* keep design system */
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 4px 4px 0 0 rgba(200,41,26,0.2);
+  height: auto;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.wam-mobile-nav-inner {
+  display: flex;
+  align-items: stretch;
+  height: 68px;
+}
+
+.wam-nav-spacer {
+  display: none;
+  height: 96px; /* taller to account for floating nav + gap */
+  flex-shrink: 0;
+}
+
+.wam-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-decoration: none;
+  color: rgba(240,236,224,0.35);
+  border-right: 1px solid rgba(240,236,224,0.06);
+  padding: 10px 4px 8px;
+  transition: background 0.1s;
+  min-width: 0;
+}
+
+.wam-tab:last-child { border-right: none; }
+.wam-tab:active { background: rgba(200,41,26,0.15); }
+
+.wam-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wam-tab-label {
+  font-family: var(--TAG);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: rgba(240,236,224,0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.wam-tab-active .wam-tab-label {
+  color: var(--RED);
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .wam-mobile-nav { display: block !important; }
   .wam-nav-spacer { display: block !important; }
+}
+
+/* ── Brand grid — 2 col mobile, 4 col desktop ── */
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-top: 3px solid #181614;
+}
+
+@media (min-width: 640px) {
+  .brands-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .brands-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ── Homepage greeting — prevent bad word breaks on mobile ── */
+@media (max-width: 767px) {
+  .greeting-h {
+    font-size: clamp(52px, 18vw, 80px) !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+  }
+}
+
+/* ── General mobile readability ── */
+@media (max-width: 767px) {
+  /* Larger base body text */
+  body { font-size: 16px; }
+
+  /* Market card fonts slightly larger */
+  .mcard-title { font-size: 20px !important; }
+
+  /* Hide scrollbar on filter pill rows */
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+}
+
+/* ── Gallery lightbox — hide arrows on touch devices ── */
+@media (hover: none) and (pointer: coarse) {
+  .lightbox-arrow { display: none !important; }
 }
