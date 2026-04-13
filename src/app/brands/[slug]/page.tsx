@@ -8,6 +8,7 @@ import SiteHeader from '@/components/ui/SiteHeader'
 import SaveBrandButton from '@/components/ui/SaveBrandButton'
 import BrandViewTracker from '@/components/ui/BrandViewTracker'
 import InstagramTapTracker from '@/components/ui/InstagramTapTracker'
+import BrandGallery from '@/components/brands/BrandGallery'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +40,6 @@ export default async function BrandPage({ params }: Props) {
 
   const supabase = await createClient()
 
-  // Fetch gallery photos and team members in parallel
   const [photosRes, membersRes] = await Promise.all([
     supabase.from('brand_photos').select('id, photo_url, caption, sort_order').eq('brand_id', brand.id).order('sort_order'),
     supabase.from('brand_members').select('id, name, role, photo_url, bio, sort_order').eq('brand_id', brand.id).order('sort_order'),
@@ -70,7 +70,6 @@ export default async function BrandPage({ params }: Props) {
   const offerActive = bio_i18n?._offer_active !== false
   const activeOffer = brand.digital_offer && offerActive ? brand.digital_offer : null
   const liveMarketId = brand.is_live ? (brand as any).live_market_id ?? null : null
-  const featuredPhoto = (brand as any).featured_photo_url ?? null
 
   return (
     <>
@@ -79,34 +78,51 @@ export default async function BrandPage({ params }: Props) {
 
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 
-        {/* Featured photo hero — if set */}
-        {featuredPhoto && (
-          <div style={{ width: '100%', height: 'clamp(200px, 40vw, 360px)', overflow: 'hidden', borderBottom: '3px solid #181614' }}>
-            <img src={featuredPhoto} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
-        )}
-
-        {/* Dark brand header */}
+        {/* Dark brand header — logo always shown here */}
         <div style={{ background: '#181614', padding: '20px 16px', borderBottom: '3px solid #181614' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '10px' }}>
+          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '12px' }}>
             BRAND MANIFESTO · WEAREMAKERS.PT
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(40px,12vw,72px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#f0ece0' }}>
-              {brand.display_name}
+
+          {/* Avatar + name row */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '10px', flexWrap: 'wrap' }}>
+            {/* Avatar / logo */}
+            {brand.avatar_url && (
+              <div style={{ width: '72px', height: '72px', flexShrink: 0, border: '3px solid rgba(240,236,224,.15)', overflow: 'hidden', background: 'rgba(240,236,224,.06)' }}>
+                <img src={brand.avatar_url} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(40px,12vw,72px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#f0ece0' }}>
+                  {brand.display_name}
+                </div>
+                {brand.is_live && <span className="badge-live">{brand.live_market_name}</span>}
+                {brand.is_verified && <span className="badge-pro">✦ PRO</span>}
+              </div>
+
+              {/* Instagram */}
+              {brand.instagram_handle && (
+                <InstagramTapTracker
+                  brandId={brand.id} handle={brand.instagram_handle}
+                  marketId={liveMarketId} visitorId={user?.id ?? null}
+                  style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '16px', color: '#c8291a', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {brand.instagram_handle}
+                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
+                </InstagramTapTracker>
+              )}
             </div>
-            {brand.is_live && <span className="badge-live">{brand.live_market_name}</span>}
-            {brand.is_verified && <span className="badge-pro">✦ PRO</span>}
           </div>
-          {brand.instagram_handle && (
-            <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId} visitorId={user?.id ?? null}
-              style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#c8291a', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              {brand.instagram_handle}
-              <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
-            </InstagramTapTracker>
-          )}
-          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <SaveBrandButton brandId={brand.id} brandName={brand.display_name} initialSaved={initialSaved} userId={user?.id ?? null} size="lg" dark={true} digitalOffer={activeOffer} />
+
+          {/* Save button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <SaveBrandButton
+              brandId={brand.id} brandName={brand.display_name}
+              initialSaved={initialSaved} userId={user?.id ?? null}
+              size="lg" dark={true} digitalOffer={activeOffer}
+            />
             {activeOffer && !initialSaved && (
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(240,236,224,.4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ color: '#c8291a' }}>✦</span> SAVE TO UNLOCK OFFER
@@ -152,26 +168,9 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Photo Gallery */}
+        {/* Photo gallery — lightbox enabled */}
         {photos.length > 0 && (
-          <div>
-            <div style={{ padding: '10px 14px', borderBottom: '3px solid #181614', borderTop: '3px solid #181614', fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#181614', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '3px', height: '12px', background: '#c8291a', display: 'inline-block' }} />
-              THE WORK · {photos.length} PHOTOS
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0 }}>
-              {photos.map((photo, i) => (
-                <div key={photo.id} style={{ aspectRatio: '1', overflow: 'hidden', borderRight: i % 3 !== 2 ? '2px solid #181614' : 'none', borderBottom: '2px solid #181614', position: 'relative' as const }}>
-                  <img src={photo.photo_url} alt={photo.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {photo.caption && (
-                    <div style={{ position: 'absolute' as const, bottom: 0, left: 0, right: 0, background: 'rgba(24,22,20,.75)', fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(240,236,224,.8)', padding: '4px 8px', letterSpacing: '0.08em' }}>
-                      {photo.caption}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <BrandGallery photos={photos as any} />
         )}
 
         {/* Meet the team */}
@@ -240,8 +239,11 @@ export default async function BrandPage({ params }: Props) {
         {/* Instagram action */}
         <div style={{ padding: '16px', borderTop: '3px solid #181614', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {brand.instagram_handle && (
-            <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId} visitorId={user?.id ?? null}
-              style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#c8291a', color: '#fff', border: '3px solid #c8291a', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}>
+            <InstagramTapTracker
+              brandId={brand.id} handle={brand.instagram_handle}
+              marketId={liveMarketId} visitorId={user?.id ?? null}
+              style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#c8291a', color: '#fff', border: '3px solid #c8291a', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}
+            >
               INSTAGRAM →
             </InstagramTapTracker>
           )}
