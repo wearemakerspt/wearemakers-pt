@@ -343,9 +343,9 @@ export default async function HomePage() {
           <div style={{ borderTop: '1px solid rgba(240,236,224,.06)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)' }}>© 2026 WEAREMAKERS.PT — LISBON, PORTUGAL</div>
             <div style={{ display: 'flex', gap: '16px' }}>
-              {['Privacy', 'Terms', 'Instagram'].map(l => (
-                <span key={l} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)' }}>{l}</span>
-              ))}
+              <Link href="/privacy" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)', textDecoration: 'none' }}>Privacy</Link>
+              <Link href="/terms" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)', textDecoration: 'none' }}>Terms</Link>
+              <a href="https://instagram.com/wearemakerspt" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(240,236,224,.18)', textDecoration: 'none' }}>Instagram</a>
             </div>
           </div>
         </footer>
