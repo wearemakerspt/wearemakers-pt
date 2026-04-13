@@ -12,10 +12,10 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
 
   return (
     <header id="masthead" style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 200 }}>
-      {/* Logo — always visible */}
+      {/* Logo — WEARE + MAKERS (red) + .PT */}
       <Link href="/" className="mh-logo">
         <span className="mh-logo-text">
-          WEARE<span className="mh-logo-pt">MAKERS.PT</span>
+          WEARE<span className="mh-logo-makers">MAKERS</span>.PT
         </span>
       </Link>
 
@@ -24,22 +24,18 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
         Lisbon Street Markets · Independent Makers
       </div>
 
-      {/* Right cells — hidden on mobile, shown on desktop */}
+      {/* Nav links — desktop only */}
       <div className="mh-right mh-desktop-only">
-
-        {/* Live counter */}
         <Link href="/" className="mh-cell live-cell">
           <span className="pdot" />
           {liveCount > 0 ? `${liveCount} LIVE` : 'LIVE'}
         </Link>
-
         <Link href="/markets" className="mh-cell">MARKETS</Link>
         <Link href="/brands" className="mh-cell">BRANDS</Link>
         <Link href="/journal" className="mh-cell">JOURNAL</Link>
         <Link href="/gems" className="mh-cell">GEMS</Link>
         <Link href="/circuit" className="mh-cell">MY CIRCUIT</Link>
 
-        {/* Auth */}
         {user ? (
           <>
             <Link
@@ -58,20 +54,20 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
           </>
         ) : (
           <>
-            <Link href="/welcome" className="mh-cell">JOIN</Link>
+            <Link href="/welcome" className="mh-cell">JOIN FREE</Link>
             <Link href="/auth/login" className="mh-cell inv">ACCESS →</Link>
           </>
         )}
       </div>
 
-      {/* Mobile right — login/exit only */}
+      {/* Mobile: only JOIN FREE / EXIT on the right */}
       <div className="mh-mobile-auth">
         {user ? (
           <form action={signOut} style={{ display: 'flex' }}>
-            <button type="submit" className="mh-cell inv" style={{ fontSize: '10px', padding: '0 12px' }}>EXIT</button>
+            <button type="submit" className="mh-cell inv" style={{ fontSize: '9.5px', padding: '0 14px' }}>EXIT</button>
           </form>
         ) : (
-          <Link href="/auth/login" className="mh-cell inv" style={{ fontSize: '10px', padding: '0 12px' }}>ACCESS →</Link>
+          <Link href="/welcome" className="mh-cell inv" style={{ fontSize: '9.5px', padding: '0 14px' }}>JOIN FREE</Link>
         )}
       </div>
     </header>
