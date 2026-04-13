@@ -150,7 +150,7 @@ export default async function CuratorPage({ params }: Props) {
               SPOTLIGHT — FEATURED BRANDS · {curator.featured_makers.length}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 0 }}>
-              {curator.featured_makers.map((maker, i) => {
+              {curator.featured_makers.map((maker) => {
                 const href = `/brands/${maker.slug ?? maker.id}`
                 const cardImage = maker.featured_photo_url ?? maker.avatar_url ?? null
                 const category = maker.bio_i18n?._category?.split(',')[0]?.trim() ?? null
@@ -222,10 +222,10 @@ function MarketRow({ market, i, isLive = false }: { market: any; i: number; isLi
         <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1 }}>
           {market.title}
         </div>
-        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(24,22,20,.4)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(24,22,20,.4)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
           <span>{formatTime(market.starts_at)}–{formatTime(market.ends_at)}</span>
           {market.space_name && market.space_slug && (
-            <Link href={`/spaces/${market.space_slug}`} onClick={e => e.stopPropagation()}
+            <Link href={`/spaces/${market.space_slug}`} onClick={(e: React.MouseEvent) => e.stopPropagation()}
               style={{ color: '#c8291a', textDecoration: 'none', fontWeight: 700 }}>
               {market.space_name} →
             </Link>
@@ -240,14 +240,4 @@ function MarketRow({ market, i, isLive = false }: { market: any; i: number; isLi
       </div>
     </div>
   )
-}
-
-function formatDate(d: string) {
-  return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', {
-    weekday: 'short', day: 'numeric', month: 'short'
-  }).toUpperCase()
-}
-
-function formatTime(t: string) {
-  return t.slice(0, 5)
 }
