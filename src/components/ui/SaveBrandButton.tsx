@@ -54,7 +54,18 @@ export default function SaveBrandButton({
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (isPending || !userId) return
+    if (isPending) return
+
+    // Anonymous visitor — skip save to DB, go straight to email capture
+    if (!userId) {
+      if (digitalOffer) {
+        setModalStep('offer')
+      } else {
+        setModalStep('email')
+      }
+      return
+    }
+
     setIsPending(true)
     const next = !saved
     setSaved(next)
@@ -117,11 +128,7 @@ export default function SaveBrandButton({
     setEmailSent(false)
   }
 
-  function goToEmail() {
-    setModalStep('email')
-  }
-
-  // Button styles
+  // Size variants
   const sizeStyle = {
     sm: { padding: '6px 12px', fontSize: '10px' },
     md: { padding: '9px 16px', fontSize: '11px' },
@@ -149,23 +156,12 @@ export default function SaveBrandButton({
       ? { ...T, background: 'transparent', color: 'var(--P)', outline: '2px solid rgba(240,236,224,.35)' }
       : { ...T, background: 'transparent', color: 'var(--INK)', outline: '2px solid rgba(24,22,20,.25)' }
 
-  if (!userId) {
-    return (
-      <a
-        href="/auth/login"
-        style={{ ...T, background: 'transparent', color: dark ? 'rgba(240,236,224,.5)' : 'rgba(24,22,20,.4)', outline: '2px solid', outlineColor: dark ? 'rgba(240,236,224,.2)' : 'rgba(24,22,20,.2)', textDecoration: 'none' }}
-      >
-        <span>♡</span> SAVE
-      </a>
-    )
-  }
-
-  const INK = 'var(--INK)'
-  const RED = 'var(--RED)'
-  const P = 'var(--P)'
   const TAG = "'Share Tech Mono', monospace"
   const LOGO = "'Barlow Condensed', sans-serif"
   const MONO = "'JetBrains Mono', monospace"
+  const INK = 'var(--INK)'
+  const RED = 'var(--RED)'
+  const P = 'var(--P)'
 
   return (
     <>
@@ -209,7 +205,7 @@ export default function SaveBrandButton({
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
-                    onClick={goToEmail}
+                    onClick={() => setModalStep('email')}
                     style={{ flex: 1, fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px', cursor: 'pointer' }}
                   >
                     GOT IT ✓
@@ -228,7 +224,7 @@ export default function SaveBrandButton({
             {modalStep === 'email' && !emailSent && (
               <>
                 <div style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: RED, marginBottom: '8px' }}>
-                  ✦ {brandName} SAVED
+                  ✦ {brandName}
                 </div>
                 <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: 'clamp(22px,6vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.92, color: P, marginBottom: '14px' }}>
                   GET NOTIFIED WHEN<br />THEY GO LIVE
@@ -247,6 +243,7 @@ export default function SaveBrandButton({
                       background: 'rgba(240,236,224,.07)',
                       border: emailError ? `2px solid ${RED}` : '2px solid rgba(240,236,224,.2)',
                       padding: '12px 14px', outline: 'none', width: '100%',
+                      borderRadius: 0,
                     }}
                     autoFocus
                   />
@@ -275,23 +272,21 @@ export default function SaveBrandButton({
 
             {/* ── STEP 2: Email confirmed ── */}
             {modalStep === 'email' && emailSent && (
-              <>
-                <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                  <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: '48px', color: '#1a5c30', marginBottom: '12px' }}>✓</div>
-                  <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: 'clamp(24px,6vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: P, lineHeight: 1, marginBottom: '10px' }}>
-                    YOU'RE IN
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: '14px', color: 'rgba(240,236,224,.45)', lineHeight: 1.6, marginBottom: '24px' }}>
-                    We'll email you the next time {brandName} is live at a market.
-                  </div>
-                  <button
-                    onClick={closeModal}
-                    style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px 28px', cursor: 'pointer' }}
-                  >
-                    CLOSE ✓
-                  </button>
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: '48px', color: '#1a5c30', marginBottom: '12px' }}>✓</div>
+                <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: 'clamp(24px,6vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: P, lineHeight: 1, marginBottom: '10px' }}>
+                  YOU'RE IN
                 </div>
-              </>
+                <div style={{ fontFamily: MONO, fontSize: '14px', color: 'rgba(240,236,224,.45)', lineHeight: 1.6, marginBottom: '24px' }}>
+                  We'll let you know the next time {brandName} is live at a market.
+                </div>
+                <button
+                  onClick={closeModal}
+                  style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px 28px', cursor: 'pointer' }}
+                >
+                  CLOSE ✓
+                </button>
+              </div>
             )}
 
           </div>
