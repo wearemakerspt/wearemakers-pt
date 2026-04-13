@@ -5,6 +5,8 @@ import { getBrandBySlug } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SaveBrandButton from '@/components/ui/SaveBrandButton'
+import BrandViewTracker from '@/components/ui/BrandViewTracker'
+import InstagramTapTracker from '@/components/ui/InstagramTapTracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,18 +62,27 @@ export default async function BrandPage({ params }: Props) {
         .eq('brand_id', brand.id)
         .maybeSingle()
       initialSaved = !!data
-    } catch { /* ignore — saved state defaults to false */ }
+    } catch { /* ignore */ }
   }
 
-  // Determine active offer — only show if offer exists and not deactivated
+  // Determine active offer
   const offerActive = bio_i18n?._offer_active !== false
   const activeOffer = brand.digital_offer && offerActive ? brand.digital_offer : null
 
-  const initials = brand.display_name.slice(0, 2).toUpperCase()
+  // Find the live market_id if brand is currently live (for analytics attribution)
+  const liveMarketId = brand.is_live ? (brand as any).live_market_id ?? null : null
 
   return (
     <>
       <SiteHeader user={user} liveCount={brand.is_live ? 1 : 0} />
+
+      {/* Track this page view — fires silently on load, never blocks rendering */}
+      <BrandViewTracker
+        brandId={brand.id}
+        marketId={liveMarketId}
+        visitorId={user?.id ?? null}
+      />
+
       <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
 
         {/* Dark brand header */}
@@ -86,19 +97,22 @@ export default async function BrandPage({ params }: Props) {
             {brand.is_live && <span className="badge-live">{brand.live_market_name}</span>}
             {brand.is_verified && <span className="badge-pro">✦ PRO</span>}
           </div>
+
+          {/* Instagram — tracked tap */}
           {brand.instagram_handle && (
-            <a
-              href={`https://instagram.com/${brand.instagram_handle.replace('@','')}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <InstagramTapTracker
+              brandId={brand.id}
+              handle={brand.instagram_handle}
+              marketId={liveMarketId}
+              visitorId={user?.id ?? null}
               style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '18px', color: '#c8291a', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               {brand.instagram_handle}
               <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', opacity: 0.6 }}>↗</span>
-            </a>
+            </InstagramTapTracker>
           )}
 
-          {/* Save to Circuit — passes offer so modal triggers on save */}
+          {/* Save to Circuit */}
           <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <SaveBrandButton
               brandId={brand.id}
@@ -145,7 +159,7 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Active offer — visible in page body (also triggers as modal on save) */}
+        {/* Active offer */}
         {activeOffer && (
           <div style={{ padding: '16px', borderBottom: '3px solid #181614', background: '#181614' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -158,7 +172,6 @@ export default async function BrandPage({ params }: Props) {
                 </span>
               )}
             </div>
-            {/* Stamp treatment */}
             <div style={{ padding: '20px', background: 'rgba(240,236,224,.04)', border: '2px dashed rgba(240,236,224,.12)', textAlign: 'center', marginBottom: '10px' }}>
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(20px,5vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#f0ece0', lineHeight: 1.2 }}>
                 {activeOffer}
@@ -227,17 +240,18 @@ export default async function BrandPage({ params }: Props) {
           </div>
         )}
 
-        {/* Instagram action */}
+        {/* Instagram action — tracked */}
         <div style={{ padding: '16px', borderTop: '3px solid #181614', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {brand.instagram_handle && (
-            <a
-              href={`https://instagram.com/${brand.instagram_handle.replace('@','')}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <InstagramTapTracker
+              brandId={brand.id}
+              handle={brand.instagram_handle}
+              marketId={liveMarketId}
+              visitorId={user?.id ?? null}
               style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: '#c8291a', color: '#fff', border: '3px solid #c8291a', padding: '12px 20px', textDecoration: 'none', display: 'inline-block' }}
             >
               INSTAGRAM →
-            </a>
+            </InstagramTapTracker>
           )}
         </div>
 
