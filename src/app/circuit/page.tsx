@@ -319,11 +319,11 @@ function BrandRow({ brand, userId }: { brand: any; userId: string | null }) {
       {/* Offer strip — shown below the brand row if offer is active */}
       {activeOffer && (
         <div style={{ margin: '0 14px 10px', padding: '7px 10px', background: 'rgba(200,41,26,.06)', border: '1px solid rgba(200,41,26,.18)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: 'var(--RED)', fontSize: '11px', flexShrink: 0 }}>✦</span>
-          <span style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--RED)', fontStyle: 'italic', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+          <span style={{ color: 'var(--RED)', fontSize: '14px', flexShrink: 0 }}>✦</span>
+          <span style={{ fontFamily: 'var(--MONO)', fontSize: '15px', color: 'var(--RED)', fontStyle: 'italic', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
             {activeOffer}
           </span>
-          <span style={{ ...T, fontSize: '8px', color: 'rgba(200,41,26,.5)', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--TAG)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'rgba(200,41,26,.7)', flexShrink: 0, fontWeight: 700 }}>
             SHOW AT STALL
           </span>
         </div>

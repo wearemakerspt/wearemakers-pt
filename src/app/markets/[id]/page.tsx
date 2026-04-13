@@ -32,6 +32,13 @@ export default async function MarketDetailPage({ params }: Props) {
 
   const isLive = market.status === 'live' || market.status === 'community_live'
 
+  // Derive space slug from space name for now (spaces are seeded with slug = slugified name)
+  const spaceSlug = market.space.name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+
   return (
     <>
       <RealtimeRefresh />
@@ -40,9 +47,22 @@ export default async function MarketDetailPage({ params }: Props) {
 
         {/* Dark header */}
         <div style={{ background: '#181614', padding: '16px', borderBottom: '3px solid #181614' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '6px' }}>
-            {market.space.name.toUpperCase()} · {(market.space.parish ?? '').toUpperCase()}
+          {/* Space breadcrumb — links to space profile */}
+          <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link
+              href={`/spaces/${spaceSlug}`}
+              style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none' }}
+            >
+              {market.space.name.toUpperCase()}
+            </Link>
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(240,236,224,.3)', letterSpacing: '0.2em' }}>
+              · {(market.space.parish ?? '').toUpperCase()}
+            </span>
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(240,236,224,.25)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              ↗
+            </span>
           </div>
+
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,10vw,64px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#f0ece0', marginBottom: '8px' }}>
             {market.title}
           </div>
@@ -66,6 +86,12 @@ export default async function MarketDetailPage({ params }: Props) {
           >
             DIRECTIONS →
           </a>
+          <Link
+            href={`/spaces/${spaceSlug}`}
+            style={{ flex: 1, fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '12px 8px', borderRight: '3px solid #181614', background: '#f0ece0', color: '#181614', textDecoration: 'none', textAlign: 'center', display: 'block' }}
+          >
+            VIEW SPACE →
+          </Link>
           <Link
             href="/gems"
             style={{ flex: 1, fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '12px 8px', background: '#f0ece0', color: '#181614', textDecoration: 'none', textAlign: 'center', display: 'block' }}

@@ -45,12 +45,11 @@ export default async function MarketsPage() {
             )}
           </div>
 
-          {/* Filter pills */}
-          <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none', padding: '12px 0 0', flexWrap: 'nowrap' }}>
+          {/* Filter pills + spaces link */}
+          <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none', padding: '12px 0 0', flexWrap: 'nowrap', alignItems: 'center' }}>
             {[
               { label: '● LIVE NOW', active: true },
               { label: 'UPCOMING', active: false },
-              { label: 'ALL SPACES', active: false },
             ].map((pill, i) => (
               <span
                 key={i}
@@ -67,6 +66,18 @@ export default async function MarketsPage() {
                 {pill.label}
               </span>
             ))}
+            <Link
+              href="/spaces"
+              style={{
+                fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
+                letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
+                border: '2px solid #181614', background: '#181614', color: '#f0ece0',
+                marginRight: '6px', marginBottom: '10px',
+                display: 'inline-block', flexShrink: 0, textDecoration: 'none',
+              }}
+            >
+              ALL SPACES →
+            </Link>
           </div>
         </div>
 
