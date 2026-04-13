@@ -221,7 +221,6 @@ export default async function CircuitPage() {
             {savedGems.map((gem: any) => {
               const googleQuery = encodeURIComponent(`${gem.name}${gem.address ? ', ' + gem.address : ''}, Lisbon`)
               const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${googleQuery}`
-
               return (
                 <div key={gem.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderBottom: '2px solid rgba(24,22,20,.1)', background: 'var(--P)' }}>
                   <div style={{ width: '44px', height: '44px', flexShrink: 0, background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
@@ -240,12 +239,8 @@ export default async function CircuitPage() {
                       </div>
                     )}
                   </div>
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontFamily: 'var(--TAG)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--INK)', border: '1px solid rgba(24,22,20,.2)', padding: '5px 10px', textDecoration: 'none', flexShrink: 0 }}
-                  >
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ fontFamily: 'var(--TAG)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--INK)', border: '1px solid rgba(24,22,20,.2)', padding: '5px 10px', textDecoration: 'none', flexShrink: 0 }}>
                     MAP →
                   </a>
                 </div>
@@ -278,43 +273,61 @@ export default async function CircuitPage() {
 
 function BrandRow({ brand, userId }: { brand: any; userId: string | null }) {
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+  const offerActive = (brand.bio_i18n as any)?._offer_active !== false
+  const activeOffer = brand.digital_offer && offerActive ? brand.digital_offer : null
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 14px', borderBottom: '2px solid rgba(24,22,20,.1)', background: brand.is_live ? 'rgba(200,41,26,.03)' : 'var(--P)' }}>
-      <Link href={`/brands/${brand.slug ?? brand.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-        <div style={{ width: '52px', height: '52px', background: 'var(--INK)', border: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', color: 'var(--RED)', position: 'relative', overflow: 'hidden' }}>
-          {brand.avatar_url
-            ? <img src={brand.avatar_url} alt={brand.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            : brand.display_name.slice(0, 2).toUpperCase()}
-          {brand.is_live && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'var(--GRN)', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '7px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff', padding: '2px 4px', textAlign: 'center' }}>LIVE</div>
-          )}
-        </div>
-      </Link>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <Link href={`/brands/${brand.slug ?? brand.id}`} style={{ textDecoration: 'none' }}>
-          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1, marginBottom: '3px' }}>
-            {brand.display_name}
+    <div style={{ borderBottom: '2px solid rgba(24,22,20,.1)', background: brand.is_live ? 'rgba(200,41,26,.03)' : 'var(--P)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 14px' }}>
+        <Link href={`/brands/${brand.slug ?? brand.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+          <div style={{ width: '52px', height: '52px', background: 'var(--INK)', border: '3px solid var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '18px', color: 'var(--RED)', position: 'relative', overflow: 'hidden' }}>
+            {brand.avatar_url
+              ? <img src={brand.avatar_url} alt={brand.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              : brand.display_name.slice(0, 2).toUpperCase()}
+            {brand.is_live && (
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'var(--GRN)', fontFamily: 'var(--TAG)', fontWeight: 700, fontSize: '7px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff', padding: '2px 4px', textAlign: 'center' }}>LIVE</div>
+            )}
           </div>
         </Link>
-        {brand.is_live && brand.live_market_name && (
-          <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '2px' }}>
-            ● LIVE AT {brand.live_market_name.toUpperCase()} · {brand.live_starts_at?.slice(0,5)}–{brand.live_ends_at?.slice(0,5)}
-          </div>
-        )}
-        {(brand.bio_i18n as any)?._category && (
-          <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>
-            {(brand.bio_i18n as any)._category.split(',').map((c: string) => c.trim()).join(' · ')}
-          </div>
-        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link href={`/brands/${brand.slug ?? brand.id}`} style={{ textDecoration: 'none' }}>
+            <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1, marginBottom: '3px' }}>
+              {brand.display_name}
+            </div>
+          </Link>
+          {brand.is_live && brand.live_market_name && (
+            <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '2px' }}>
+              ● LIVE AT {brand.live_market_name.toUpperCase()} · {brand.live_starts_at?.slice(0,5)}–{brand.live_ends_at?.slice(0,5)}
+            </div>
+          )}
+          {(brand.bio_i18n as any)?._category && (
+            <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>
+              {(brand.bio_i18n as any)._category.split(',').map((c: string) => c.trim()).join(' · ')}
+            </div>
+          )}
+        </div>
+        <SaveBrandButton
+          brandId={brand.id}
+          brandName={brand.display_name}
+          initialSaved={true}
+          userId={userId}
+          size="sm"
+          digitalOffer={activeOffer}
+        />
       </div>
-      <SaveBrandButton
-        brandId={brand.id}
-        brandName={brand.display_name}
-        initialSaved={true}
-        userId={userId}
-        size="sm"
-      />
+
+      {/* Offer strip — shown below the brand row if offer is active */}
+      {activeOffer && (
+        <div style={{ margin: '0 14px 10px', padding: '7px 10px', background: 'rgba(200,41,26,.06)', border: '1px solid rgba(200,41,26,.18)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: 'var(--RED)', fontSize: '11px', flexShrink: 0 }}>✦</span>
+          <span style={{ fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--RED)', fontStyle: 'italic', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+            {activeOffer}
+          </span>
+          <span style={{ ...T, fontSize: '8px', color: 'rgba(200,41,26,.5)', flexShrink: 0 }}>
+            SHOW AT STALL
+          </span>
+        </div>
+      )}
     </div>
   )
 }
