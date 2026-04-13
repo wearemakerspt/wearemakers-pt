@@ -3,8 +3,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getMarketBySlug } from '@/lib/queries/markets'
 import { getCurrentUser } from '@/lib/queries/auth'
+import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
+import SaveMarketButton from '@/components/ui/SaveMarketButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,12 +34,26 @@ export default async function MarketDetailPage({ params }: Props) {
 
   const isLive = market.status === 'live' || market.status === 'community_live'
 
-  // Derive space slug from space name for now (spaces are seeded with slug = slugified name)
   const spaceSlug = market.space.name
     .toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
+
+  // Check if user has saved this market
+  let initialSaved = false
+  if (user) {
+    try {
+      const supabase = await createClient()
+      const { data } = await supabase
+        .from('saved_markets')
+        .select('id')
+        .eq('visitor_id', user.id)
+        .eq('market_id', market.id)
+        .maybeSingle()
+      initialSaved = !!data
+    } catch { }
+  }
 
   return (
     <>
@@ -47,7 +63,7 @@ export default async function MarketDetailPage({ params }: Props) {
 
         {/* Dark header */}
         <div style={{ background: '#181614', padding: '16px', borderBottom: '3px solid #181614' }}>
-          {/* Space breadcrumb — links to space profile */}
+          {/* Space breadcrumb */}
           <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link
               href={`/spaces/${spaceSlug}`}
@@ -58,9 +74,7 @@ export default async function MarketDetailPage({ params }: Props) {
             <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(240,236,224,.3)', letterSpacing: '0.2em' }}>
               · {(market.space.parish ?? '').toUpperCase()}
             </span>
-            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(240,236,224,.25)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              ↗
-            </span>
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(240,236,224,.25)', letterSpacing: '0.1em' }}>↗</span>
           </div>
 
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,10vw,64px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#f0ece0', marginBottom: '8px' }}>
@@ -74,6 +88,17 @@ export default async function MarketDetailPage({ params }: Props) {
               {market.space.address}
             </div>
           )}
+
+          {/* Save date button */}
+          <div style={{ marginTop: '14px' }}>
+            <SaveMarketButton
+              marketId={market.id}
+              marketTitle={market.title}
+              userId={user?.id ?? null}
+              initialSaved={initialSaved}
+              dark={true}
+            />
+          </div>
         </div>
 
         {/* Action bar */}
