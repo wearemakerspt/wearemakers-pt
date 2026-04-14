@@ -22,15 +22,9 @@ function getDayAndGreeting() {
   const h = new Date().getHours()
   const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
   const day = days[new Date().getDay()]
-  if (h < 12) return { day, abbr: 'MORN.', full: 'GOOD MORNING.' }
-  if (h < 17) return { day, abbr: 'AFT.', full: 'GOOD AFTERNOON.' }
-  return { day, abbr: 'EVE.', full: 'GOOD EVENING.' }
-}
-
-function formatDate() {
-  return new Date().toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  }).toUpperCase()
+  if (h < 12) return { day, abbr: 'MORN.', greeting: 'GOOD MORNING.' }
+  if (h < 17) return { day, abbr: 'AFT.', greeting: 'GOOD AFTERNOON.' }
+  return { day, abbr: 'EVE.', greeting: 'GOOD EVENING.' }
 }
 
 async function getLisbonWeather(): Promise<{
@@ -48,19 +42,16 @@ async function getLisbonWeather(): Promise<{
     const windspeed = Math.round(data.current.wind_speed_10m)
     const precipitation = data.current.precipitation ?? 0
     const code = data.current.weather_code as number
-
     let condition: string
     if (code <= 2) condition = 'CLEAR SKIES'
     else if (code <= 48) condition = 'OVERCAST'
     else condition = 'RAIN'
-
     const isGood = precipitation <= 3 && windspeed <= 30
     const message = isGood
       ? 'PERFECT DAY FOR THE MARKETS'
       : precipitation > 3
         ? 'CHECK IF YOUR MARKET IS LIVE BEFORE HEADING OUT'
         : 'WIND ADVISORY — CONFIRM YOUR MARKET IS OPEN'
-
     return { temp, windspeed, precipitation, condition, message, isGood }
   } catch { return null }
 }
@@ -72,6 +63,7 @@ const INK = '#1A1A1A'
 const WHITE = '#F4F1EC'
 const PAPER = '#EDE9E2'
 const STONE = '#6B6560'
+const GREEN = '#1a5c30'
 
 export default async function HomePage() {
   const [liveMarkets, allMarkets, allBrands, user, top20Rows, articles, weather] = await Promise.all([
@@ -84,12 +76,14 @@ export default async function HomePage() {
     getLisbonWeather(),
   ])
 
-  const { day, abbr, full } = getDayAndGreeting()
+  const { day, abbr, greeting } = getDayAndGreeting()
   const liveBrands = allBrands.filter(b => b.is_live)
   const upcomingMarkets = allMarkets.filter(m => m.status === 'scheduled').slice(0, 3)
   const top20Brands = (top20Rows as any[]).map(r => r.maker).filter(Boolean).slice(0, 10)
-  // Slideshow: prefer live brands, fall back to top20
+  // Slideshow: prefer live brands (≥2), fall back to top20
   const slideshowBrands = liveBrands.length >= 2 ? liveBrands.slice(0, 8) : top20Brands
+  // Spotlight 2×2 grid: top4 of top20, or live brands if no top20
+  const spotlightBrands = top20Brands.slice(0, 4).length > 0 ? top20Brands.slice(0, 4) : liveBrands.slice(0, 4)
   const latestArticles = articles.slice(0, 3)
 
   return (
@@ -97,9 +91,9 @@ export default async function HomePage() {
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveMarkets.length} />
 
-      {/* ── Weather ticker ── */}
+      {/* ── Weather ticker — always red ── */}
       {weather && (
-        <div style={{ background: weather.isGood ? INK : RED, borderBottom: B, height: '34px', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+        <div style={{ background: RED, borderBottom: B, height: '34px', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
           <style>{`@keyframes weather-tick { from { transform: translateX(0) } to { transform: translateX(-50%) } }`}</style>
           <div style={{ display: 'flex', animation: 'weather-tick 32s linear infinite', whiteSpace: 'nowrap' }}>
             {[...Array(2)].map((_, ri) => (
@@ -112,7 +106,7 @@ export default async function HomePage() {
                   new Date().toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase(),
                   weather.isGood ? '● GO FIND YOUR MAKERS' : '● CHECK BEFORE YOU GO',
                 ].map((item, i) => (
-                  <span key={i} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.85)', padding: '0 32px', display: 'inline-flex', alignItems: 'center', gap: '32px' }}>
+                  <span key={i} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.9)', padding: '0 32px', display: 'inline-flex', alignItems: 'center', gap: '32px' }}>
                     {item}<span style={{ opacity: 0.4, fontSize: '14px' }}>·</span>
                   </span>
                 ))}
@@ -122,20 +116,18 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── Hero ── */}
+      {/* ── Hero — 55/45 ── */}
       <section style={{ display: 'grid', gridTemplateColumns: '55% 45%', borderBottom: B, minHeight: 'calc(100vh - 84px)' }} className="home-hero">
 
-        {/* Left: rotating brand slideshow */}
+        {/* Left: brand slideshow */}
         <HeroSlideshow
           brands={slideshowBrands}
-          dayLabel={`${day} · ${full}`}
-          greetingLine={`${day} · ${abbr}`}
+          dayLabel={`${day} · ${greeting}`}
+          greetingLine={abbr}
         />
 
-        {/* Right: live status + weather chips + upcoming */}
+        {/* Right: live status + weather + upcoming */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-
-          {/* Live status */}
           <div style={{ flex: 1, background: INK, color: WHITE, padding: '52px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderBottom: B, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(180deg,transparent 0px,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 3px)', pointerEvents: 'none' }} />
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.18em', color: RED, border: `1px solid ${RED}`, padding: '5px 11px', width: 'fit-content', marginBottom: '28px', textTransform: 'uppercase', position: 'relative' }}>
@@ -175,7 +167,7 @@ export default async function HomePage() {
             </div>
           )}
 
-          {/* Upcoming */}
+          {/* Upcoming markets */}
           {upcomingMarkets.length > 0 && (
             <div style={{ padding: '24px 44px 28px' }}>
               <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.2em', color: INK, marginBottom: '14px', textTransform: 'uppercase' }}>COMING UP</div>
@@ -231,6 +223,79 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ── Spotlight — section rule + 38/62 grid ── */}
+      <div className="section-rule">
+        <span className="section-rule-title">SPOTLIGHT</span>
+        <Link href="/brands" className="section-rule-link">ALL BRANDS →</Link>
+      </div>
+      <section style={{ display: 'grid', gridTemplateColumns: '38% 62%', borderBottom: B, minHeight: '380px' }} className="home-spotlight">
+        {/* Dark editorial left */}
+        <div style={{ background: INK, color: WHITE, padding: '52px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: B, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', bottom: '-32px', right: '-16px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '128px', lineHeight: 0.85, color: 'rgba(255,255,255,0.035)', letterSpacing: '-0.03em', pointerEvents: 'none', whiteSpace: 'pre', userSelect: 'none' as const }}>
+            {`TOP\n20`}
+          </div>
+          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', color: RED, textTransform: 'uppercase', position: 'relative' }}>
+            EDITORIAL · EDITORS' PICK
+          </div>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(56px,5.5vw,82px)', lineHeight: 0.88, letterSpacing: '-0.02em', textTransform: 'uppercase', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
+            WAM<br />TOP<br /><span style={{ color: RED }}>20</span>
+          </div>
+          <Link href="/brands/wam-top20" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: "'Share Tech Mono',monospace", fontSize: '9.5px', letterSpacing: '0.14em', color: WHITE, borderBottom: '1px solid rgba(244,241,236,0.25)', paddingBottom: '3px', width: 'fit-content', textDecoration: 'none', position: 'relative', textTransform: 'uppercase' }}>
+            SEE ALL 20 MAKERS →
+          </Link>
+        </div>
+
+        {/* 2×2 maker grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+          {spotlightBrands.length > 0
+            ? spotlightBrands.map((b: any, i: number) => (
+              <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ borderLeft: i % 2 === 1 ? Bsm : B, borderBottom: i < 2 ? Bsm : 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit', background: WHITE, minHeight: '140px', position: 'relative' as const, transition: 'background .18s' }} className="maker-cell-hover">
+                <div style={{ width: '40px', height: '40px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '12px', overflow: 'hidden' }}>
+                  {b.avatar_url ? <img src={b.avatar_url} alt={b.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.display_name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '15px', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: '16px', color: INK }}>{b.display_name}</div>
+                  {(b.bio_i18n as any)?._category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.1em', color: STONE, marginTop: '3px', textTransform: 'uppercase' }}>{(b.bio_i18n as any)._category.split(',')[0].trim()}</div>}
+                  {(b.bio_i18n as any)?._price_range && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: RED, marginTop: '3px' }}>{(b.bio_i18n as any)._price_range}</div>}
+                </div>
+              </Link>
+            ))
+            : [1,2,3,4].map(n => (
+              <div key={n} style={{ borderLeft: n % 2 === 0 ? Bsm : B, borderBottom: n <= 2 ? Bsm : 'none', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: WHITE, minHeight: '140px' }}>
+                <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: 'rgba(12,12,12,0.2)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>MAKER SLOT</div>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+      {/* ── Live brands scroll ── */}
+      {liveBrands.length > 0 && (
+        <section>
+          <div className="section-rule">
+            <span className="section-rule-title">LIVE BRANDS</span>
+            <Link href="/brands" className="section-rule-link">ALL BRANDS →</Link>
+          </div>
+          <div className="live-brands-scroll">
+            {liveBrands.map(b => (
+              <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} className="lb-card" style={{ textDecoration: 'none' }}>
+                <div className="lb-img">
+                  {(b as any).featured_photo_url || b.avatar_url
+                    ? <img src={(b as any).featured_photo_url ?? b.avatar_url!} alt={b.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div className="lb-img-name">{b.display_name}</div>
+                  }
+                  <div className="lb-live-tag">LIVE</div>
+                </div>
+                <div className="lb-info">
+                  <div className="lb-name">{b.display_name}</div>
+                  {(b.bio_i18n as any)?._category && <div className="lb-cat">{(b.bio_i18n as any)._category.split(',')[0].trim()}</div>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── Journal ── */}
       {latestArticles.length > 0 && (
         <section>
@@ -260,7 +325,7 @@ export default async function HomePage() {
             REGISTER YOUR BRAND —<br />IT'S <span style={{ color: RED }}>FREE</span>
           </div>
         </div>
-        <Link href="/welcome/maker" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 60px', fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.16em', background: INK, color: WHITE, textDecoration: 'none', textTransform: 'uppercase', whiteSpace: 'nowrap', transition: 'background .18s' }}>
+        <Link href="/welcome/maker" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 60px', fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.16em', background: INK, color: WHITE, textDecoration: 'none', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           JOIN WEAREMAKERS.PT →
         </Link>
       </div>
@@ -285,7 +350,7 @@ export default async function HomePage() {
                 <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.2em', color: INK, marginBottom: '18px', textTransform: 'uppercase' }}>{col.title}</div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '9px' }}>
                   {(col.links ?? []).map(l => (
-                    <li key={l.href}><a href={l.href} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK, textDecoration: 'none', transition: 'color .15s' }}>{l.label}</a></li>
+                    <li key={l.href}><a href={l.href} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK, textDecoration: 'none' }}>{l.label}</a></li>
                   ))}
                 </ul>
               </>
@@ -307,20 +372,25 @@ export default async function HomePage() {
 
       <style>{`
         .journal-card-hover:hover { background: #EDE9E2 !important; }
+        .maker-cell-hover:hover { background: #EDE9E2 !important; }
         @media (max-width: 860px) {
           .home-hero { grid-template-columns: 1fr !important; min-height: auto !important; }
+          .home-spotlight { grid-template-columns: 1fr !important; min-height: auto !important; }
+          .home-spotlight > div:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 40px 24px !important; min-height: 260px; }
           .home-journal { grid-template-columns: 1fr !important; }
           .home-journal > a { border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; padding: 28px 24px !important; }
           .home-footer { grid-template-columns: 1fr 1fr !important; }
           .home-footer > div:first-child { grid-column: 1/-1; border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; }
-          .home-footer > div:nth-child(2) { border-right: 2px solid #0C0C0C !important; }
+          .home-footer > div:nth-child(2) { border-right: ${B} !important; }
           .home-cta { grid-template-columns: 1fr !important; }
           .home-cta > div:first-child { border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; padding: 28px 24px !important; }
-          .home-cta > a { padding: 22px !important; border-top: 2px solid #0C0C0C !important; }
+          .home-cta > a { padding: 22px !important; border-top: ${B} !important; }
+          .section-rule { padding: 0 16px !important; }
         }
         @media (max-width: 540px) {
           .home-footer { grid-template-columns: 1fr !important; }
           .home-footer > div { border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; padding: 32px 24px !important; }
+          .home-spotlight > div:last-child { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
     </>
