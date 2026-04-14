@@ -188,7 +188,7 @@ export default async function BrandProfilePage({ params }: Props) {
               <span className="section-rule-title">GALLERY</span>
               <span className="section-rule-link">{(brand as any).photos.length} PHOTOS</span>
             </div>
-            <BrandGallery photos={(brand as any).photos} brandName={brand.display_name} />
+            <BrandGallery photos={(brand as any).photos} />
           </div>
         )}
 
