@@ -6,7 +6,6 @@ import { getCurrentUser } from '@/lib/queries/auth'
 import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import SaveBrandButton from '@/components/ui/SaveBrandButton'
-import BrandGallery from '@/components/brands/BrandGallery'
 import BrandViewTracker from '@/components/ui/BrandViewTracker'
 import InstagramTapTracker from '@/components/ui/InstagramTapTracker'
 
@@ -38,7 +37,7 @@ export default async function BrandProfilePage({ params }: Props) {
   const category = bio_i18n?._category ?? null
   const priceRange = bio_i18n?._price_range ?? null
   const offerActive = bio_i18n?._offer_active !== false
-  const hasOffer = brand.digital_offer && offerActive
+  const hasOffer = !!(brand.digital_offer && offerActive)
 
   let initialSaved = false
   if (user) {
@@ -49,21 +48,18 @@ export default async function BrandProfilePage({ params }: Props) {
     } catch { }
   }
 
-  const liveMarketId = (brand as any).live_attendance?.[0]?.market_id ?? null
-
   return (
     <>
       <SiteHeader user={user} liveCount={isLive ? 1 : 0} />
-      <BrandViewTracker brandId={brand.id} marketId={liveMarketId} />
+      <BrandViewTracker brandId={brand.id} marketId={null} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
         <style>{`
-          .brand-market-row:hover { background: ${PAPER} !important; }
+          .brand-market-row:hover > div { background: ${PAPER} !important; }
           @media (max-width: 860px) {
             .brand-hero { grid-template-columns: 1fr !important; }
             .brand-hero > div:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 36px 24px !important; }
             .brand-hero > div:last-child { padding: 28px 24px !important; }
-            .section-rule { padding: 0 16px !important; }
           }
         `}</style>
 
@@ -75,7 +71,7 @@ export default async function BrandProfilePage({ params }: Props) {
             <div>
               {isLive && (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.16em', color: WHITE, background: GREEN, padding: '5px 12px', marginBottom: '20px', textTransform: 'uppercase' }}>
-                  <span style={{ fontSize: '7px', animation: 'blink 2s infinite' }}>●</span> LIVE NOW
+                  <span style={{ fontSize: '7px' }}>●</span> LIVE NOW {brand.live_market_name ? `AT ${brand.live_market_name.toUpperCase()}` : ''}
                 </div>
               )}
 
@@ -115,7 +111,7 @@ export default async function BrandProfilePage({ params }: Props) {
               )}
             </div>
 
-            {/* Offer hint */}
+            {/* Offer unlock hint */}
             {hasOffer && !initialSaved && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.12em', color: RED, textTransform: 'uppercase', border: `1px solid rgba(232,0,28,.25)`, padding: '8px 14px', width: 'fit-content' }}>
                 <span>✦</span> SAVE TO UNLOCK EXCLUSIVE OFFER
@@ -123,18 +119,16 @@ export default async function BrandProfilePage({ params }: Props) {
             )}
           </div>
 
-          {/* Right sidebar */}
+          {/* Right sidebar — dark */}
           <div style={{ padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: '24px', background: INK, color: WHITE }}>
-            {/* Save button */}
-            <div>
-              <SaveBrandButton
-                brandId={brand.id}
-                brandName={brand.display_name}
-                initialSaved={initialSaved}
-                userId={user?.id ?? null}
-                digitalOffer={hasOffer ? brand.digital_offer : null}
-              />
-            </div>
+
+            <SaveBrandButton
+              brandId={brand.id}
+              brandName={brand.display_name}
+              initialSaved={initialSaved}
+              userId={user?.id ?? null}
+              digitalOffer={hasOffer ? brand.digital_offer : null}
+            />
 
             <div style={{ width: '100%', height: '1px', background: 'rgba(244,241,236,0.1)' }} />
 
@@ -142,35 +136,38 @@ export default async function BrandProfilePage({ params }: Props) {
             {brand.instagram_handle && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>INSTAGRAM</div>
-                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId}>
-                  <a href={`https://instagram.com/${brand.instagram_handle!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
+                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={null}>
+                  <a href={`https://instagram.com/${brand.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
                     {brand.instagram_handle} ↗
                   </a>
                 </InstagramTapTracker>
               </div>
             )}
 
-            {/* Shop */}
-            {(brand as any).shop_url && (
+            {/* Online Shop */}
+            {brand.shop_url && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>ONLINE SHOP</div>
-                <a href={(brand as any).shop_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
+                <a href={brand.shop_url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
                   VISIT SHOP ↗
                 </a>
               </div>
             )}
 
             {/* WhatsApp */}
-            {(brand as any).whatsapp && (
+            {brand.whatsapp && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>WHATSAPP</div>
-                <a href={`https://wa.me/${(brand as any).whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
+                <a href={`https://wa.me/${brand.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                  style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
                   SEND MESSAGE ↗
                 </a>
               </div>
             )}
 
-            {/* Offer */}
+            {/* Unlocked offer */}
             {hasOffer && initialSaved && (
               <div style={{ background: 'rgba(232,0,28,.12)', border: '1px solid rgba(232,0,28,.3)', padding: '14px' }}>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.16em', color: RED, textTransform: 'uppercase', marginBottom: '6px' }}>✦ YOUR EXCLUSIVE OFFER</div>
@@ -181,68 +178,35 @@ export default async function BrandProfilePage({ params }: Props) {
           </div>
         </div>
 
-        {/* Gallery */}
-        {(brand as any).photos?.length > 0 && (
+        {/* WHERE TO FIND ME — upcoming markets */}
+        {brand.upcoming_markets.length > 0 && (
           <div>
-            <div className="section-rule" style={{ padding: '0 52px' }}>
-              <span className="section-rule-title">GALLERY</span>
-              <span className="section-rule-link">{(brand as any).photos.length} PHOTOS</span>
-            </div>
-            <BrandGallery photos={(brand as any).photos} />
-          </div>
-        )}
-
-        {/* Team members */}
-        {(brand as any).members?.length > 0 && (
-          <div>
-            <div className="section-rule" style={{ padding: '0 52px' }}>
-              <span className="section-rule-title">THE PEOPLE</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: B }}>
-              {(brand as any).members.map((member: any, i: number) => (
-                <div key={member.id} style={{ padding: '32px', borderRight: i < 2 ? Bsm : 'none' }}>
-                  {member.photo_url && (
-                    <div style={{ width: '64px', height: '64px', border: B, overflow: 'hidden', marginBottom: '14px' }}>
-                      <img src={member.photo_url} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  )}
-                  <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: INK, marginBottom: '4px' }}>{member.name}</div>
-                  {member.role && <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: RED, marginBottom: '8px' }}>{member.role}</div>}
-                  {member.bio && <div style={{ fontFamily: FB, fontSize: '13px', color: STONE, lineHeight: 1.6 }}>{member.bio}</div>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* WHERE TO FIND ME */}
-        {(brand as any).upcoming_markets?.length > 0 && (
-          <div>
-            <div className="section-rule" style={{ padding: '0 52px' }}>
+            <div className="section-rule">
               <span className="section-rule-title">WHERE TO FIND ME</span>
-              <span className="section-rule-link">{(brand as any).upcoming_markets.length} UPCOMING</span>
+              <span className="section-rule-link">{brand.upcoming_markets.length} UPCOMING</span>
             </div>
-            {(brand as any).upcoming_markets.map((market: any, i: number) => {
-              const spaceSlug = market.space?.name?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') ?? ''
+            {brand.upcoming_markets.map((market, i) => {
+              const d = new Date(market.event_date + 'T12:00:00')
               return (
-                <Link key={market.id} href={`/markets/${market.id}`} className="brand-market-row"
-                  style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '20px', padding: '0 52px', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s' }}>
-                  <div style={{ flexShrink: 0, width: '80px' }}>
-                    <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '28px', color: INK, lineHeight: 1 }}>
-                      {new Date(market.event_date + 'T12:00:00').getDate()}
+                <Link key={market.market_id} href={`/markets/${market.market_id}`} className="brand-market-row"
+                  style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '0 52px', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s' }}>
+                    <div style={{ flexShrink: 0, width: '64px' }}>
+                      <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '32px', color: INK, lineHeight: 1 }}>{d.getDate()}</div>
+                      <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        {d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}
+                      </div>
                     </div>
-                    <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                      {new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: INK, lineHeight: 1 }}>
+                        {market.market_title}
+                      </div>
+                      <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, marginTop: '3px', letterSpacing: '0.06em' }}>
+                        {market.space_name}{market.space_address ? ` · ${market.space_address}` : ''} · {market.starts_at?.slice(0, 5)}
+                      </div>
                     </div>
+                    <div style={{ fontFamily: FM, fontSize: '14px', color: 'rgba(12,12,12,0.2)' }}>→</div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: INK, lineHeight: 1 }}>{market.title}</div>
-                    <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, marginTop: '3px', letterSpacing: '0.06em' }}>
-                      {market.space?.name && <Link href={`/spaces/${spaceSlug}`} style={{ color: RED, textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>{market.space.name}</Link>}
-                      {market.starts_at ? ` · ${market.starts_at.slice(0,5)}–${market.ends_at?.slice(0,5)}` : ''}
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: FM, fontSize: '14px', color: 'rgba(12,12,12,0.2)' }}>→</div>
                 </Link>
               )
             })}
