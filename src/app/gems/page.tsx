@@ -8,34 +8,39 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Hidden Gems — WEAREMAKERS.PT',
-  description: 'Places recommended by Lisbon\'s independent makers. The best coffee, food, studios and shops near the street markets — curated by the people who know these streets.',
+  description: "Places recommended by Lisbon's independent makers. The best coffee, food, studios and shops near the street markets.",
   alternates: { canonical: '/gems' },
 }
 
-export default async function GemsPage() {
-  const [gems, user] = await Promise.all([
-    getAllGems(),
-    getCurrentUser(),
-  ])
+const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', STONE = '#6B6560'
+const B = '2px solid #0C0C0C'
+const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", FB = "'Barlow',sans-serif"
 
-  const T = { fontFamily: 'var(--TAG)', letterSpacing: '0.18em', textTransform: 'uppercase' as const }
+export default async function GemsPage() {
+  const [gems, user] = await Promise.all([getAllGems(), getCurrentUser()])
 
   return (
     <>
       <SiteHeader user={user} />
-      <main style={{ background: 'var(--P)', minHeight: '100dvh' }}>
-        <div style={{ background: 'var(--INK)', padding: '20px 16px', borderBottom: '3px solid var(--INK)' }}>
-          <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '8px' }}>
+      <main style={{ background: WHITE, minHeight: '100dvh' }}>
+        {/* Dark hero */}
+        <div style={{ background: INK, padding: '56px 52px 48px', borderBottom: B }}>
+          <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: RED, fontWeight: 700, marginBottom: '10px' }}>
             RECOMMENDED BY MAKERS · LISBON
           </div>
-          <h1 style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: 'clamp(36px,8vw,60px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: 'var(--P)', marginBottom: '10px' }}>
-            HIDDEN GEMS
+          <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: WHITE, marginBottom: '20px' }}>
+            HIDDEN<br />GEMS
           </h1>
-          <p style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(240,236,224,.45)', lineHeight: 1.6, maxWidth: '520px', margin: 0 }}>
+          <p style={{ fontFamily: FB, fontWeight: 300, fontSize: '15px', color: 'rgba(244,241,236,0.5)', lineHeight: 1.7, maxWidth: '480px', margin: 0 }}>
             The best spots near each market — recommended by the independent makers who set up there every week.
           </p>
         </div>
         <GemsClient gems={gems} userId={user?.id ?? null} />
+        <style>{`
+          @media (max-width: 860px) {
+            .gems-hero { padding: 40px 24px 32px !important; }
+          }
+        `}</style>
       </main>
     </>
   )

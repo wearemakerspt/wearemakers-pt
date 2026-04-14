@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Brands — WEAREMAKERS.PT',
-  description: '200+ independent maker brands at Lisbon street markets. Ceramics, leather, textiles, print, jewellery and more.',
+  description: '200+ independent maker brands at Lisbon street markets.',
   alternates: { canonical: '/brands' },
 }
 
@@ -20,9 +20,12 @@ const CATEGORIES = [
   'ACCESSORIES', 'HANDMADE', 'GIFTS', 'OTHER',
 ]
 
+const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560'
+const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
+const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif"
+
 export default async function BrandsPage() {
   const [brands, user] = await Promise.all([getAllBrands(), getCurrentUser()])
-
   const liveCount = brands.filter(b => b.is_live).length
   const liveBrands = brands.filter(b => b.is_live)
   const otherBrands = brands.filter(b => !b.is_live)
@@ -31,62 +34,62 @@ export default async function BrandsPage() {
     <>
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveCount} />
-      <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
+      <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
-        {/* Editorial header */}
-        <div style={{ padding: '16px 16px 0', background: '#f0ece0', borderBottom: '3px solid #181614' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', marginBottom: '4px' }}>
-            200+ INDEPENDENT MAKERS
+        {/* Page hero */}
+        <div style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>200+ INDEPENDENT MAKERS</div>
+            <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>ALL BRANDS</h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,10vw,64px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#181614' }}>
-              ALL BRANDS
+          {liveCount > 0 && (
+            <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: '#1a5c30', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '8px' }}>●</span> {liveCount} LIVE NOW
             </div>
-            {liveCount > 0 && (
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#1a5c30', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '8px' }}>●</span> {liveCount} LIVE NOW
-              </div>
-            )}
-          </div>
-
-          {/* All filter pills — horizontally scrollable */}
-          <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '12px 0 0', flexWrap: 'nowrap' }}>
-            {CATEGORIES.map((cat, i) => (
-              <span key={cat} style={{
-                fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
-                letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
-                border: '2px solid #181614',
-                background: i === 0 ? '#c8291a' : '#f0ece0',
-                color: i === 0 ? '#fff' : '#181614',
-                marginRight: '6px', marginBottom: '10px',
-                display: 'inline-block', flexShrink: 0, cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}>
-                {i === 0 ? '● LIVE NOW' : cat}
-              </span>
-            ))}
-          </div>
+          )}
         </div>
 
-        {/* Brand grid — responsive: 2 col mobile, 4 col desktop */}
+        {/* Filter bar */}
+        <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {CATEGORIES.map((cat, i) => (
+            <div key={cat} style={{
+              display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px',
+              fontFamily: FM, fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase',
+              whiteSpace: 'nowrap', borderRight: Bsm, cursor: 'pointer', flexShrink: 0,
+              background: i === 0 ? RED : WHITE, color: i === 0 ? WHITE : INK,
+              transition: 'background .15s, color .15s',
+            }}>
+              {i === 0 ? '● LIVE NOW' : cat}
+            </div>
+          ))}
+        </div>
+
+        {/* Brand grid */}
         <div className="brands-grid">
           {[...liveBrands, ...otherBrands].map(b => (
             <BrandCard key={b.id} brand={b} view="grid" />
           ))}
-          {/* Join CTA card */}
-          <Link href="/auth/register" style={{ textDecoration: 'none', background: '#181614', borderRight: '2px solid #181614', borderBottom: '2px solid #181614', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', minHeight: '120px' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, color: 'rgba(240,236,224,.4)', letterSpacing: '0.12em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.6, marginBottom: '8px' }}>
-              SELL AT<br />LISBON<br />MARKETS?
+          {/* Join CTA */}
+          <Link href="/welcome/maker" style={{ textDecoration: 'none', background: INK, borderRight: Bsm, borderBottom: Bsm, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px 26px', minHeight: '200px', gap: '14px' }}>
+            <div style={{ width: '52px', height: '52px', border: '2px solid rgba(244,241,236,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '24px', color: RED }}>+</div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1.8 }}>SELL AT<br />LISBON MARKETS?</div>
+              <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '8px' }}>REGISTER FREE →</div>
             </div>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.1em', textTransform: 'uppercase' }}>JOIN FREE →</div>
           </Link>
         </div>
 
         {brands.length === 0 && (
           <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)' }}>No brands registered yet.</div>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE }}>No brands registered yet.</div>
           </div>
         )}
+
+        <style>{`
+          @media (max-width: 860px) {
+            .brands-page-hero { padding: 40px 24px 32px !important; }
+          }
+        `}</style>
       </main>
     </>
   )
