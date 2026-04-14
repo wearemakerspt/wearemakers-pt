@@ -78,7 +78,7 @@ export default function GemsClient({ gems, userId }: { gems: Gem[]; userId: stri
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '0 20px', height: '44px',
               fontFamily: FM, fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase',
-              whiteSpace: 'nowrap', borderRight: Bsm, cursor: 'pointer', flexShrink: 0,
+              whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0,
               background: cat === activeCategory ? INK : WHITE,
               color: cat === activeCategory ? WHITE : INK,
               borderRight: Bsm,
