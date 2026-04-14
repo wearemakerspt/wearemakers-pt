@@ -142,7 +142,11 @@ export default async function BrandProfilePage({ params }: Props) {
             {brand.instagram_handle && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>INSTAGRAM</div>
-                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId} />
+                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId}>
+                  <a href={`https://instagram.com/${brand.instagram_handle!.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
+                    {brand.instagram_handle} ↗
+                  </a>
+                </InstagramTapTracker>
               </div>
             )}
 
