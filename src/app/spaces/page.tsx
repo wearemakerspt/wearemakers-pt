@@ -19,18 +19,34 @@ const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", 
 export default async function SpacesPage() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()])
   const sb = await supabase
-  const { data: spaces } = await sb.from('spaces').select('id, name, slug, address, parish, city, description').eq('is_active', true).order('name')
+  const { data: spaces } = await sb
+    .from('spaces')
+    .select('id, name, slug, address, parish, city, description')
+    .eq('is_active', true)
+    .order('name')
 
   return (
     <>
       <SiteHeader user={user} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
+        <style>{`
+          .space-row:hover { background: #d8d2c4 !important; }
+          @media (max-width: 860px) {
+            .spaces-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
+            .space-row { padding: 0 24px !important; }
+          }
+        `}</style>
+
         {/* Page hero */}
-        <div style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap' }}>
+        <div className="spaces-hero" style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>{spaces?.length ?? 0} PERMANENT LOCATIONS</div>
-            <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>MARKET<br />SPACES</h1>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>
+              {spaces?.length ?? 0} PERMANENT LOCATIONS
+            </div>
+            <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>
+              MARKET<br />SPACES
+            </h1>
           </div>
           <div style={{ fontFamily: FM, fontSize: '9.5px', letterSpacing: '0.14em', color: STONE, maxWidth: '240px', lineHeight: 1.7, textTransform: 'uppercase' }}>
             Permanent locations where Lisbon's independent makers set up their stalls.
@@ -39,9 +55,18 @@ export default async function SpacesPage() {
 
         {/* Space list */}
         {(spaces ?? []).map((space, i) => (
-          <Link key={space.id} href={`/spaces/${space.slug}`} style={{ textDecoration: 'none', display: 'grid', gridTemplateColumns: '100px 1fr auto', alignItems: 'center', padding: '0 40px', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s', gap: '24px' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#d8d2c4'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? WHITE : PAPER}
+          <Link
+            key={space.id}
+            href={`/spaces/${space.slug}`}
+            className="space-row"
+            style={{
+              textDecoration: 'none', display: 'grid',
+              gridTemplateColumns: '100px 1fr auto',
+              alignItems: 'center', padding: '0 52px', height: '72px',
+              borderBottom: Bsm,
+              background: i % 2 === 0 ? WHITE : PAPER,
+              transition: 'background .15s', gap: '24px',
+            }}
           >
             <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '32px', color: 'rgba(12,12,12,0.1)', letterSpacing: '-0.02em', lineHeight: 1 }}>
               {String(i + 1).padStart(2, '0')}
@@ -52,7 +77,9 @@ export default async function SpacesPage() {
                 {space.parish ?? ''}{space.address ? ` · ${space.address}` : ''}
               </div>
             </div>
-            <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>VIEW →</div>
+            <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              VIEW →
+            </div>
           </Link>
         ))}
 
@@ -61,12 +88,6 @@ export default async function SpacesPage() {
             <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE }}>No spaces listed yet.</div>
           </div>
         )}
-
-        <style>{`
-          @media (max-width: 860px) {
-            .spaces-page-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
-          }
-        `}</style>
       </main>
     </>
   )

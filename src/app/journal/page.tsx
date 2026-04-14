@@ -20,12 +20,24 @@ export default async function JournalIndexPage() {
   const [articles, user] = await Promise.all([getAllArticles(), getCurrentUser()])
   const featured = articles[0] ?? null
   const secondary = articles.slice(1, 3)
-  const rest = articles.slice(3)
 
   return (
     <>
       <SiteHeader user={user} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
+
+        <style>{`
+          .jnl-featured:hover { background: #1f1f1f !important; }
+          .jnl-mini:hover { background: ${PAPER} !important; }
+          .jnl-row:hover { background: #d8d2c4 !important; }
+          .jnl-row:hover .jnl-arr { color: ${RED} !important; }
+          @media (max-width: 860px) {
+            .journal-hero { grid-template-columns: 1fr !important; }
+            .journal-hero > a:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 40px 24px !important; }
+            .section-rule { padding: 0 16px !important; }
+            .jnl-row { padding: 16px 24px !important; }
+          }
+        `}</style>
 
         {/* Masthead bar */}
         <div style={{ borderBottom: B, padding: '0 40px' }}>
@@ -47,10 +59,7 @@ export default async function JournalIndexPage() {
         {featured && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: B, minHeight: '340px' }} className="journal-hero">
             {/* Featured large */}
-            <Link href={`/journal/${featured.slug}`} style={{ background: INK, color: WHITE, padding: '52px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: B, textDecoration: 'none', transition: 'background .18s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#1f1f1f'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = INK}
-            >
+            <Link href={`/journal/${featured.slug}`} className="jnl-featured" style={{ background: INK, color: WHITE, padding: '52px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: B, textDecoration: 'none', transition: 'background .18s' }}>
               <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', color: RED, textTransform: 'uppercase', marginBottom: '20px' }}>{featured.kicker}</div>
               <div style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(38px,4.5vw,58px)', lineHeight: 0.9, letterSpacing: '-0.015em', textTransform: 'uppercase', flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: '24px' }}>
                 {featured.title}
@@ -60,13 +69,10 @@ export default async function JournalIndexPage() {
               </div>
             </Link>
 
-            {/* Two mini cards right */}
+            {/* Two mini cards */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {secondary.map((article, i) => (
-                <Link key={article.id} href={`/journal/${article.slug}`} style={{ flex: 1, padding: '28px 36px', borderBottom: i === 0 ? Bsm : 'none', textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: WHITE, transition: 'background .15s' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = WHITE}
-                >
+                <Link key={article.id} href={`/journal/${article.slug}`} className="jnl-mini" style={{ flex: 1, padding: '28px 36px', borderBottom: i === 0 ? Bsm : 'none', textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: WHITE, transition: 'background .15s' }}>
                   <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: RED, marginBottom: '8px', textTransform: 'uppercase' }}>{article.kicker}</div>
                   <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '17px', letterSpacing: '0.03em', textTransform: 'uppercase', lineHeight: 1.1, flex: 1, color: INK }}>{article.title}</div>
                   <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.1em', color: STONE, marginTop: '12px', textTransform: 'uppercase' }}>
@@ -78,19 +84,17 @@ export default async function JournalIndexPage() {
           </div>
         )}
 
-        {/* All articles list */}
+        {/* Section rule */}
         <div className="section-rule">
           <span className="section-rule-title">ALL ARTICLES</span>
           <span className="section-rule-link">{articles.length} ISSUES</span>
         </div>
 
+        {/* Article list */}
         <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {articles.map((article, i) => (
             <li key={article.id} style={{ borderBottom: B }}>
-              <Link href={`/journal/${article.slug}`} style={{ textDecoration: 'none', display: 'flex', gap: '16px', padding: '20px 40px', background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#d8d2c4'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? WHITE : PAPER}
-              >
+              <Link href={`/journal/${article.slug}`} className="jnl-row" style={{ textDecoration: 'none', display: 'flex', gap: '16px', padding: '20px 40px', background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s' }}>
                 <span style={{ fontFamily: FH, fontWeight: 900, fontSize: '56px', color: 'rgba(12,12,12,0.07)', lineHeight: 1, flexShrink: 0, width: '56px', textAlign: 'right', alignSelf: 'flex-start' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
@@ -107,7 +111,7 @@ export default async function JournalIndexPage() {
                   </p>
                   <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{article.author_name}</div>
                 </div>
-                <div style={{ fontFamily: FM, fontSize: '18px', color: 'rgba(12,12,12,0.18)', alignSelf: 'center', flexShrink: 0 }}>→</div>
+                <div className="jnl-arr" style={{ fontFamily: FM, fontSize: '18px', color: 'rgba(12,12,12,0.18)', alignSelf: 'center', flexShrink: 0, transition: 'color .15s' }}>→</div>
               </Link>
             </li>
           ))}
@@ -124,13 +128,6 @@ export default async function JournalIndexPage() {
           <Link href="/" style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>← BACK TO LIVE MARKETS</Link>
         </div>
       </main>
-      <style>{`
-        @media (max-width: 860px) {
-          .journal-hero { grid-template-columns: 1fr !important; }
-          .journal-hero > a:first-child { border-right: none !important; border-bottom: 2px solid #0C0C0C !important; }
-          .section-rule { padding: 0 16px !important; }
-        }
-      `}</style>
     </>
   )
 }
