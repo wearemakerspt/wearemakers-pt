@@ -39,9 +39,7 @@ export default function BrandCard({ brand, view = 'grid' }: Props) {
   if (view === 'grid') {
     return (
       <Link href={href} style={{ textDecoration: 'none', display: 'block', borderRight: Bsm, borderBottom: Bsm, background: brand.is_live ? 'rgba(232,0,28,.02)' : WHITE, position: 'relative' as const, overflow: 'hidden', transition: 'background .15s' }}
-        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = PAPER}
-        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = brand.is_live ? 'rgba(232,0,28,.02)' : WHITE}
-      >
+      className="brand-card-grid">
         {brand.is_live && (
           <div style={{ position: 'absolute' as const, top: 0, left: 0, right: 0, background: GREEN, fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fff', padding: '4px 8px', zIndex: 2, textAlign: 'center' }}>
             ● LIVE NOW {brand.live_market_name ? `AT ${brand.live_market_name.toUpperCase()}` : ''}
@@ -86,7 +84,7 @@ export default function BrandCard({ brand, view = 'grid' }: Props) {
 
   // List view
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 14px', borderBottom: Bsm, background: brand.is_live ? 'rgba(232,0,28,.02)' : WHITE, transition: 'background .15s' }}>
+    <Link href={href} className="brand-card-list" style={{ textDecoration: 'none', display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 14px', borderBottom: Bsm, background: brand.is_live ? 'rgba(232,0,28,.02)' : WHITE }}>
       <div style={{ width: '44px', height: '44px', flexShrink: 0, border: B, overflow: 'hidden', background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {cardImage
           ? <img src={cardImage} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

@@ -35,6 +35,10 @@ export default async function BrandsPage() {
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveCount} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
+        <style>{`
+          .brand-card-grid:hover { background: #EDE9E2 !important; }
+          .brand-card-list:hover { background: #EDE9E2 !important; }
+        `}</style>
 
         <style>{`
           .filter-tab:hover { background: ${INK} !important; color: ${WHITE} !important; }
