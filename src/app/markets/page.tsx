@@ -14,11 +14,13 @@ export const metadata: Metadata = {
   alternates: { canonical: '/markets' },
 }
 
+const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560'
+const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
+const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif"
+
 export default async function MarketsPage() {
   const [markets, monthGroups, user] = await Promise.all([
-    getAllMarkets(),
-    getMarketsByMonth(),
-    getCurrentUser(),
+    getAllMarkets(), getMarketsByMonth(), getCurrentUser(),
   ])
 
   const live = markets.filter(m => m.status === 'live' || m.status === 'community_live')
@@ -27,96 +29,76 @@ export default async function MarketsPage() {
   return (
     <>
       <SiteHeader user={user} liveCount={live.length} />
-      <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
+      <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
-        {/* Editorial header */}
-        <div style={{ padding: '16px 16px 0', background: '#f0ece0', borderBottom: '3px solid #181614' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', marginBottom: '4px' }}>
-            LISBON STREET MARKETS
+        {/* Page hero */}
+        <div style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', minHeight: '180px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>LISBON STREET MARKETS</div>
+            <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>
+              LISBON<br />MARKETS
+            </h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,10vw,64px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#181614' }}>
-              ALL MARKETS
-            </div>
-            {live.length > 0 && (
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#1a5c30', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '8px' }}>●</span> {live.length} OPEN NOW
-              </div>
-            )}
-          </div>
-
-          {/* Filter pills + spaces link */}
-          <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none', padding: '12px 0 0', flexWrap: 'nowrap', alignItems: 'center' }}>
-            {[
-              { label: '● LIVE NOW', active: true },
-              { label: 'UPCOMING', active: false },
-            ].map((pill, i) => (
-              <span
-                key={i}
-                style={{
-                  fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
-                  letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
-                  border: '2px solid #181614',
-                  background: pill.active ? '#c8291a' : '#f0ece0',
-                  color: pill.active ? '#fff' : '#181614',
-                  marginRight: '6px', marginBottom: '10px',
-                  display: 'inline-block', flexShrink: 0, cursor: 'default',
-                }}
-              >
-                {pill.label}
-              </span>
-            ))}
-            <Link
-              href="/spaces"
-              style={{
-                fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '11px',
-                letterSpacing: '0.14em', textTransform: 'uppercase', padding: '8px 14px',
-                border: '2px solid #181614', background: '#181614', color: '#f0ece0',
-                marginRight: '6px', marginBottom: '10px',
-                display: 'inline-block', flexShrink: 0, textDecoration: 'none',
-              }}
-            >
-              ALL SPACES →
-            </Link>
+          <div style={{ fontFamily: FM, fontSize: '9.5px', letterSpacing: '0.14em', color: STONE, maxWidth: '240px', lineHeight: 1.7, textTransform: 'uppercase' }}>
+            All street markets in Lisbon — live status, scheduled dates, and maker line-ups.
           </div>
         </div>
 
-        {/* ── Live markets ── */}
+        {/* Filter bar */}
+        <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {[
+            { label: '● LIVE NOW', live: true, active: live.length > 0 },
+            { label: 'UPCOMING', live: false, active: false },
+            { label: 'ALL SPACES →', live: false, active: false, href: '/spaces' },
+          ].map((tab, i) => (
+            tab.href ? (
+              <Link key={i} href={tab.href} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: Bsm, textDecoration: 'none', color: INK, transition: 'background .15s', background: INK, flexShrink: 0 }}>
+                <span style={{ color: WHITE }}>ALL SPACES →</span>
+              </Link>
+            ) : (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: Bsm, color: tab.live ? RED : INK, background: tab.active ? (tab.live ? RED : INK) : WHITE, flexShrink: 0, cursor: 'default' }}>
+                {tab.label}
+              </div>
+            )
+          ))}
+        </div>
+
+        {/* Live markets */}
         {live.length > 0 ? (
-          <section>
-            {live.map(m => <MarketCard key={m.id} market={m} />)}
-          </section>
+          <section>{live.map(m => <MarketCard key={m.id} market={m} />)}</section>
         ) : (
-          <div style={{ padding: '32px 16px', textAlign: 'center', borderBottom: '3px solid #181614', background: '#f0ece0' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)', lineHeight: 2 }}>
+          <div style={{ padding: '32px 40px', borderBottom: B, background: WHITE }}>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE, lineHeight: 2 }}>
               NO LIVE MARKETS RIGHT NOW<br />Check the calendar below for upcoming dates.
             </div>
           </div>
         )}
 
-        {/* ── Upcoming calendar — two-tier by month ── */}
-        <div style={{ borderTop: '3px solid #181614' }}>
-          <div style={{ padding: '14px 16px 10px', background: '#f0ece0', borderBottom: '3px solid #181614' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.38)', marginBottom: '4px' }}>
-              COMING UP
-            </div>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 0.9, color: '#181614' }}>
-              UPCOMING MARKETS
-            </div>
+        {/* Upcoming calendar */}
+        <div>
+          <div className="section-rule" style={{ padding: '0 40px' }}>
+            <span className="section-rule-title">UPCOMING MARKETS</span>
+            <span className="section-rule-link">FULL CALENDAR →</span>
           </div>
           <MarketsCalendar groups={monthGroups} liveCount={live.length} />
         </div>
 
-        {/* ── Cancelled ── */}
+        {/* Cancelled */}
         {cancelled.length > 0 && (
           <section>
-            <div style={{ padding: '14px 16px 8px', background: '#c8291a', borderBottom: '3px solid #181614', borderTop: '3px solid #181614' }}>
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '32px', textTransform: 'uppercase', color: '#fff' }}>CANCELLED</div>
+            <div style={{ padding: '0 40px', height: '46px', display: 'flex', alignItems: 'center', background: RED, borderBottom: B, borderTop: B }}>
+              <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', color: WHITE }}>CANCELLED</div>
             </div>
-            {cancelled.map(m => <MarketCard key={m.id} market={m} />)}
+            {cancelled.map(m => <MarketCard key={m.id} market={m} dim />)}
           </section>
         )}
 
+        <style>{`
+          @media (max-width: 860px) {
+            .markets-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
+            .section-rule { padding: 0 16px !important; }
+          }
+        `}</style>
       </main>
     </>
   )

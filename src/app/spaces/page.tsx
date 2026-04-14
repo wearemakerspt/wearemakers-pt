@@ -8,79 +8,65 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Market Spaces — WEAREMAKERS.PT',
-  description: 'Permanent locations for Lisbon street markets. Find makers, upcoming markets and hidden gems at each space.',
+  description: 'Permanent locations for Lisbon street markets.',
   alternates: { canonical: '/spaces' },
 }
+
+const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560'
+const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
+const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", FB = "'Barlow',sans-serif"
 
 export default async function SpacesPage() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()])
   const sb = await supabase
-
-  const { data: spaces } = await sb
-    .from('spaces')
-    .select('id, name, slug, address, parish, city, description')
-    .eq('is_active', true)
-    .order('name')
+  const { data: spaces } = await sb.from('spaces').select('id, name, slug, address, parish, city, description').eq('is_active', true).order('name')
 
   return (
     <>
       <SiteHeader user={user} />
-      <main style={{ background: '#f0ece0', minHeight: '100dvh' }}>
+      <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
-        <div style={{ padding: '16px 16px 0', borderBottom: '3px solid #181614' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(24,22,20,.4)', marginBottom: '4px' }}>
-            {spaces?.length ?? 0} PERMANENT LOCATIONS
+        {/* Page hero */}
+        <div style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>{spaces?.length ?? 0} PERMANENT LOCATIONS</div>
+            <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>MARKET<br />SPACES</h1>
           </div>
-          <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,10vw,64px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: '#181614', marginBottom: '16px' }}>
-            MARKET SPACES
-          </h1>
+          <div style={{ fontFamily: FM, fontSize: '9.5px', letterSpacing: '0.14em', color: STONE, maxWidth: '240px', lineHeight: 1.7, textTransform: 'uppercase' }}>
+            Permanent locations where Lisbon's independent makers set up their stalls.
+          </div>
         </div>
 
-        <div>
-          {(spaces ?? []).map((space, i) => (
-            <Link
-              key={space.id}
-              href={`/spaces/${space.slug}`}
-              style={{ textDecoration: 'none', display: 'flex', gap: '16px', alignItems: 'flex-start', padding: '16px', borderBottom: '3px solid #181614', background: i % 2 === 0 ? '#f0ece0' : '#e6e0d0' }}
-            >
-              {/* Number */}
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '32px', color: 'rgba(24,22,20,.12)', letterSpacing: '-0.02em', lineHeight: 1, flexShrink: 0, width: '36px', textAlign: 'right' as const }}>
-                {String(i + 1).padStart(2, '0')}
+        {/* Space list */}
+        {(spaces ?? []).map((space, i) => (
+          <Link key={space.id} href={`/spaces/${space.slug}`} style={{ textDecoration: 'none', display: 'grid', gridTemplateColumns: '100px 1fr auto', alignItems: 'center', padding: '0 40px', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s', gap: '24px' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#d8d2c4'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? WHITE : PAPER}
+          >
+            <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '32px', color: 'rgba(12,12,12,0.1)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              {String(i + 1).padStart(2, '0')}
+            </div>
+            <div>
+              <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.04em', color: INK }}>{space.name}</div>
+              <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase' }}>
+                {space.parish ?? ''}{space.address ? ` · ${space.address}` : ''}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(22px,5vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: '#181614', lineHeight: 1, marginBottom: '4px' }}>
-                  {space.name}
-                </div>
-                {space.parish && (
-                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c8291a', marginBottom: '4px' }}>
-                    {space.parish}
-                  </div>
-                )}
-                {space.address && (
-                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', color: 'rgba(24,22,20,.4)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                    {space.address}
-                  </div>
-                )}
-                {space.description && (
-                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '14px', color: 'rgba(24,22,20,.55)', lineHeight: 1.5, marginTop: '6px' }}>
-                    {space.description.slice(0, 120)}{space.description.length > 120 ? '...' : ''}
-                  </div>
-                )}
-              </div>
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', fontWeight: 700, color: '#c8291a', letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0, alignSelf: 'center' }}>
-                VIEW →
-              </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>VIEW →</div>
+          </Link>
+        ))}
 
         {(!spaces || spaces.length === 0) && (
-          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(24,22,20,.3)' }}>
-              No spaces listed yet.
-            </div>
+          <div style={{ padding: '64px 40px', textAlign: 'center' }}>
+            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE }}>No spaces listed yet.</div>
           </div>
         )}
+
+        <style>{`
+          @media (max-width: 860px) {
+            .spaces-page-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
+          }
+        `}</style>
       </main>
     </>
   )

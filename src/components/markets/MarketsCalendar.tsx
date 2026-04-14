@@ -3,79 +3,76 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { MarketsByMonth, MarketSummary } from '@/lib/queries/markets'
 
-const INK = '#181614'
-const PAPER = '#f0ece0'
-const PAPER2 = '#e8e0d0'
-const RED = '#c8291a'
-const GRN = '#1a5c30'
+const INK = '#1A1A1A'
+const RED = '#E8001C'
+const WHITE = '#F4F1EC'
+const PAPER = '#EDE9E2'
+const STONE = '#6B6560'
+const GREEN = '#1a5c30'
+const B = '2px solid #0C0C0C'
+const Bsm = '1px solid rgba(12,12,12,0.15)'
+const BLACK = '#0C0C0C'
 
-const T = {
-  fontFamily: "'Share Tech Mono',monospace",
-  fontSize: '10px',
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase' as const,
-}
+const FM = { fontFamily: "'Share Tech Mono',monospace" }
+const FH = { fontFamily: "'Barlow Condensed',sans-serif" }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  live:           { label: '● LIVE',      color: '#fff',    bg: GRN },
-  community_live: { label: '● LIVE',      color: '#fff',    bg: GRN },
-  scheduled:      { label: 'SCHEDULED',   color: INK,       bg: 'transparent' },
-  cancelled:      { label: 'CANCELLED',   color: '#fff',    bg: INK },
+  live:           { label: '● LIVE',    color: WHITE,             bg: GREEN },
+  community_live: { label: '● LIVE',    color: WHITE,             bg: GREEN },
+  scheduled:      { label: 'SCHEDULED', color: STONE,             bg: 'transparent' },
+  cancelled:      { label: 'CANCELLED', color: WHITE,             bg: INK },
 }
 
 function MarketRow({ market }: { market: MarketSummary }) {
   const cfg = statusConfig[market.status] ?? statusConfig.scheduled
   const isLive = market.status === 'live' || market.status === 'community_live'
-  const dayName = new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
-  const dayNum = new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric' }).toUpperCase()
+  const d = new Date(market.event_date + 'T12:00:00')
+  const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
+  const dayNum = d.getDate()
 
   return (
     <Link href={`/markets/${market.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '12px 16px',
-        borderBottom: `2px solid ${INK}`,
-        background: isLive ? 'rgba(26,92,48,.05)' : PAPER,
-        borderLeft: isLive ? `4px solid ${GRN}` : `4px solid transparent`,
-      }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER2}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = isLive ? 'rgba(26,92,48,.05)' : PAPER}
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '0 40px', height: '72px', borderBottom: Bsm, background: isLive ? 'rgba(26,92,48,.04)' : WHITE, transition: 'background .15s', cursor: 'pointer' }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = isLive ? 'rgba(26,92,48,.04)' : WHITE}
       >
-        {/* Date block */}
-        <div style={{ flexShrink: 0, width: '40px', textAlign: 'center', borderRight: `2px solid rgba(24,22,20,.1)`, paddingRight: '12px' }}>
-          <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', color: 'rgba(24,22,20,.4)', textTransform: 'uppercase' }}>{dayName}</div>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '24px', color: INK, lineHeight: 1 }}>{dayNum}</div>
+        {/* Date */}
+        <div style={{ width: '100px', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+          <div style={{ ...FH, fontWeight: 900, fontSize: '32px', lineHeight: 1, letterSpacing: '-0.02em', color: INK }}>{dayNum}</div>
+          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.1em', color: STONE }}>{dayName}</div>
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '20px', textTransform: 'uppercase', color: INK, lineHeight: 1, marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {market.space.name}
-          </div>
-          <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)' }}>
+        {/* Market info */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ ...FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK }}>{market.space.name}</div>
+          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE }}>
             {market.space.parish ? `${market.space.parish} · ` : ''}{market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
             {market.curator ? ` · ${market.curator.display_name}` : ''}
           </div>
         </div>
 
-        {/* Check-in count */}
-        {market.checkin_count > 0 && (
-          <div style={{ flexShrink: 0, textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', color: GRN, lineHeight: 1 }}>{market.checkin_count}</div>
-            <div style={{ ...T, fontSize: '8px', color: 'rgba(24,22,20,.35)' }}>LIVE</div>
-          </div>
-        )}
+        {/* Time */}
+        <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.08em', color: INK, textAlign: 'right', flexShrink: 0 }}>
+          {market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
+        </div>
 
-        {/* Status badge */}
+        {/* Status */}
         <div style={{ flexShrink: 0 }}>
-          <span style={{ ...T, fontSize: '8px', fontWeight: 700, background: cfg.bg, color: cfg.color, padding: '3px 8px', border: cfg.bg === 'transparent' ? `1px solid rgba(24,22,20,.3)` : 'none' }}>
+          <span style={{ ...FM, fontSize: '10px', fontWeight: 700, background: cfg.bg, color: cfg.color, padding: '4px 10px', border: cfg.bg === 'transparent' ? `1px solid ${STONE}` : 'none', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {cfg.label}
           </span>
         </div>
 
-        <div style={{ ...T, fontSize: '12px', color: 'rgba(24,22,20,.2)', flexShrink: 0 }}>→</div>
+        {/* Live count */}
+        {market.checkin_count > 0 && (
+          <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '32px' }}>
+            <div style={{ ...FH, fontWeight: 900, fontSize: '22px', color: GREEN, lineHeight: 1 }}>{market.checkin_count}</div>
+            <div style={{ ...FM, fontSize: '10px', color: STONE }}>LIVE</div>
+          </div>
+        )}
+
+        <div style={{ ...FM, fontSize: '14px', color: 'rgba(12,12,12,0.2)', flexShrink: 0, opacity: 0, transition: 'opacity .2s' }} className="mkt-row-arr">→</div>
       </div>
     </Link>
   )
@@ -85,41 +82,22 @@ function MonthBlock({ group }: { group: MarketsByMonth }) {
   const [open, setOpen] = useState(group.isCurrentMonth)
 
   return (
-    <div style={{ borderBottom: `3px solid ${INK}` }}>
-      {/* Month header */}
+    <div style={{ borderBottom: B }}>
       <button
         onClick={() => setOpen(v => !v)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          background: group.isCurrentMonth ? INK : PAPER2,
-          border: 'none',
-          cursor: 'pointer',
-          borderBottom: open ? `2px solid ${INK}` : 'none',
-        }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '42px', background: group.isCurrentMonth ? INK : PAPER, border: 'none', cursor: 'pointer', borderBottom: open ? Bsm : 'none' }}
       >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 1, color: group.isCurrentMonth ? PAPER : INK }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: group.isCurrentMonth ? WHITE : INK }}>
             {group.monthLabel}
           </div>
-          <div style={{ ...T, fontSize: '9px', color: group.isCurrentMonth ? 'rgba(240,236,224,.4)' : 'rgba(24,22,20,.4)' }}>
+          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.12em', color: group.isCurrentMonth ? 'rgba(244,241,236,0.4)' : STONE }}>
             {group.markets.length} MARKET{group.markets.length !== 1 ? 'S' : ''}
           </div>
         </div>
-        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '14px', color: group.isCurrentMonth ? 'rgba(240,236,224,.4)' : 'rgba(24,22,20,.3)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-          ↓
-        </div>
+        <div style={{ ...FM, fontSize: '12px', color: group.isCurrentMonth ? 'rgba(244,241,236,0.4)' : STONE, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>↓</div>
       </button>
-
-      {/* Market rows */}
-      {open && (
-        <div>
-          {group.markets.map(m => <MarketRow key={m.id} market={m} />)}
-        </div>
-      )}
+      {open && group.markets.map(m => <MarketRow key={m.id} market={m} />)}
     </div>
   )
 }
@@ -129,12 +107,8 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
     <div>
       {groups.length === 0 ? (
         <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', color: 'rgba(24,22,20,.12)', marginBottom: '12px' }}>
-            NO MARKETS SCHEDULED
-          </div>
-          <div style={{ ...T, color: 'rgba(24,22,20,.3)', lineHeight: 2 }}>
-            Check back soon.
-          </div>
+          <div style={{ ...FH, fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', color: 'rgba(12,12,12,0.12)', marginBottom: '12px' }}>NO MARKETS SCHEDULED</div>
+          <div style={{ ...FM, fontSize: '10px', color: STONE, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Check back soon.</div>
         </div>
       ) : (
         groups.map(group => <MonthBlock key={group.monthKey} group={group} />)
