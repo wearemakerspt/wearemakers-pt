@@ -54,7 +54,7 @@ export default async function BrandProfilePage({ params }: Props) {
   return (
     <>
       <SiteHeader user={user} liveCount={isLive ? 1 : 0} />
-      <BrandViewTracker brandId={brand.id} marketId={liveMarketId} userId={user?.id ?? null} />
+      <BrandViewTracker brandId={brand.id} marketId={liveMarketId} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
         <style>{`
