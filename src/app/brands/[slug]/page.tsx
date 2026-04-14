@@ -142,7 +142,7 @@ export default async function BrandProfilePage({ params }: Props) {
             {brand.instagram_handle && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>INSTAGRAM</div>
-                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} userId={user?.id ?? null} marketId={liveMarketId} />
+                <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={liveMarketId} />
               </div>
             )}
 
