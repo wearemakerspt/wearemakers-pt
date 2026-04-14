@@ -151,7 +151,7 @@ export default function GemsClient({ gems, userId }: { gems: Gem[]; userId: stri
                               )}
                             </div>
                           </div>
-                          <SaveGemButton gemId={gem.id} userId={userId} />
+                          <SaveGemButton gemId={gem.id} gemName={gem.name} userId={userId} />
                         </div>
 
                         {gem.description && (
