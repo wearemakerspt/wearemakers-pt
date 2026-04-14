@@ -33,7 +33,7 @@ export default async function SpacePage({ params }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const liveMarkets = (space.markets ?? []).filter((m: any) => ['live', 'community_live'].includes(m.status))
   const upcomingMarkets = (space.markets ?? []).filter((m: any) => m.event_date >= today && !['live', 'community_live'].includes(m.status))
-  const liveMakers = (space.live_makers ?? [])
+  const liveMakers = (space.markets ?? []).filter((m: any) => ['live', 'community_live'].includes(m.status)).flatMap((m: any) => m.makers ?? [])
 
   return (
     <>
