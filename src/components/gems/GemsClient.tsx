@@ -1,229 +1,194 @@
 'use client'
-
-import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useState } from 'react'
 import SaveGemButton from '@/components/ui/SaveGemButton'
 
-const GEM_ICONS: Record<string, string> = {
-  coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈'
-}
+const CATEGORIES = ['ALL', 'COFFEE', 'FOOD', 'DRINKS', 'STUDIOS', 'SHOPS']
+const CAT_ICONS: Record<string, string> = { coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈' }
 
-const CATEGORIES = [
-  { value: 'all', label: 'ALL' },
-  { value: 'coffee', label: '☕ COFFEE' },
-  { value: 'food', label: '🍽 FOOD' },
-  { value: 'drinks', label: '🍷 DRINKS' },
-  { value: 'studio', label: '◆ STUDIOS' },
-  { value: 'shop', label: '◈ SHOPS' },
-]
+const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560'
+const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
+const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", FB = "'Barlow',sans-serif"
 
-interface Gem {
+type Gem = {
   id: string
   name: string
   category: string
   description: string | null
   address: string | null
-  lat: number | null
-  lng: number | null
   distance_metres: number | null
-  space_id: string
-  space_name: string
-  space_parish: string | null
   vetted_by_name: string
-  vetted_by_slug: string | null
+  space_name: string | null
+  space_parish: string | null
+  near_space_id: string | null
+  is_saved?: boolean
 }
 
-interface Props {
-  gems: Gem[]
-  userId: string | null
+type GroupedGems = {
+  parish: string
+  spaces: {
+    space_name: string
+    space_id: string | null
+    gems: Gem[]
+  }[]
 }
 
-export default function GemsClient({ gems, userId }: Props) {
-  const [activeCategory, setActiveCategory] = useState('all')
+export default function GemsClient({ gems, userId }: { gems: Gem[]; userId: string | null }) {
+  const [activeCategory, setActiveCategory] = useState('ALL')
 
-  const T = { fontFamily: 'var(--TAG)', letterSpacing: '0.18em', textTransform: 'uppercase' as const }
+  const filtered = activeCategory === 'ALL'
+    ? gems
+    : gems.filter(g => g.category.toLowerCase() === activeCategory.toLowerCase())
 
-  const filtered = useMemo(() =>
-    activeCategory === 'all' ? gems : gems.filter(g => g.category === activeCategory),
-    [gems, activeCategory]
-  )
+  // Group by parish → space
+  const grouped: GroupedGems[] = []
+  const parishMap = new Map<string, Map<string, Gem[]>>()
 
-  const grouped = useMemo(() => {
-    const parishMap = new Map<string, Map<string, Gem[]>>()
-    for (const gem of filtered) {
-      const parish = gem.space_parish ?? gem.space_name ?? 'Lisbon'
-      const space = gem.space_name
-      if (!parishMap.has(parish)) parishMap.set(parish, new Map())
-      const spaceMap = parishMap.get(parish)!
-      if (!spaceMap.has(space)) spaceMap.set(space, [])
-      spaceMap.get(space)!.push(gem)
-    }
-    return parishMap
-  }, [filtered])
+  filtered.forEach(gem => {
+    const parish = gem.space_parish ?? 'LISBON'
+    const spaceName = gem.space_name ?? 'NEARBY'
+    if (!parishMap.has(parish)) parishMap.set(parish, new Map())
+    const spaceMap = parishMap.get(parish)!
+    if (!spaceMap.has(spaceName)) spaceMap.set(spaceName, [])
+    spaceMap.get(spaceName)!.push(gem)
+  })
+
+  parishMap.forEach((spaces, parish) => {
+    const spaceArr: GroupedGems['spaces'] = []
+    spaces.forEach((gs, spaceName) => {
+      spaceArr.push({ space_name: spaceName, space_id: gs[0]?.near_space_id ?? null, gems: gs })
+    })
+    grouped.push({ parish, spaces: spaceArr })
+  })
 
   return (
     <div>
-      {/* Category filter */}
-      <div style={{ borderBottom: '3px solid var(--INK)', background: 'var(--P2)', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {CATEGORIES.map(c => (
-          <button
-            key={c.value}
-            onClick={() => setActiveCategory(c.value)}
+      <style>{`
+        .gem-tab:hover { background: ${INK} !important; color: ${WHITE} !important; }
+        .gem-tab-active:hover { background: ${RED} !important; color: ${WHITE} !important; }
+        .gem-row:hover { background: ${PAPER} !important; }
+        .gem-dir-btn:hover { background: ${INK} !important; color: ${WHITE} !important; }
+      `}</style>
+
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none', background: WHITE }}>
+        {CATEGORIES.map(cat => (
+          <button key={cat} onClick={() => setActiveCategory(cat)}
+            className={cat === activeCategory ? 'gem-tab gem-tab-active' : 'gem-tab'}
             style={{
-              ...T, fontSize: '10px', fontWeight: 700,
-              padding: '12px 16px',
-              background: activeCategory === c.value ? 'var(--INK)' : 'transparent',
-              color: activeCategory === c.value ? 'var(--P)' : 'rgba(24,22,20,.5)',
-              border: 'none', borderRight: '2px solid rgba(24,22,20,.1)',
-              cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' as const,
-            }}
-          >
-            {c.label}
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '0 20px', height: '44px',
+              fontFamily: FM, fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase',
+              whiteSpace: 'nowrap', borderRight: Bsm, cursor: 'pointer', flexShrink: 0,
+              background: cat === activeCategory ? INK : WHITE,
+              color: cat === activeCategory ? WHITE : INK,
+              border: 'none', borderRight: Bsm,
+              transition: 'background .15s, color .15s',
+            }}>
+            {cat !== 'ALL' && <span>{CAT_ICONS[cat.toLowerCase()] ?? '◈'}</span>}
+            {cat}
           </button>
         ))}
       </div>
 
-      {/* Count */}
-      <div style={{ padding: '10px 16px', borderBottom: '2px solid rgba(24,22,20,.08)' }}>
-        <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)' }}>
-          {filtered.length} GEM{filtered.length !== 1 ? 'S' : ''} · {grouped.size} NEIGHBOURHOOD{grouped.size !== 1 ? 'S' : ''}
-        </div>
+      {/* Summary */}
+      <div style={{ padding: '10px 40px', borderBottom: Bsm, background: WHITE }}>
+        <span style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          {filtered.length} GEM{filtered.length !== 1 ? 'S' : ''} · {grouped.length} NEIGHBOURHOOD{grouped.length !== 1 ? 'S' : ''}
+        </span>
       </div>
 
-      {/* Empty state */}
-      {filtered.length === 0 && (
-        <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '32px', textTransform: 'uppercase', color: 'rgba(24,22,20,.12)', marginBottom: '8px' }}>
-            NO GEMS YET
-          </div>
-          <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', lineHeight: 2 }}>
-            No {activeCategory !== 'all' ? activeCategory : ''} recommendations yet.{' '}
-            <button onClick={() => setActiveCategory('all')} style={{ background: 'none', border: 'none', color: 'var(--RED)', cursor: 'pointer', ...T, fontSize: '10px' }}>
-              SEE ALL →
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Gems grouped by parish → space */}
-      {Array.from(grouped.entries()).map(([parish, spaceMap]) => (
-        <div key={parish}>
-          {/* Parish header */}
-          <div style={{ background: 'var(--INK2)', padding: '12px 16px', borderBottom: '2px solid rgba(240,236,224,.06)', borderTop: '3px solid var(--INK)' }}>
-            <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.25)', marginBottom: '2px' }}>NEIGHBOURHOOD</div>
-            <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 1, color: 'var(--P)' }}>
-              {parish}
+      {grouped.length === 0 ? (
+        <div style={{ padding: '64px 40px', textAlign: 'center' }}>
+          <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.14em', textTransform: 'uppercase' }}>No gems in this category yet.</div>
+        </div>
+      ) : (
+        grouped.map(group => (
+          <div key={group.parish}>
+            {/* Parish header */}
+            <div style={{ padding: '0 40px', height: '38px', display: 'flex', alignItems: 'center', background: PAPER, borderBottom: Bsm, borderTop: B }}>
+              <span style={{ fontFamily: FH, fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'rgba(12,12,12,0.15)' }}>{group.parish}</span>
             </div>
-          </div>
 
-          {Array.from(spaceMap.entries()).map(([spaceName, spaceGems]) => (
-            <div key={spaceName}>
-              {/* Space sub-header */}
-              <div style={{ padding: '8px 16px', borderBottom: '2px solid rgba(24,22,20,.1)', background: 'var(--P2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'rgba(24,22,20,.5)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ width: '3px', height: '10px', background: 'var(--RED)', display: 'inline-block' }} />
-                  NEAR {spaceName.toUpperCase()}
+            {group.spaces.map(spaceGroup => (
+              <div key={spaceGroup.space_name}>
+                {/* Space subheader */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '42px', borderBottom: Bsm, background: WHITE }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '3px', height: '14px', background: RED, flexShrink: 0 }} />
+                    <span style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: INK }}>
+                      NEAR {spaceGroup.space_name.toUpperCase()}
+                    </span>
+                  </div>
+                  <span style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {spaceGroup.gems.length} PLACE{spaceGroup.gems.length !== 1 ? 'S' : ''}
+                  </span>
                 </div>
-                <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)' }}>
-                  {spaceGems.length} PLACE{spaceGems.length !== 1 ? 'S' : ''}
-                </div>
-              </div>
 
-              {/* Gem cards */}
-              {spaceGems.map((g, i) => {
-                const googleQuery = encodeURIComponent(`${g.name}${g.address ? ', ' + g.address : ''}, Lisbon`)
-                const googleUrl = `https://www.google.com/search?q=${googleQuery}`
-                const mapsUrl = g.lat && g.lng && g.lat !== 0 && g.lng !== 0
-                  ? `https://www.google.com/maps?q=${g.lat},${g.lng}`
-                  : `https://www.google.com/maps/search/?api=1&query=${googleQuery}`
+                {/* Gems */}
+                {spaceGroup.gems.map((gem, i) => {
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${gem.name}${gem.address ? ', ' + gem.address : ''}, Lisbon`)}`
+                  const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(`${gem.name} Lisbon`)}`
 
-                return (
-                  <div key={g.id} style={{ borderBottom: '2px solid var(--INK)', background: i % 2 === 0 ? 'var(--P)' : 'var(--P2)' }}>
-                    <div style={{ display: 'flex' }}>
-                      {/* Icon */}
-                      <div style={{ width: '56px', flexShrink: 0, background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', borderRight: '2px solid var(--INK)', alignSelf: 'stretch' }}>
-                        {GEM_ICONS[g.category] ?? '◈'}
+                  return (
+                    <div key={gem.id} className="gem-row" style={{ display: 'flex', gap: 0, borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, minHeight: '88px', transition: 'background .15s' }}>
+                      {/* Icon column */}
+                      <div style={{ width: '64px', flexShrink: 0, background: INK, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', borderRight: B }}>
+                        {CAT_ICONS[gem.category.toLowerCase()] ?? '◈'}
                       </div>
 
                       {/* Content */}
-                      <div style={{ padding: '14px 14px 12px', flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
-                          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--INK)', lineHeight: 1 }}>
-                            {g.name}
+                      <div style={{ flex: 1, padding: '16px 20px', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                          <div>
+                            <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: INK, lineHeight: 1, marginBottom: '4px' }}>{gem.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              {gem.distance_metres !== null && (
+                                <span style={{ fontFamily: FM, fontSize: '10px', border: Bsm, padding: '2px 8px', color: STONE }}>{gem.distance_metres}m</span>
+                              )}
+                              {gem.address && (
+                                <span style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.06em' }}>{gem.address}</span>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                            {g.distance_metres !== null && (
-                              <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', border: '1px solid rgba(24,22,20,.2)', padding: '2px 7px' }}>
-                                {g.distance_metres}m
-                              </span>
-                            )}
-                            <SaveGemButton gemId={g.id} gemName={g.name} userId={userId} size="sm" />
-                          </div>
+                          <SaveGemButton gemId={gem.id} userId={userId} initialSaved={gem.is_saved ?? false} />
                         </div>
 
-                        {g.description && (
-                          <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'rgba(24,22,20,.6)', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '8px' }}>
-                            {g.description}
-                          </div>
+                        {gem.description && (
+                          <p style={{ fontFamily: FB, fontSize: '13px', color: STONE, lineHeight: 1.55, fontStyle: 'italic', marginBottom: '8px' }}>{gem.description}</p>
                         )}
 
-                        {g.address && (
-                          <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span>◎</span><span>{g.address}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.06em' }}>
+                            ● rec by {gem.vetted_by_name}
                           </div>
-                        )}
-
-                        {g.vetted_by_name && (
-                          <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.35)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span style={{ color: 'var(--RED)' }}>✦</span>
-                            {g.vetted_by_slug ? (
-                              <Link href={`/brands/${g.vetted_by_slug}`} style={{ color: 'rgba(24,22,20,.45)', textDecoration: 'none' }}>
-                                REC BY {g.vetted_by_name.toUpperCase()}
-                              </Link>
-                            ) : (
-                              <span>REC BY {g.vetted_by_name.toUpperCase()}</span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'var(--INK)', color: 'var(--P)', textDecoration: 'none', display: 'inline-block' }}>
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="gem-dir-btn"
+                            style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK, border: B, padding: '5px 14px', textDecoration: 'none', transition: 'background .15s, color .15s' }}>
                             DIRECTIONS →
                           </a>
-                          <a href={googleUrl} target="_blank" rel="noopener noreferrer"
-                            style={{ ...T, fontSize: '9px', fontWeight: 700, padding: '6px 12px', background: 'transparent', color: 'rgba(24,22,20,.5)', border: '1px solid rgba(24,22,20,.2)', textDecoration: 'none', display: 'inline-block' }}>
-                            SEARCH ON GOOGLE ↗
+                          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="gem-dir-btn"
+                            style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: STONE, border: Bsm, padding: '5px 14px', textDecoration: 'none', transition: 'background .15s, color .15s' }}>
+                            SEARCH ON GOOGLE →
                           </a>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-
-          {/* Footer CTA after last parish */}
-          {Array.from(grouped.keys()).pop() === parish && filtered.length > 0 && (
-            <div style={{ padding: '20px 16px', borderTop: '3px solid var(--INK)', background: 'var(--INK)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ ...T, fontSize: '10px', color: 'rgba(240,236,224,.35)' }}>
-                Are you a maker? Share a place you love.
+                  )
+                })}
               </div>
-              <Link href="/welcome/maker" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '2px solid var(--RED)', padding: '10px 16px', textDecoration: 'none' }}>
-                JOIN & SUBMIT A GEM →
-              </Link>
-            </div>
-          )}
-        </div>
-      ))}
+            ))}
+          </div>
+        ))
+      )}
 
-      {/* Back */}
-      <div style={{ padding: '16px', borderTop: filtered.length === 0 ? '3px solid var(--INK)' : 'none' }}>
-        <Link href="/markets" style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--RED)', textDecoration: 'none' }}>
-          ← BACK TO MARKETS
-        </Link>
+      {/* Submit CTA */}
+      <div style={{ padding: '20px 40px', borderTop: B, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          ARE YOU A MAKER? SHARE A PLACE YOU LOVE.
+        </div>
+        <a href="/dashboard/maker" style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: WHITE, background: RED, border: `2px solid ${RED}`, padding: '10px 20px', textDecoration: 'none' }}>
+          JOIN &amp; SUBMIT A GEM →
+        </a>
       </div>
     </div>
   )
