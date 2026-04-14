@@ -81,7 +81,7 @@ export default function GemsClient({ gems, userId }: { gems: Gem[]; userId: stri
               whiteSpace: 'nowrap', borderRight: Bsm, cursor: 'pointer', flexShrink: 0,
               background: cat === activeCategory ? INK : WHITE,
               color: cat === activeCategory ? WHITE : INK,
-              border: 'none', borderRight: Bsm,
+              borderRight: Bsm,
               transition: 'background .15s, color .15s',
             }}>
             {cat !== 'ALL' && <span>{CAT_ICONS[cat.toLowerCase()] ?? '◈'}</span>}
