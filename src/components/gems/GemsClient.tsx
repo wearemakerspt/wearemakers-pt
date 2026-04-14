@@ -19,7 +19,7 @@ type Gem = {
   vetted_by_name: string
   space_name: string | null
   space_parish: string | null
-  near_space_id: string | null
+  near_space_id?: string | null
   is_saved?: boolean
 }
 
