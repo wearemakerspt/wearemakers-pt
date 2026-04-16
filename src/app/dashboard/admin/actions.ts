@@ -137,6 +137,7 @@ export async function adminUpdateMarket(marketId: string, formData: FormData) {
   if (error || !supabase) return { error }
 
   const title = (formData.get('title') as string)?.trim()
+  const spaceId = (formData.get('space_id') as string) || null
   const eventDate = formData.get('event_date') as string
   const eventDateEnd = (formData.get('event_date_end') as string) || null
   const startsAt = formData.get('starts_at') as string
@@ -149,6 +150,7 @@ export async function adminUpdateMarket(marketId: string, formData: FormData) {
 
   const { error: e } = await supabase.from('markets').update({
     title,
+    space_id: spaceId || undefined,
     event_date: eventDate,
     event_date_end: eventDateEnd || null,
     starts_at: startsAt,

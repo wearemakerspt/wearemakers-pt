@@ -152,6 +152,13 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
                     <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '3px' }}>TITLE</div>
                     <input name="title" defaultValue={m.title} required style={{ ...inputStyle, fontSize: '12px', padding: '5px 8px' }} />
                   </div>
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '3px' }}>SPACE / LOCATION</div>
+                    <select name="space_id" defaultValue={(m.space as any)?.id ?? ''} style={{ ...inputStyle, fontSize: '12px', padding: '5px 8px', cursor: 'pointer' }}>
+                      <option value="">Select space</option>
+                      {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
                   <div>
                     <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '3px' }}>START DATE</div>
                     <input name="event_date" type="date" defaultValue={m.event_date} required style={{ ...inputStyle, fontSize: '12px', padding: '5px 8px' }} />
