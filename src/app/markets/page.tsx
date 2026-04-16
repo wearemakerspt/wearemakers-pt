@@ -44,44 +44,8 @@ export default async function MarketsPage() {
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { label: '● LIVE NOW', live: true, active: live.length > 0 },
-            { label: 'UPCOMING', live: false, active: false },
-            { label: 'ALL SPACES →', live: false, active: false, href: '/spaces' },
-          ].map((tab, i) => (
-            tab.href ? (
-              <Link key={i} href={tab.href} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: Bsm, textDecoration: 'none', color: INK, transition: 'background .15s', background: INK, flexShrink: 0 }}>
-                <span style={{ color: WHITE }}>ALL SPACES →</span>
-              </Link>
-            ) : (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px', fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRight: Bsm, color: tab.live ? RED : INK, background: tab.active ? (tab.live ? RED : INK) : WHITE, flexShrink: 0, cursor: 'default' }}>
-                {tab.label}
-              </div>
-            )
-          ))}
-        </div>
-
-        {/* Live markets */}
-        {live.length > 0 ? (
-          <section>{live.map(m => <MarketCard key={m.id} market={m} />)}</section>
-        ) : (
-          <div style={{ padding: '32px 40px', borderBottom: B, background: WHITE }}>
-            <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE, lineHeight: 2 }}>
-              NO LIVE MARKETS RIGHT NOW<br />Check the calendar below for upcoming dates.
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming calendar */}
-        <div>
-          <div className="section-rule" style={{ padding: '0 40px' }}>
-            <span className="section-rule-title">UPCOMING MARKETS</span>
-            <span className="section-rule-link">FULL CALENDAR →</span>
-          </div>
-          <MarketsCalendar groups={monthGroups} liveCount={live.length} />
-        </div>
+        {/* Calendar with built-in filter tabs */}
+        <MarketsCalendar groups={monthGroups} liveCount={live.length} />
 
         {/* Cancelled */}
         {cancelled.length > 0 && (
