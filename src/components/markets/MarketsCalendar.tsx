@@ -1,104 +1,295 @@
 'use client'
-import { useState } from 'react'
+
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import type { MarketsByMonth, MarketSummary } from '@/lib/queries/markets'
 
-const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560', GREEN = '#1a5c30'
-const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
-const FM = { fontFamily: "'Share Tech Mono',monospace" }
-const FH = { fontFamily: "'Barlow Condensed',sans-serif" }
-
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  live:           { label: '● LIVE',    color: WHITE, bg: GREEN },
-  community_live: { label: '● LIVE',    color: WHITE, bg: GREEN },
-  scheduled:      { label: 'SCHEDULED', color: STONE, bg: 'transparent' },
-  cancelled:      { label: 'CANCELLED', color: WHITE, bg: INK },
+interface MarketSummary {
+  id: string
+  title: string
+  status: string
+  event_date: string
+  starts_at: string
+  ends_at: string
+  checkin_count: number
+  space: {
+    id: string
+    name: string
+    address: string | null
+    parish: string | null
+    lat: number
+    lng: number
+  }
+  curator: {
+    id: string
+    display_name: string
+    slug: string | null
+  } | null
 }
 
-function MarketRow({ market, even }: { market: MarketSummary; even: boolean }) {
-  const cfg = statusConfig[market.status] ?? statusConfig.scheduled
-  const isLive = market.status === 'live' || market.status === 'community_live'
-  const d = new Date(market.event_date + 'T12:00:00')
-  const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
-  const dayNum = d.getDate()
+interface MarketsByMonth {
+  monthKey: string
+  monthLabel: string
+  isCurrentMonth: boolean
+  markets: MarketSummary[]
+}
 
-  return (
-    <Link href={`/markets/${market.id}`} style={{ textDecoration: 'none', display: 'block' }} className="mkt-cal-row">
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '24px',
-        padding: '0 40px', height: '72px', borderBottom: Bsm,
-        background: isLive ? 'rgba(26,92,48,.04)' : (even ? WHITE : PAPER),
-        transition: 'background .15s', cursor: 'pointer',
-      }}>
-        {/* Date */}
-        <div style={{ width: '100px', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-          <div style={{ ...FH, fontWeight: 900, fontSize: '32px', lineHeight: 1, letterSpacing: '-0.02em', color: INK }}>{dayNum}</div>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.1em', color: STONE, textTransform: 'uppercase' }}>{dayName}</div>
-        </div>
+interface Props {
+  marketsByMonth: MarketsByMonth[]
+  liveMarketIds: string[]
+}
 
-        {/* Market title + space */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          <div style={{ ...FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK }}>
-            {market.title}
-          </div>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase' }}>
-            {market.space.name}{market.space.parish ? ` · ${market.space.parish}` : ''} · {market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
-          </div>
-        </div>
+type Filter = 'all' | 'live' | 'upcoming'
 
-        {/* Status */}
-        <div style={{ flexShrink: 0 }}>
-          <span style={{ ...FM, fontSize: '10px', fontWeight: 700, background: cfg.bg, color: cfg.color, padding: '4px 10px', border: cfg.bg === 'transparent' ? `1px solid ${STONE}` : 'none', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            {cfg.label}
-          </span>
-        </div>
+const T = { fontFamily: "'Share Tech Mono',monospace", letterSpacing: '0.14em', textTransform: 'uppercase' as const }
 
-        {/* Live count */}
-        {market.checkin_count > 0 && (
-          <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '32px' }}>
-            <div style={{ ...FH, fontWeight: 900, fontSize: '22px', color: GREEN, lineHeight: 1 }}>{market.checkin_count}</div>
-            <div style={{ ...FM, fontSize: '10px', color: STONE, textTransform: 'uppercase' }}>LIVE</div>
-          </div>
-        )}
+function formatWeekday(d: string) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
+}
 
-        <div style={{ ...FM, fontSize: '14px', color: 'rgba(12,12,12,0.2)', flexShrink: 0 }}>→</div>
-      </div>
-    </Link>
+function formatDay(d: string) {
+  return new Date(d + 'T12:00:00').getDate()
+}
+
+function formatMonth(d: string) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()
+}
+
+export default function MarketsCalendar({ marketsByMonth, liveMarketIds }: Props) {
+  const [filter, setFilter] = useState<Filter>('all')
+
+  const liveSet = useMemo(() => new Set(liveMarketIds), [liveMarketIds])
+
+  const filteredByMonth = useMemo(() => {
+    if (filter === 'all') return marketsByMonth
+
+    return marketsByMonth.map(month => ({
+      ...month,
+      markets: month.markets.filter(m => {
+        if (filter === 'live') return m.status === 'live' || m.status === 'community_live'
+        if (filter === 'upcoming') return m.status === 'scheduled'
+        return true
+      }),
+    })).filter(month => month.markets.length > 0)
+  }, [marketsByMonth, filter])
+
+  const liveCount = useMemo(() =>
+    marketsByMonth.flatMap(m => m.markets).filter(m => m.status === 'live' || m.status === 'community_live').length,
+    [marketsByMonth]
   )
-}
 
-function MonthBlock({ group }: { group: MarketsByMonth }) {
-  const [open, setOpen] = useState(group.isCurrentMonth)
+  const tabs: { key: Filter; label: string; count?: number }[] = [
+    { key: 'all', label: 'ALL MARKETS' },
+    { key: 'live', label: '● LIVE NOW', count: liveCount },
+    { key: 'upcoming', label: 'UPCOMING' },
+  ]
 
-  return (
-    <div style={{ borderBottom: B }}>
-      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '42px', background: group.isCurrentMonth ? INK : PAPER, border: 'none', cursor: 'pointer', borderBottom: open ? Bsm : 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: group.isCurrentMonth ? WHITE : INK }}>
-            {group.monthLabel}
-          </div>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.12em', color: group.isCurrentMonth ? 'rgba(244,241,236,0.4)' : STONE, textTransform: 'uppercase' }}>
-            {group.markets.length} MARKET{group.markets.length !== 1 ? 'S' : ''}
-          </div>
-        </div>
-        <div style={{ ...FM, fontSize: '12px', color: group.isCurrentMonth ? 'rgba(244,241,236,0.4)' : STONE, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>↓</div>
-      </button>
-      {open && group.markets.map((m, i) => <MarketRow key={m.id} market={m} even={i % 2 === 0} />)}
-    </div>
-  )
-}
-
-export default function MarketsCalendar({ groups, liveCount }: { groups: MarketsByMonth[]; liveCount: number }) {
   return (
     <div>
-      <style>{`.mkt-cal-row:hover > div { background: #d8d2c4 !important; }`}</style>
-      {groups.length === 0 ? (
-        <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-          <div style={{ ...FH, fontWeight: 900, fontSize: '40px', textTransform: 'uppercase', color: 'rgba(12,12,12,0.12)', marginBottom: '12px' }}>NO MARKETS SCHEDULED</div>
-          <div style={{ ...FM, fontSize: '10px', color: STONE, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Check back soon.</div>
+      {/* ── Filter tabs ── */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '3px solid var(--INK)',
+        background: 'var(--P2)',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+      }}>
+        {tabs.map(tab => {
+          const active = filter === tab.key
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              style={{
+                ...T,
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '12px 18px',
+                background: active ? 'var(--INK)' : 'transparent',
+                color: active ? 'var(--P)' : tab.key === 'live' && liveCount > 0 ? 'var(--GRN)' : 'rgba(24,22,20,.5)',
+                border: 'none',
+                borderRight: '2px solid rgba(24,22,20,.1)',
+                cursor: 'pointer',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {tab.label}
+              {tab.count !== undefined && tab.count > 0 && (
+                <span style={{
+                  background: active ? 'var(--RED)' : 'var(--GRN)',
+                  color: '#fff',
+                  fontSize: '9px',
+                  padding: '1px 5px',
+                  fontFamily: "'Share Tech Mono',monospace",
+                  letterSpacing: '0.06em',
+                }}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto', padding: '0 4px', display: 'flex', alignItems: 'center' }}>
+          <Link href="/spaces" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)', textDecoration: 'none', padding: '12px 14px', whiteSpace: 'nowrap' }}>
+            ALL SPACES →
+          </Link>
         </div>
-      ) : (
-        groups.map(group => <MonthBlock key={group.monthKey} group={group} />)
+      </div>
+
+      {/* ── Empty live state ── */}
+      {filter === 'live' && liveCount === 0 && (
+        <div style={{ padding: '40px 20px', textAlign: 'center', borderBottom: '3px solid var(--INK)' }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', color: 'rgba(24,22,20,.15)', marginBottom: '8px' }}>
+            NO LIVE MARKETS RIGHT NOW
+          </div>
+          <div style={{ ...T, fontSize: '11px', color: 'rgba(24,22,20,.3)', lineHeight: 2 }}>
+            Check the calendar below for upcoming dates.
+          </div>
+        </div>
+      )}
+
+      {/* ── Month groups ── */}
+      {filteredByMonth.map(month => (
+        <div key={month.monthKey}>
+          {/* Month header */}
+          <div style={{
+            background: 'var(--INK)',
+            padding: '10px 14px',
+            borderBottom: '2px solid rgba(240,236,224,.06)',
+            borderTop: month.isCurrentMonth ? 'none' : '3px solid var(--INK)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--P)', lineHeight: 1 }}>
+              {month.monthLabel}
+            </div>
+            <div style={{ ...T, fontSize: '9px', color: 'rgba(240,236,224,.25)' }}>
+              {month.markets.length} MARKET{month.markets.length !== 1 ? 'S' : ''}
+            </div>
+          </div>
+
+          {/* Market rows */}
+          {month.markets.map((m, i) => {
+            const isLive = m.status === 'live' || m.status === 'community_live'
+            const isCancelled = m.status === 'cancelled'
+
+            return (
+              <Link
+                key={m.id}
+                href={`/markets/${m.id}`}
+                style={{
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  borderBottom: '2px solid var(--INK)',
+                  background: isLive ? 'rgba(26,92,48,.04)' : i % 2 === 0 ? 'var(--P)' : 'var(--P2)',
+                  minHeight: '72px',
+                  position: 'relative',
+                  borderLeft: isLive ? '4px solid var(--GRN)' : '4px solid transparent',
+                }}
+              >
+                {/* Date block */}
+                <div style={{
+                  width: '72px',
+                  flexShrink: 0,
+                  background: isLive ? 'var(--GRN)' : 'var(--INK)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 4px',
+                  gap: '1px',
+                }}>
+                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: isLive ? '#fff' : 'rgba(240,236,224,.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {formatWeekday(m.event_date)}
+                  </div>
+                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', color: isLive ? '#fff' : 'var(--RED)', lineHeight: 1 }}>
+                    {formatDay(m.event_date)}
+                  </div>
+                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: isLive ? 'rgba(255,255,255,.6)' : 'rgba(240,236,224,.4)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {formatMonth(m.event_date)}
+                  </div>
+                </div>
+
+                {/* Market info */}
+                <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                    {isLive && (
+                      <span style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'var(--GRN)', color: '#fff', padding: '2px 6px' }}>
+                        ● LIVE NOW
+                      </span>
+                    )}
+                    {isCancelled && (
+                      <span style={{ fontFamily: "'Share Tech Mono',monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'var(--RED)', color: '#fff', padding: '2px 6px' }}>
+                        CANCELLED
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Market title */}
+                  <div style={{
+                    fontFamily: "'Barlow Condensed',sans-serif",
+                    fontWeight: 900,
+                    fontSize: 'clamp(18px,4vw,24px)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '-0.01em',
+                    color: isCancelled ? 'rgba(24,22,20,.35)' : 'var(--INK)',
+                    lineHeight: 1,
+                    marginBottom: '3px',
+                    textDecoration: isCancelled ? 'line-through' : 'none',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {m.title}
+                  </div>
+
+                  {/* Space + time */}
+                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(24,22,20,.45)', lineHeight: 1.4 }}>
+                    {m.space.name}
+                    {m.space.parish ? ` · ${m.space.parish}` : ''}
+                    {' · '}{m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}
+                  </div>
+
+                  {/* Curator name — KEY ADDITION */}
+                  {m.curator?.display_name && (
+                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--RED)', marginTop: '3px', fontWeight: 700 }}>
+                      ↳ {m.curator.display_name}
+                      {m.curator.slug && (
+                        <span style={{ fontWeight: 400, color: 'rgba(24,22,20,.35)' }}> · curators/{m.curator.slug}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Live maker count */}
+                  {isLive && m.checkin_count > 0 && (
+                    <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--GRN)', marginTop: '3px', fontWeight: 700 }}>
+                      {m.checkin_count} MAKERS CHECKED IN
+                    </div>
+                  )}
+                </div>
+
+                {/* Arrow */}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', color: 'rgba(24,22,20,.2)', fontFamily: "'Share Tech Mono',monospace", fontSize: '16px' }}>
+                  →
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      ))}
+
+      {/* ── Empty all ── */}
+      {filteredByMonth.length === 0 && filter !== 'live' && (
+        <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '32px', textTransform: 'uppercase', color: 'rgba(24,22,20,.15)', marginBottom: '8px' }}>
+            NO MARKETS FOUND
+          </div>
+        </div>
       )}
     </div>
   )
