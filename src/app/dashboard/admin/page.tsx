@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
   ] = await Promise.all([
     supabase.from('spaces').select('*').order('name'),
     supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
-    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
+    supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator', 'admin']).order('display_name'),
     serviceClient.from('markets').select('id, title, status, event_date, event_date_end, starts_at, ends_at, space:spaces(id, name), curator:profiles!markets_curator_id_fkey(id, display_name)').order('event_date', { ascending: false }),
     supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
     serviceClient.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
