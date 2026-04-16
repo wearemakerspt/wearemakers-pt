@@ -24,7 +24,6 @@ export interface CuratorMarket {
   status: string
   space_name: string | null
   space_slug: string | null
-  space_address: string | null
 }
 
 export interface FeaturedMaker {
@@ -40,17 +39,18 @@ export interface FeaturedMaker {
 
 export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | null> {
   const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
 
-  // Accept curator or admin role (admin can also run markets)
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('id, display_name, slug, bio, avatar_url, instagram_handle, shop_url, organisation_name, organisation_url')
     .eq('slug', slug)
-    .in('role', ['curator', 'admin'])
+    .eq('role', 'curator')
     .single()
 
   if (error || !profile) return null
 
+  // Upcoming markets (next 60 days) + recent (last 30 days)
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
@@ -59,14 +59,13 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
       .from('markets')
       .select(`
         id, title, event_date, event_date_end, starts_at, ends_at, status,
-        space:spaces ( name, slug, address )
+        space:spaces ( name, slug )
       `)
       .eq('curator_id', profile.id)
       .gte('event_date', thirtyDaysAgo.toISOString().split('T')[0])
-      .not('status', 'eq', 'shadow')
-      .not('status', 'eq', 'cancelled')
+      .not('status', 'in', '("shadow","cancelled")')
       .order('event_date', { ascending: true })
-      .limit(30),
+      .limit(20),
 
     supabase
       .from('curator_featured_makers')
@@ -91,9 +90,9 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
     status: m.status,
     space_name: m.space?.name ?? null,
     space_slug: m.space?.slug ?? null,
-    space_address: m.space?.address ?? null,
   }))
 
+  // Check which featured makers are live right now
   const featuredMakerIds = (featuredRes.data ?? [])
     .map((f: any) => f.maker?.id)
     .filter(Boolean)
@@ -135,15 +134,4 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
     markets,
     featured_makers,
   }
-}
-
-export async function getAllCuratorSlugs(): Promise<string[]> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select('slug')
-    .in('role', ['curator', 'admin'])
-    .eq('is_approved', true)
-    .eq('is_active', true)
-  return (data ?? []).map((p: any) => p.slug).filter(Boolean)
 }
