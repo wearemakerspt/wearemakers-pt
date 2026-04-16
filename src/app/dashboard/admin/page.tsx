@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
     supabase.from('spaces').select('*').order('name'),
     supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_verified, is_active, is_approved, applied_at, created_at, bio_i18n').in('role', ['maker', 'admin']).order('display_name'),
     supabase.from('profiles').select('id, display_name, slug, instagram_handle, is_active, is_approved, applied_at, created_at').in('role', ['curator']).order('display_name'),
-    supabase.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
+    serviceClient.from('markets').select('*, space:spaces(name), curator:profiles(id, display_name)').order('event_date', { ascending: false }),
     supabase.from('profiles').select('id, display_name, created_at').in('role', ['visitor']).order('created_at', { ascending: false }),
     serviceClient.from('gems').select('*, vetted_by:profiles(display_name), space:spaces(name, id)').order('created_at', { ascending: false }),
     supabase.from('wam_top20').select('*, maker:profiles(id, display_name, slug, avatar_url, is_verified)').order('position'),
