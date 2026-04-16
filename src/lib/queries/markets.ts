@@ -226,10 +226,7 @@ export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
 export async function getMarketBySlug(slug: string): Promise<MarketDetail | null> {
   const supabase = await createClient()
 
-  const parts = slug.split('--')
-  const eventDate = parts[1]
-
-  let query = supabase
+  const { data: markets } = await supabase
     .from('markets')
     .select(`
       id, title, status, event_date, starts_at, ends_at,
@@ -244,14 +241,11 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
         )
       )
     `)
+    .eq('id', slug)
     .is('attendance.checked_out_at', null)
     .neq('status', 'shadow')
+    .limit(1)
 
-  if (eventDate) {
-    query = query.eq('event_date', eventDate)
-  }
-
-  const { data: markets } = await query.limit(1)
   if (!markets || markets.length === 0) return null
 
   const m = markets[0] as any
