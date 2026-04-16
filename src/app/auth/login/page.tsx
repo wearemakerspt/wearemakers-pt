@@ -73,8 +73,8 @@ export default async function LoginPage({
           </form>
 
           <div style={{ padding: '14px 20px', borderTop: '1px dashed rgba(24,22,20,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Link href="/auth/register" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', textDecoration: 'none' }}>
-              No account? Apply for access →
+            <Link href="/welcome" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', textDecoration: 'none' }}>
+              No account? Join free →
             </Link>
           </div>
         </div>

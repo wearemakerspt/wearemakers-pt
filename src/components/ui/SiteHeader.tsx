@@ -32,7 +32,6 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
         </Link>
         <Link href="/markets" className="mh-cell">MARKETS</Link>
         <Link href="/brands" className="mh-cell">BRANDS</Link>
-        <Link href="/journal" className="mh-cell">JOURNAL</Link>
         <Link href="/gems" className="mh-cell">GEMS</Link>
         <Link href="/circuit" className="mh-cell">MY CIRCUIT</Link>
 
