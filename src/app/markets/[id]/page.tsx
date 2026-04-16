@@ -89,6 +89,14 @@ export default async function MarketDetailPage({ params }: Props) {
 
           {/* Right sidebar — dark */}
           <div style={{ background: INK, color: WHITE, padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {(market as any).curator && (
+              <div>
+                <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>CURATOR</div>
+                <Link href={`/curators/${(market as any).curator.slug}`} style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
+                  {(market as any).curator.display_name} ↗
+                </Link>
+              </div>
+            )}
             <div>
               <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>SPACE</div>
               <Link href={`/spaces/${spaceSlug}`} style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE, textDecoration: 'none' }}>
