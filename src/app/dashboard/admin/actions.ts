@@ -74,23 +74,26 @@ export async function adminCreateMarket(formData: FormData) {
 
   const spaceId = formData.get('space_id') as string
   const eventDate = formData.get('event_date') as string
+  const eventDateEnd = (formData.get('event_date_end') as string) || null
   const startsAt = formData.get('starts_at') as string
   const endsAt = formData.get('ends_at') as string
   const curatorId = (formData.get('curator_id') as string) || null
   const status = (formData.get('status') as string) || 'scheduled'
+  const customTitle = (formData.get('title') as string)?.trim() || null
 
   if (!spaceId || !eventDate || !startsAt || !endsAt) {
     return { error: 'Space, date and times are required' }
   }
 
   const { data: space } = await supabase.from('spaces').select('name').eq('id', spaceId).single()
-  const title = `${space?.name ?? 'Market'} — ${eventDate}`
+  const title = customTitle || `${space?.name ?? 'Market'} — ${eventDate}`
 
   const { error: e } = await supabase.from('markets').insert({
     space_id: spaceId,
     curator_id: curatorId,
     title,
     event_date: eventDate,
+    event_date_end: eventDateEnd || null,
     starts_at: startsAt,
     ends_at: endsAt,
     status,
@@ -118,6 +121,45 @@ export async function adminDeleteMarket(marketId: string) {
   if (error || !supabase) return { error }
   await supabase.from('markets').delete().eq('id', marketId)
   revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function adminCancelMarket(marketId: string) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+  await supabase.from('markets').update({ status: 'cancelled' }).eq('id', marketId)
+  revalidatePath('/dashboard/admin')
+  return { success: true }
+}
+
+export async function adminUpdateMarket(marketId: string, formData: FormData) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const title = (formData.get('title') as string)?.trim()
+  const eventDate = formData.get('event_date') as string
+  const eventDateEnd = (formData.get('event_date_end') as string) || null
+  const startsAt = formData.get('starts_at') as string
+  const endsAt = formData.get('ends_at') as string
+  const curatorId = (formData.get('curator_id') as string) || null
+
+  if (!title || !eventDate || !startsAt || !endsAt) {
+    return { error: 'Title, date and times are required' }
+  }
+
+  const { error: e } = await supabase.from('markets').update({
+    title,
+    event_date: eventDate,
+    event_date_end: eventDateEnd || null,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    curator_id: curatorId || null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', marketId)
+
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/markets')
   return { success: true }
 }
 
