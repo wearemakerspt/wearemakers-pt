@@ -72,7 +72,7 @@ export default function MarketLedger({ markets: initialMarkets, spaces }: Props)
         const eventDateEnd = (formData.get('event_date_end') as string) || null
         const startsAt = formData.get('starts_at') as string
         const endsAt = formData.get('ends_at') as string
-        const spaceName = spaces.find(s => s.id === spaceId)?.name ?? market.space?.name ?? ''
+        const spaceName = spaces.find(s => s.id === spaceId)?.name ?? markets.find(m => m.id === marketId)?.space?.name ?? ''
         setMarkets(prev => prev.map(m => m.id === marketId
           ? { ...m, title, event_date: eventDate, event_date_end: eventDateEnd, starts_at: startsAt, ends_at: endsAt, space: { ...m.space, id: spaceId, name: spaceName } }
           : m
