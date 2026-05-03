@@ -6,13 +6,17 @@ export default function AdminCurators({ curators, spaces }: { curators: any[]; s
   const [list, setList] = useState(curators)
   const [isPending, startTransition] = useTransition()
   const [tab, setTab] = useState<'pending' | 'active'>('pending')
+  const [search, setSearch] = useState('')
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
 
   const pending = list.filter((c: any) => !c.is_approved)
   const active = list.filter((c: any) => c.is_approved !== false)
 
-  const displayed = tab === 'pending' ? pending : active
+  const displayed = (tab === 'pending' ? pending : active).filter((c: any) =>
+    c.display_name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.instagram_handle ?? '').toLowerCase().includes(search.toLowerCase())
+  )
 
   function handleDelete(id: string) {
     if (!confirm('Delete this curator?')) return
@@ -51,6 +55,14 @@ export default function AdminCurators({ curators, spaces }: { curators: any[]; s
       </div>
 
       <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '8px' }}>{displayed.length} CURATORS</div>
+
+      {/* Search */}
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search curators..."
+        style={{ width: '100%', background: 'var(--P2)', border: '2px solid var(--INK)', padding: '8px 12px', fontFamily: 'var(--MONO)', fontSize: '14px', color: 'var(--INK)', outline: 'none', marginBottom: '12px', boxSizing: 'border-box' as const }}
+      />
 
       {/* Pending tab */}
       {tab === 'pending' && (
