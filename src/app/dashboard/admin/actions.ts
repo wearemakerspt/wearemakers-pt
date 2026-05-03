@@ -173,7 +173,7 @@ export async function adminCancelMarket(marketId: string) {
               id: marketId,
             })
           }
-        }).catch(() => {})
+        }, () => {})
     }
   }
 
