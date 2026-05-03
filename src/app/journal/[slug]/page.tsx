@@ -101,17 +101,19 @@ export default async function ArticlePage({ params }: Props) {
           {/* Content */}
           <div style={{ padding: '52px 52px 60px', borderRight: B, maxWidth: '640px' }}>
             <style>{`
-              .art-body h2 { font-family: ${FH}; font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: 0.02em; color: ${INK}; margin: 36px 0 14px; padding-top: 24px; border-top: ${Bsm}; line-height: 1.1; }
-              .art-body h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-              .art-body h3 { font-family: ${FM}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: ${RED}; margin: 28px 0 10px; }
-              .art-body p { font-family: ${FB}; font-weight: 300; font-size: 15px; color: ${STONE}; line-height: 1.75; margin: 0 0 20px; }
-              .art-body p:last-child { margin-bottom: 0; }
-              .art-body strong { color: ${INK}; font-weight: 600; }
-              .art-body em { font-style: italic; }
-              .art-body a { color: ${RED}; text-decoration: underline; text-underline-offset: 3px; }
-              .art-body a:hover { opacity: 0.7; }
-              .art-body blockquote { border-left: 3px solid ${RED}; background: ${PAPER}; padding: 14px 18px; font-style: italic; color: ${STONE}; margin: 20px 0; }
-            `}</style>
+          .art-body h2 { font-family: ${FH}; font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: 0.02em; color: ${INK}; margin: 36px 0 14px; padding-top: 24px; border-top: ${Bsm}; line-height: 1.1; }
+          .art-body h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+          .art-body h3 { font-family: ${FM}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: ${RED}; margin: 28px 0 10px; }
+          .art-body p { font-family: ${FB}; font-weight: 300; font-size: 15px; color: ${STONE}; line-height: 1.75; margin: 0 0 20px; }
+          .art-body p:last-child { margin-bottom: 0; }
+          .art-body strong { color: ${INK}; font-weight: 600; }
+          .art-body em { font-style: italic; }
+          .art-body a { color: ${RED}; text-decoration: underline; text-underline-offset: 3px; }
+          .art-body a:hover { opacity: 0.7; }
+          .art-body blockquote { border-left: 3px solid ${RED}; background: ${PAPER}; padding: 14px 18px; font-style: italic; color: ${STONE}; margin: 20px 0; }
+          .sidebar-maker-link { transition: opacity .15s; }
+          .sidebar-maker-link:hover { opacity: 0.5; }
+        `}</style>
             <div className="art-body" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           </div>
 
@@ -123,9 +125,7 @@ export default async function ArticlePage({ params }: Props) {
                   MAKERS IN THIS LOOP
                 </div>
                 {featuredMakers.slice(0, 4).map((m: any) => (
-                  <Link key={m.id} href={`/brands/${m.slug ?? m.id}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: Bsm, textDecoration: 'none', color: 'inherit', transition: 'opacity .15s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.5'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+                  <Link key={m.id} href={`/brands/${m.slug ?? m.id}`} className="sidebar-maker-link" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: Bsm, textDecoration: 'none', color: 'inherit' }}
                   >
                     <div style={{ width: '32px', height: '32px', flexShrink: 0, background: PAPER, border: Bsm, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '11px', color: STONE }}>
                       {m.avatar_url ? <img src={m.avatar_url} alt={m.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : m.display_name.slice(0, 2).toUpperCase()}
