@@ -88,7 +88,7 @@ export default async function BrandsPage() {
           <Link href="/welcome/maker" className="brands-join-cta" style={{ textDecoration: 'none', background: INK, borderRight: Bsm, borderBottom: Bsm, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px 26px', minHeight: '200px', gap: '14px', transition: 'opacity .15s' }}>
             <div style={{ width: '52px', height: '52px', border: '2px solid rgba(244,241,236,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '24px', color: RED }}>+</div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1.8 }}>SELL AT<br />LISBON MARKETS?</div>
+              <div style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1.8 }}>YOUR BRAND<br />HERE</div>
               <div style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '8px' }}>REGISTER FREE →</div>
             </div>
           </Link>
