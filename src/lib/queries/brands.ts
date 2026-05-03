@@ -122,11 +122,19 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
     ['live', 'community_live'].includes(a.market?.status)
   )
 
+  const seen = new Set<string>()
   const upcoming = (p.attendance ?? [])
     .filter((a: any) =>
       a.market?.event_date >= today &&
       ['scheduled', 'live', 'community_live'].includes(a.market?.status)
     )
+    .sort((a: any, b: any) => (a.market?.event_date ?? '').localeCompare(b.market?.event_date ?? ''))
+    .filter((a: any) => {
+      const id = a.market?.id
+      if (!id || seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
     .map((a: any) => ({
       market_id: a.market?.id,
       market_title: a.market?.title,
@@ -135,7 +143,6 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
       space_name: a.market?.space?.name ?? '',
       space_address: a.market?.space?.address ?? null,
     }))
-    .sort((a: any, b: any) => a.event_date.localeCompare(b.event_date))
     .slice(0, 6)
 
   const bio = (lang !== 'pt' && p.bio_i18n?.[lang]) ? p.bio_i18n[lang] : p.bio
