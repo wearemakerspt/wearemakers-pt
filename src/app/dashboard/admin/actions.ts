@@ -247,6 +247,22 @@ export async function approveMaker(makerId: string) {
     is_active: true,
   }).eq('id', makerId)
   revalidatePath('/dashboard/admin')
+
+  // Send approval email fire-and-forget
+  supabase.from('profiles').select('display_name').eq('id', makerId).single()
+    .then(async ({ data: profile }) => {
+      const { createClient: sc } = await import('@supabase/supabase-js')
+      const serviceClient = sc(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data } = await serviceClient.auth.admin.getUserById(makerId)
+      if (data?.user?.email) {
+        const { sendApprovalEmail } = await import('@/lib/email')
+        await sendApprovalEmail(data.user.email, profile?.display_name ?? 'Maker', 'maker')
+      }
+    }, () => {})
+
   return { success: true }
 }
 
@@ -284,6 +300,22 @@ export async function approveCurator(curatorId: string) {
     is_active: true,
   }).eq('id', curatorId)
   revalidatePath('/dashboard/admin')
+
+  // Send approval email fire-and-forget
+  supabase.from('profiles').select('display_name').eq('id', curatorId).single()
+    .then(async ({ data: profile }) => {
+      const { createClient: sc } = await import('@supabase/supabase-js')
+      const serviceClient = sc(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const { data } = await serviceClient.auth.admin.getUserById(curatorId)
+      if (data?.user?.email) {
+        const { sendApprovalEmail } = await import('@/lib/email')
+        await sendApprovalEmail(data.user.email, profile?.display_name ?? 'Curator', 'curator')
+      }
+    }, () => {})
+
   return { success: true }
 }
 
