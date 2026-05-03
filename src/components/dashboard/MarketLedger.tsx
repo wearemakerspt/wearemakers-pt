@@ -6,9 +6,9 @@ import { formatMarketDate, formatTime, getStatusMeta } from '@/lib/utils'
 import type { CuratorMarket } from '@/lib/queries/curator'
 import type { MarketStatus } from '@/types/database'
 
-interface Props { markets: CuratorMarket[] }
+interface Props { markets: CuratorMarket[]; spaces: { id: string; name: string }[] }
 
-export default function MarketLedger({ markets: initialMarkets }: Props) {
+export default function MarketLedger({ markets: initialMarkets, spaces }: Props) {
   const [markets, setMarkets] = useState(initialMarkets)
   const [isPending, startTransition] = useTransition()
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -67,12 +67,14 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
         setEditingId(null)
         // Optimistically update local state
         const title = formData.get('title') as string
+        const spaceId = formData.get('space_id') as string
         const eventDate = formData.get('event_date') as string
         const eventDateEnd = (formData.get('event_date_end') as string) || null
         const startsAt = formData.get('starts_at') as string
         const endsAt = formData.get('ends_at') as string
+        const spaceName = spaces.find(s => s.id === spaceId)?.name ?? market.space?.name ?? ''
         setMarkets(prev => prev.map(m => m.id === marketId
-          ? { ...m, title, event_date: eventDate, event_date_end: eventDateEnd, starts_at: startsAt, ends_at: endsAt }
+          ? { ...m, title, event_date: eventDate, event_date_end: eventDateEnd, starts_at: startsAt, ends_at: endsAt, space: { ...m.space, id: spaceId, name: spaceName } }
           : m
         ))
         setTimeout(() => setEditSuccess(null), 3000)
@@ -220,6 +222,19 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
                       <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '10px' }}>✗ {editError}</div>
                     )}
                     <form action={(fd) => handleUpdate(market.id, fd)} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {/* Space */}
+                      <div>
+                        <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>SPACE / LOCATION</label>
+                        <select
+                          name="space_id"
+                          defaultValue={market.space?.id ?? ''}
+                          style={{ width: '100%', fontFamily: 'var(--MONO)', fontWeight: 700, fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' as const }}
+                        >
+                          {spaces.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
                       {/* Title */}
                       <div>
                         <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>TITLE</label>

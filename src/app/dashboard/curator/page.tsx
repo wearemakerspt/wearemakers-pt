@@ -127,7 +127,7 @@ export default async function CuratorDashboardPage() {
               <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)' }}>Click a market to see checked-in makers and verify attendance.</div>
               <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.25)' }}>CANCEL = RED CARD</div>
             </div>
-            <MarketLedger markets={ownMarkets} />
+            <MarketLedger markets={ownMarkets} spaces={spaces} />
           </div>
 
           {/* §2 Promo Kit */}
