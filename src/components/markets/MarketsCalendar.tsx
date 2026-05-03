@@ -110,7 +110,8 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
     ? (() => {
         const counts: Record<string, { name: string; count: number }> = {}
         statusFiltered.flatMap(g => g.markets).forEach(m => {
-          const id = m.space.name
+          const id = m.space?.name
+          if (!id) return
           if (!counts[id]) counts[id] = { name: m.space.name, count: 0 }
           counts[id].count++
         })
@@ -130,7 +131,7 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
   const filteredGroups = activeSpace === 'all'
     ? statusFiltered
     : statusFiltered
-        .map(g => ({ ...g, markets: g.markets.filter(m => m.space.name === activeSpace) }))
+        .map(g => ({ ...g, markets: g.markets.filter(m => m.space?.name === activeSpace) }))
         .filter(g => g.markets.length > 0)
 
   const tabStyle = (isActive: boolean, isRed = false): React.CSSProperties => ({
