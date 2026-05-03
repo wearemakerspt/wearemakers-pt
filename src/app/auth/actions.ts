@@ -150,6 +150,14 @@ async function signUpWithRole(
 
     revalidatePath('/', 'layout')
 
+    // Send welcome email (fire and forget)
+    if (data.user.email && (role === 'maker' || role === 'curator')) {
+      import('@/lib/email').then(({ sendWelcomeEmailMaker, sendWelcomeEmailCurator }) => {
+        if (role === 'maker') sendWelcomeEmailMaker(data.user!.email!, displayName).catch(() => {})
+        else sendWelcomeEmailCurator(data.user!.email!, displayName).catch(() => {})
+      }).catch(() => {})
+    }
+
     // After auto-confirm, show pending approval state
     // (is_approved = false so dashboard will show pending screen)
     redirect(`${errorRedirectBase}?success=1`)

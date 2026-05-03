@@ -127,8 +127,56 @@ export async function adminDeleteMarket(marketId: string) {
 export async function adminCancelMarket(marketId: string) {
   const { error, supabase } = await getAdminClient()
   if (error || !supabase) return { error }
+
+  // Fetch market + saved visitors emails before cancelling
+  const { data: market } = await supabase
+    .from('markets')
+    .select('title, event_date, space:spaces(name)')
+    .eq('id', marketId)
+    .single()
+
+  const { data: savedVisitors } = await supabase
+    .from('saved_markets')
+    .select('visitor:profiles!saved_markets_visitor_id_fkey(id)')
+    .eq('market_id', marketId)
+
   await supabase.from('markets').update({ status: 'cancelled' }).eq('id', marketId)
   revalidatePath('/dashboard/admin')
+  revalidatePath('/markets')
+
+  // Send cancellation emails fire-and-forget
+  if (market && savedVisitors?.length) {
+    const visitorIds = savedVisitors.map((s: any) => s.visitor?.id).filter(Boolean)
+    if (visitorIds.length) {
+      supabase
+        .from('profiles')
+        .select('id')
+        .in('id', visitorIds)
+        .then(async ({ data: visitors }) => {
+          // Get emails from auth.users via service role
+          const { createClient: sc } = await import('@supabase/supabase-js')
+          const serviceClient = sc(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+          const emails: string[] = []
+          for (const v of visitors ?? []) {
+            const { data } = await serviceClient.auth.admin.getUserById(v.id)
+            if (data?.user?.email) emails.push(data.user.email)
+          }
+          if (emails.length) {
+            const { sendMarketCancelledEmails } = await import('@/lib/email')
+            await sendMarketCancelledEmails(emails, {
+              title: market.title,
+              event_date: market.event_date,
+              space_name: (market.space as any)?.name ?? '',
+              id: marketId,
+            })
+          }
+        }).catch(() => {})
+    }
+  }
+
   return { success: true }
 }
 

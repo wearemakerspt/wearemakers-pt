@@ -63,21 +63,25 @@ export async function checkInToMarket(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name, slug')
-      .eq('id', user.id)
-      .single()
+  // Push + email notifications (best-effort, fire and forget)
+  ;(async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, slug')
+        .eq('id', user.id)
+        .single()
 
-    const { data: market } = await supabase
-      .from('markets')
-      .select('title, space:spaces(name)')
-      .eq('id', marketId)
-      .single()
+      const { data: market } = await supabase
+        .from('markets')
+        .select('title, space:spaces(name)')
+        .eq('id', marketId)
+        .single()
 
-    if (profile && market) {
+      if (!profile || !market) return
       const marketName = (market.space as any)?.name ?? market.title
+
+      // Push notification
       fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,8 +92,37 @@ export async function checkInToMarket(formData: FormData) {
           brandSlug: profile.slug,
         }),
       }).catch(() => {})
-    }
-  } catch { /* push is best-effort */ }
+
+      // Email alert to saved visitors
+      const { data: savedRows } = await supabase
+        .from('saved_brands')
+        .select('visitor_id')
+        .eq('brand_id', user.id)
+        .not('visitor_id', 'is', null)
+
+      if (!savedRows?.length) return
+
+      const visitorIds = savedRows.map((r: any) => r.visitor_id).filter(Boolean)
+      const { createClient: sc } = await import('@supabase/supabase-js')
+      const serviceClient = sc(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      const emails: string[] = []
+      for (const id of visitorIds) {
+        const { data } = await serviceClient.auth.admin.getUserById(id)
+        if (data?.user?.email) emails.push(data.user.email)
+      }
+      if (!emails.length) return
+
+      const { sendCheckinAlertEmails } = await import('@/lib/email')
+      await sendCheckinAlertEmails(
+        emails,
+        { display_name: profile.display_name, slug: profile.slug, id: user.id },
+        { space_name: marketName, title: market.title }
+      )
+    } catch { /* best-effort */ }
+  })()
 
   revalidatePath('/dashboard/maker')
   return { success: true }
