@@ -21,12 +21,13 @@ export default function MarketCard({ market: m, dim = false }: Props) {
   const isLive = m.status === 'live' || m.status === 'community_live'
 
   return (
-    <Link
-      href={`/markets/${m.id}`}
-      style={{ display: 'flex', borderBottom: B, opacity: dim ? 0.5 : 1, minHeight: '88px', textDecoration: 'none', color: 'inherit', background: WHITE, transition: 'background .15s' }}
-      onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.background = PAPER}
-      onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.background = WHITE}
-    >
+    <>
+      <style>{`.mkt-card:hover { background: ${PAPER} !important; }`}</style>
+      <Link
+        href={`/markets/${m.id}`}
+        className="mkt-card"
+        style={{ display: 'flex', borderBottom: B, opacity: dim ? 0.5 : 1, minHeight: '88px', textDecoration: 'none', color: 'inherit', background: WHITE, transition: 'background .15s' }}
+      >
       {/* Left counter */}
       <div style={{ width: '72px', flexShrink: 0, background: INK, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 4px', borderRight: B }}>
         <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '28px', color: isLive ? RED : 'rgba(244,241,236,0.5)', lineHeight: 1 }}>
@@ -57,5 +58,6 @@ export default function MarketCard({ market: m, dim = false }: Props) {
         )}
       </div>
     </Link>
+    </>
   )
 }
