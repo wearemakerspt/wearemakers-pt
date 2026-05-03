@@ -167,3 +167,49 @@ export async function signOut() {
   revalidatePath('/', 'layout')
   redirect('/')
 }
+
+// ── Request Password Reset ────────────────────────────────────
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = formData.get('email') as string
+
+  if (!email) {
+    redirect(`/auth/reset-password?error=${encodeURIComponent('Email is required.')}`)
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/update-password`,
+  })
+
+  if (error) {
+    redirect(`/auth/reset-password?error=${encodeURIComponent(error.message)}`)
+  }
+
+  redirect(`/auth/reset-password?sent=1`)
+}
+
+// ── Update Password (after reset link clicked) ────────────────
+
+export async function updatePassword(formData: FormData) {
+  const password = formData.get('password') as string
+  const confirm = formData.get('confirm') as string
+
+  if (!password || password.length < 8) {
+    redirect(`/auth/update-password?error=${encodeURIComponent('Password must be at least 8 characters.')}`)
+  }
+
+  if (password !== confirm) {
+    redirect(`/auth/update-password?error=${encodeURIComponent('Passwords do not match.')}`)
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) {
+    redirect(`/auth/update-password?error=${encodeURIComponent(error.message)}`)
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/dashboard/maker?reset=1')
+}

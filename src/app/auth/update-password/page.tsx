@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { signInWithPassword } from '@/app/auth/actions'
+import { updatePassword } from '@/app/auth/actions'
 
 export const metadata: Metadata = {
-  title: 'Sign In — WEAREMAKERS.PT',
+  title: 'Set New Password — WEAREMAKERS.PT',
   robots: { index: false, follow: false },
 }
 
-export default async function LoginPage({
+export default async function UpdatePasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>
+  searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
@@ -36,50 +36,45 @@ export default async function LoginPage({
           </div>
         </div>
 
-        {/* Form card */}
+        {/* Card */}
         <div style={{ background: 'var(--P)', border: '3px solid var(--P)', boxShadow: '8px 8px 0 0 var(--RED)' }}>
-          <div style={{ background: 'var(--RED)', padding: '10px 16px', borderBottom: '3px solid var(--INK)' }}>
-            <div style={{ ...T, fontWeight: 700, color: 'var(--P)' }}>SIGN IN</div>
+          <div style={{ background: 'var(--INK)', padding: '10px 16px', borderBottom: '3px solid var(--INK)' }}>
+            <div style={{ ...T, fontWeight: 700, color: 'var(--P)' }}>SET NEW PASSWORD</div>
           </div>
 
-          <form action={signInWithPassword} style={{ padding: '20px' }}>
-            {params.next && (
-              <input type="hidden" name="next" value={params.next} />
-            )}
-
+          <form action={updatePassword} style={{ padding: '20px' }}>
             {params.error && (
               <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700 }}>
-                ✗ {params.error === 'invalid_credentials' ? 'Invalid email or password.' : params.error}
+                ✗ {params.error}
               </div>
             )}
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>
-                EMAIL ADDRESS *
+                NEW PASSWORD *
               </label>
-              <input type="email" name="email" required autoComplete="email" placeholder="your@email.com" style={inputStyle} />
+              <input
+                type="password" name="password" required
+                autoComplete="new-password" placeholder="Min. 8 characters"
+                style={inputStyle}
+              />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>
-                PASSWORD *
+                CONFIRM PASSWORD *
               </label>
-              <input type="password" name="password" required autoComplete="current-password" placeholder="••••••••••••" style={inputStyle} />
+              <input
+                type="password" name="confirm" required
+                autoComplete="new-password" placeholder="Repeat your password"
+                style={inputStyle}
+              />
             </div>
 
-            <button type="submit" style={{ ...T, fontWeight: 700, fontSize: '12px', width: '100%', padding: '14px', background: 'var(--INK)', color: 'var(--P)', border: '3px solid var(--INK)', cursor: 'pointer', boxShadow: '4px 4px 0 0 var(--RED)' }}>
-              ENTER THE CIRCUIT →
+            <button type="submit" style={{ ...T, fontWeight: 700, fontSize: '12px', width: '100%', padding: '14px', background: 'var(--RED)', color: 'var(--P)', border: '3px solid var(--RED)', cursor: 'pointer', boxShadow: '4px 4px 0 0 var(--INK)' }}>
+              SET NEW PASSWORD →
             </button>
           </form>
-
-          <div style={{ padding: '14px 20px', borderTop: '1px dashed rgba(24,22,20,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Link href="/welcome" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', textDecoration: 'none' }}>
-              No account? Join free →
-            </Link>
-            <Link href="/auth/reset-password" style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)', textDecoration: 'none' }}>
-              Forgot password?
-            </Link>
-          </div>
         </div>
 
         <div style={{ marginTop: '20px', textAlign: 'center', ...T, fontSize: '9px', color: 'rgba(240,236,224,.2)' }}>
