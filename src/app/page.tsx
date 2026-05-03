@@ -91,30 +91,32 @@ export default async function HomePage() {
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={liveMarkets.length} />
 
-      {/* ── Weather ticker — always red ── */}
-      {weather && (
-        <div style={{ background: RED, borderBottom: B, height: '34px', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
-          <style>{`@keyframes weather-tick { from { transform: translateX(0) } to { transform: translateX(-50%) } }`}</style>
-          <div style={{ display: 'flex', animation: 'weather-tick 32s linear infinite', whiteSpace: 'nowrap' }}>
-            {[...Array(2)].map((_, ri) => (
-              <span key={ri} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                {[
-                  `LISBON · ${weather.temp}°C`,
-                  weather.condition,
-                  `WIND ${weather.windspeed} KM/H`,
-                  weather.message,
-                  new Date().toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase(),
-                  weather.isGood ? '● GO FIND YOUR MAKERS' : '● CHECK BEFORE YOU GO',
-                ].map((item, i) => (
-                  <span key={i} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.9)', padding: '0 32px', display: 'inline-flex', alignItems: 'center', gap: '32px' }}>
-                    {item}<span style={{ opacity: 0.4, fontSize: '14px' }}>·</span>
-                  </span>
-                ))}
-              </span>
-            ))}
-          </div>
+      {/* ── Platform identity ticker — always red ── */}
+      <div style={{ background: RED, borderBottom: B, height: '34px', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+        <style>{`@keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }`}</style>
+        <div style={{ display: 'flex', animation: 'ticker 38s linear infinite', whiteSpace: 'nowrap' }}>
+          {[...Array(2)].map((_, ri) => (
+            <span key={ri} style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {[
+                'LISBON STREET MARKETS',
+                '200+ INDEPENDENT MAKERS',
+                'LIVE MARKET STATUS',
+                'CERAMICS',
+                'LEATHER',
+                'JEWELLERY',
+                'TEXTILE',
+                'SUNGLASSES',
+                'LOCAL BRANDS',
+                'REGISTER YOUR BRAND — FREE',
+              ].map((item, i) => (
+                <span key={i} style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.9)', padding: '0 28px', display: 'inline-flex', alignItems: 'center', gap: '28px' }}>
+                  {item}<span style={{ opacity: 0.4, fontSize: '14px' }}>·</span>
+                </span>
+              ))}
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* ── Hero — 55/45 ── */}
       <section style={{ display: 'grid', gridTemplateColumns: '55% 45%', borderBottom: B, minHeight: 'calc(100vh - 84px)' }} className="home-hero">
@@ -195,33 +197,53 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Live markets ── */}
+      {/* ── Live markets — vertical card grid ── */}
       {liveMarkets.length > 0 && (
         <section>
           <div className="section-rule">
             <span className="section-rule-title">OPEN TODAY</span>
             <Link href="/markets" className="section-rule-link">{liveMarkets.length} LIVE →</Link>
           </div>
-          {liveMarkets.map(m => (
-            <Link key={m.market_id} href={`/markets/${m.market_id}`} className="mcard">
-              <div className="mcard-img">
-                <div className="mcard-count">{m.checkin_count}</div>
-                <div className="mcard-count-lbl">LIVE</div>
-              </div>
-              <div className="mbody">
-                <div className="mmeta" style={{ marginBottom: '5px' }}><span className="badge-live">{m.checkin_count} MAKERS</span></div>
-                <div className="mtitle">{m.market_title}</div>
-                <div className="maddr">{m.space_name} · {m.space_parish ?? ''} · {m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}</div>
-                <div className="maker-cluster">
-                  {m.makers.slice(0, 3).map((mk, i) => (
-                    <div key={mk.maker_id} className="maker-av-sm live-av" style={{ zIndex: 3 - i }}>{mk.maker_name.slice(0, 2).toUpperCase()}</div>
-                  ))}
-                  {m.makers.length > 3 && <div className="maker-av-sm maker-av-more">+{m.makers.length - 3}</div>}
-                  <span className="maker-cluster-lbl">ALL {m.makers.length} →</span>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(liveMarkets.length, 3)}, 1fr)`, borderBottom: B }} className="home-live-markets">
+            {liveMarkets.map((m, i) => (
+              <Link key={m.market_id} href={`/markets/${m.market_id}`} style={{ textDecoration: 'none', color: 'inherit', borderRight: i < liveMarkets.length - 1 ? B : 'none', display: 'flex', flexDirection: 'column', background: WHITE, transition: 'background .15s' }} className="live-mkt-card-hover">
+                {/* Dark top — ghost name + status */}
+                <div style={{ background: INK, padding: '28px 28px 24px', position: 'relative', overflow: 'hidden', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(36px,4vw,56px)', letterSpacing: '-0.02em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.055)', pointerEvents: 'none', textAlign: 'center', lineHeight: 0.88, padding: '0 16px' }}>
+                    {m.market_title}
+                  </div>
+                  <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.18em', color: WHITE, background: GREEN, padding: '4px 10px', width: 'fit-content', position: 'relative', textTransform: 'uppercase' }}>
+                    ● LIVE NOW
+                  </span>
+                  {m.checkin_count > 0 && (
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '16px' }}>
+                      <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '42px', color: WHITE, lineHeight: 1 }}>{m.checkin_count}</span>
+                      <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>MAKERS</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Link>
-          ))}
+                {/* Body */}
+                <div style={{ padding: '20px 28px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', letterSpacing: '-0.01em', textTransform: 'uppercase', lineHeight: 1, color: INK }}>
+                    {m.market_title}
+                  </div>
+                  <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase' }}>
+                    {m.space_name}{m.space_parish ? ` · ${m.space_parish}` : ''} · {m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}
+                  </div>
+                  {m.makers.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+                      {m.makers.slice(0, 4).map((mk, j) => (
+                        <div key={mk.maker_id} style={{ width: '28px', height: '28px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '9px', color: INK, overflow: 'hidden', flexShrink: 0 }}>
+                          {mk.avatar_url ? <img src={mk.avatar_url} alt={mk.maker_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : mk.maker_name.slice(0, 2).toUpperCase()}
+                        </div>
+                      ))}
+                      {m.makers.length > 4 && <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', color: STONE, letterSpacing: '0.1em' }}>+{m.makers.length - 4}</span>}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 
@@ -370,7 +392,10 @@ export default async function HomePage() {
       <style>{`
         .journal-card-hover:hover { background: #EDE9E2 !important; }
         .maker-cell-hover:hover { background: #EDE9E2 !important; }
+        .live-mkt-card-hover:hover { background: #EDE9E2 !important; }
         @media (max-width: 860px) {
+          .home-live-markets { grid-template-columns: 1fr !important; }
+          .home-live-markets > a { border-right: none !important; border-bottom: 2px solid #0C0C0C !important; }
           .home-hero { grid-template-columns: 1fr !important; min-height: auto !important; }
           .home-spotlight { grid-template-columns: 1fr !important; min-height: auto !important; }
           .home-spotlight > div:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 40px 24px !important; min-height: 260px; }
