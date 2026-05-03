@@ -17,10 +17,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const brand = await getBrandBySlug(slug)
   if (!brand) return { title: 'Brand Not Found' }
+
+  const bio_i18n = brand.bio_i18n as any
+  const category = bio_i18n?._category?.split(',')[0]?.trim() ?? 'Independent Maker'
+  const avatar = brand.avatar_url ?? ''
+  const ogUrl = `https://wearemakers.pt/api/og?type=brand&title=${encodeURIComponent(brand.display_name)}&sub=${encodeURIComponent(category)}&avatar=${encodeURIComponent(avatar)}`
+  const description = brand.bio ?? `${brand.display_name} — independent maker at Lisbon street markets.`
+
   return {
     title: `${brand.display_name} — WEAREMAKERS.PT`,
-    description: brand.bio ?? `${brand.display_name} — independent maker at Lisbon street markets.`,
+    description,
     alternates: { canonical: `/brands/${slug}` },
+    openGraph: {
+      title: brand.display_name,
+      description,
+      url: `https://wearemakers.pt/brands/${slug}`,
+      siteName: 'WEAREMAKERS.PT',
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: brand.display_name }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: brand.display_name,
+      description,
+      images: [ogUrl],
+    },
   }
 }
 

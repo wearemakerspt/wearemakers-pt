@@ -15,10 +15,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const market = await getMarketBySlug(id)
   if (!market) return { title: 'Market Not Found' }
+
+  const isLive = market.status === 'live' || market.status === 'community_live'
+  const date = new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()
+  const ogUrl = `https://wearemakers.pt/api/og?type=market&title=${encodeURIComponent(market.title)}&sub=${encodeURIComponent(market.space.name)}&date=${encodeURIComponent(date)}&status=${encodeURIComponent(isLive ? 'LIVE NOW' : 'SCHEDULED')}`
+
   return {
     title: `${market.title} — WEAREMAKERS.PT`,
     description: market.description ?? `${market.title} at ${market.space.name}, Lisbon.`,
     alternates: { canonical: `/markets/${id}` },
+    openGraph: {
+      title: market.title,
+      description: market.description ?? `${market.title} at ${market.space.name}, Lisbon.`,
+      url: `https://wearemakers.pt/markets/${id}`,
+      siteName: 'WEAREMAKERS.PT',
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: market.title }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: market.title,
+      description: market.description ?? `${market.title} at ${market.space.name}, Lisbon.`,
+      images: [ogUrl],
+    },
   }
 }
 
