@@ -154,17 +154,21 @@ export async function getAllMarkets(): Promise<MarketSummary[]> {
   }
 
   return (data as any[])
-    .map((m) => ({
-      id: m.id,
-      title: m.title,
-      status: m.status,
-      event_date: m.event_date,
-      starts_at: m.starts_at,
-      ends_at: m.ends_at,
-      checkin_count: m.attendance?.length ?? 0,
-      space: m.space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
-      curator: m.curator ?? null,
-    }))
+    .map((m) => {
+      const space = Array.isArray(m.space) ? m.space[0] : m.space
+      const curator = Array.isArray(m.curator) ? m.curator[0] : m.curator
+      return {
+        id: m.id,
+        title: m.title,
+        status: m.status,
+        event_date: m.event_date,
+        starts_at: m.starts_at,
+        ends_at: m.ends_at,
+        checkin_count: m.attendance?.length ?? 0,
+        space: space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
+        curator: curator ?? null,
+      }
+    })
     .sort((a, b) => (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9))
 }
 
@@ -195,6 +199,8 @@ export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
     const [year, month] = m.event_date.split('-')
     const key = `${year}-${month}`
     if (!monthMap.has(key)) monthMap.set(key, [])
+    const space = Array.isArray(m.space) ? m.space[0] : m.space
+    const curator = Array.isArray(m.curator) ? m.curator[0] : m.curator
     monthMap.get(key)!.push({
       id: m.id,
       title: m.title,
@@ -203,8 +209,8 @@ export async function getMarketsByMonth(): Promise<MarketsByMonth[]> {
       starts_at: m.starts_at,
       ends_at: m.ends_at,
       checkin_count: m.attendance?.length ?? 0,
-      space: m.space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
-      curator: m.curator ?? null,
+      space: space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
+      curator: curator ?? null,
     })
   }
 
