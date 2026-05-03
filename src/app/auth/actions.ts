@@ -106,10 +106,10 @@ async function signUpWithRole(
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       data: {
-        full_name: displayName,
+        display_name: displayName,
         instagram_handle: instagramHandle,
         requested_role: role,
-        category,       // stored in user metadata for reference
+        category,
         market_name: marketName,
       },
     },
@@ -125,7 +125,6 @@ async function signUpWithRole(
     const bioI18n = category ? { _category: category } : undefined
 
     const profileData: Record<string, any> = {
-      id: data.user.id,
       display_name: displayName,
       instagram_handle: instagramHandle,
       role: 'visitor', // Admin promotes to maker/curator after review
@@ -143,10 +142,7 @@ async function signUpWithRole(
       }
     }
 
-    await supabase.from('profiles').upsert(profileData, {
-      onConflict: 'id',
-      ignoreDuplicates: false,
-    })
+    await supabase.from('profiles').update(profileData).eq('id', data.user.id)
 
     revalidatePath('/', 'layout')
 
