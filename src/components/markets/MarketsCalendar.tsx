@@ -93,20 +93,47 @@ type FilterTab = 'live' | 'upcoming' | 'all'
 
 export default function MarketsCalendar({ groups, liveCount }: { groups: MarketsByMonth[]; liveCount: number }) {
   const [activeTab, setActiveTab] = useState<FilterTab>(liveCount > 0 ? 'live' : 'upcoming')
+  const [activeSpace, setActiveSpace] = useState<string>('all')
 
   // Flatten all markets for filtering
   const allMarkets = groups.flatMap(g => g.markets)
-  const liveMarkets = allMarkets.filter(m => m.status === 'live' || m.status === 'community_live')
-  const upcomingMarkets = allMarkets.filter(m => m.status === 'scheduled')
 
-  // Which groups to show based on tab
-  const filteredGroups = activeTab === 'all'
+  // Status filter
+  const statusFiltered = activeTab === 'all'
     ? groups
     : activeTab === 'live'
       ? groups.map(g => ({ ...g, markets: g.markets.filter(m => m.status === 'live' || m.status === 'community_live') })).filter(g => g.markets.length > 0)
       : groups.map(g => ({ ...g, markets: g.markets.filter(m => m.status === 'scheduled') })).filter(g => g.markets.length > 0)
 
-  const tabStyle = (tab: FilterTab): React.CSSProperties => ({
+  // Derive space tabs from status-filtered markets (sorted by market count desc)
+  const spacesInView = activeTab !== 'live'
+    ? (() => {
+        const counts: Record<string, { name: string; count: number }> = {}
+        statusFiltered.flatMap(g => g.markets).forEach(m => {
+          const id = m.space.name
+          if (!counts[id]) counts[id] = { name: m.space.name, count: 0 }
+          counts[id].count++
+        })
+        return Object.entries(counts)
+          .sort((a, b) => b[1].count - a[1].count)
+          .map(([, v]) => v)
+      })()
+    : []
+
+  // Reset space filter when status tab changes
+  const handleTabChange = (tab: FilterTab) => {
+    setActiveTab(tab)
+    setActiveSpace('all')
+  }
+
+  // Space filter on top of status filter
+  const filteredGroups = activeSpace === 'all'
+    ? statusFiltered
+    : statusFiltered
+        .map(g => ({ ...g, markets: g.markets.filter(m => m.space.name === activeSpace) }))
+        .filter(g => g.markets.length > 0)
+
+  const tabStyle = (isActive: boolean, isRed = false): React.CSSProperties => ({
     ...FM,
     display: 'flex',
     alignItems: 'center',
@@ -119,9 +146,29 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
     cursor: 'pointer',
     border: 'none',
     borderRight: Bsm,
-    background: activeTab === tab ? INK : 'transparent',
-    color: activeTab === tab ? WHITE : (tab === 'live' ? RED : INK),
+    background: isActive ? INK : 'transparent',
+    color: isActive ? WHITE : (isRed ? RED : INK),
     flexShrink: 0,
+    transition: 'background .15s, color .15s',
+  })
+
+  const spaceTabStyle = (isActive: boolean): React.CSSProperties => ({
+    ...FM,
+    display: 'flex',
+    alignItems: 'center',
+    height: '36px',
+    padding: '0 16px',
+    fontSize: '9px',
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase' as const,
+    whiteSpace: 'nowrap' as const,
+    cursor: 'pointer',
+    border: 'none',
+    borderRight: Bsm,
+    background: isActive ? PAPER : 'transparent',
+    color: isActive ? INK : STONE,
+    flexShrink: 0,
+    fontWeight: isActive ? 700 : 400,
     transition: 'background .15s, color .15s',
   })
 
@@ -133,28 +180,32 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
       `}</style>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none' }}>
-        <button
-          onClick={() => setActiveTab('live')}
-          style={tabStyle('live')}
-          className="filter-tab-live"
-        >
+      {/* Row 1 — Status filter tabs */}
+      <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: spacesInView.length > 0 ? Bsm : B, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        <button onClick={() => handleTabChange('live')} style={tabStyle(activeTab === 'live', true)} className="filter-tab-live">
           LIVE NOW{liveCount > 0 ? ` (${liveCount})` : ''}
         </button>
-        <button
-          onClick={() => setActiveTab('upcoming')}
-          style={tabStyle('upcoming')}
-        >
+        <button onClick={() => handleTabChange('upcoming')} style={tabStyle(activeTab === 'upcoming')}>
           UPCOMING
         </button>
-        <button
-          onClick={() => setActiveTab('all')}
-          style={tabStyle('all')}
-        >
+        <button onClick={() => handleTabChange('all')} style={tabStyle(activeTab === 'all')}>
           ALL MARKETS
         </button>
       </div>
+
+      {/* Row 2 — Space filter tabs (hidden on LIVE NOW) */}
+      {spacesInView.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: B, overflowX: 'auto', scrollbarWidth: 'none', background: WHITE }}>
+          <button onClick={() => setActiveSpace('all')} style={spaceTabStyle(activeSpace === 'all')}>
+            ALL SPACES
+          </button>
+          {spacesInView.map(s => (
+            <button key={s.name} onClick={() => setActiveSpace(s.name)} style={spaceTabStyle(activeSpace === s.name)}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
       {filteredGroups.length === 0 ? (
