@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { setMarketStatus, deleteMarket, verifyAttendance } from '@/app/dashboard/curator/actions'
+import { setMarketStatus, deleteMarket, verifyAttendance, updateMarket } from '@/app/dashboard/curator/actions'
 import { formatMarketDate, formatTime, getStatusMeta } from '@/lib/utils'
 import type { CuratorMarket } from '@/lib/queries/curator'
 import type { MarketStatus } from '@/types/database'
@@ -12,8 +12,11 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
   const [markets, setMarkets] = useState(initialMarkets)
   const [isPending, startTransition] = useTransition()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editSuccess, setEditSuccess] = useState<string | null>(null)
 
   function optimisticSetStatus(marketId: string, status: MarketStatus) {
     setMarkets(prev => prev.map(m => m.id === marketId ? { ...m, status } : m))
@@ -52,6 +55,31 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
     })
   }
 
+  function handleUpdate(marketId: string, formData: FormData) {
+    setEditError(null)
+    setEditSuccess(null)
+    startTransition(async () => {
+      const result = await updateMarket(marketId, formData)
+      if (result?.error) {
+        setEditError(result.error)
+      } else {
+        setEditSuccess('SAVED')
+        setEditingId(null)
+        // Optimistically update local state
+        const title = formData.get('title') as string
+        const eventDate = formData.get('event_date') as string
+        const eventDateEnd = (formData.get('event_date_end') as string) || null
+        const startsAt = formData.get('starts_at') as string
+        const endsAt = formData.get('ends_at') as string
+        setMarkets(prev => prev.map(m => m.id === marketId
+          ? { ...m, title, event_date: eventDate, event_date_end: eventDateEnd, starts_at: startsAt, ends_at: endsAt }
+          : m
+        ))
+        setTimeout(() => setEditSuccess(null), 3000)
+      }
+    })
+  }
+
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
   const statusColors: Record<string, string> = {
     live: 'var(--RED)', community_live: 'var(--GRN)', scheduled: 'rgba(24,22,20,.4)',
@@ -75,6 +103,11 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
       {error && (
         <div style={{ background: 'rgba(200,41,26,.08)', borderLeft: '3px solid var(--RED)', padding: '10px 14px', ...T, fontWeight: 700, color: 'var(--RED)' }}>
           ✗ {error}
+        </div>
+      )}
+      {editSuccess && (
+        <div style={{ background: 'rgba(40,160,80,.08)', borderLeft: '3px solid var(--GRN)', padding: '10px 14px', ...T, fontWeight: 700, color: 'var(--GRN)' }}>
+          ✓ {editSuccess}
         </div>
       )}
 
@@ -166,11 +199,99 @@ export default function MarketLedger({ markets: initialMarkets }: Props) {
                       ✕ CANCEL
                     </button>
                   )}
+                  <button
+                    onClick={() => { setEditingId(editingId === market.id ? null : market.id); setEditError(null) }}
+                    style={{ ...T, fontSize: '10px', color: editingId === market.id ? 'var(--INK)' : 'rgba(24,22,20,.5)', background: editingId === market.id ? 'rgba(24,22,20,.08)' : 'transparent', border: '2px solid rgba(24,22,20,.2)', padding: '8px 14px', cursor: 'pointer' }}>
+                    {editingId === market.id ? '✕ CLOSE EDIT' : '✎ EDIT'}
+                  </button>
                   <button onClick={() => handleDelete(market.id)} disabled={thisIsPending}
                     style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)', background: 'transparent', border: '1px dashed rgba(24,22,20,.2)', padding: '8px 12px', cursor: 'pointer', marginLeft: 'auto' }}>
                     DELETE
                   </button>
                 </div>
+
+                {/* Inline edit form */}
+                {editingId === market.id && (
+                  <div style={{ border: '2px solid var(--INK)', background: 'var(--P)', padding: '14px', marginBottom: '14px' }}>
+                    <div style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--INK)', borderBottom: '2px solid var(--INK)', paddingBottom: '8px', marginBottom: '12px' }}>
+                      ✎ EDIT MARKET DETAILS
+                    </div>
+                    {editError && (
+                      <div style={{ ...T, fontSize: '10px', color: 'var(--RED)', fontWeight: 700, marginBottom: '10px' }}>✗ {editError}</div>
+                    )}
+                    <form action={(fd) => handleUpdate(market.id, fd)} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {/* Title */}
+                      <div>
+                        <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>TITLE</label>
+                        <input
+                          name="title"
+                          defaultValue={market.title}
+                          required
+                          style={{ width: '100%', fontFamily: 'var(--MONO)', fontWeight: 700, fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      {/* Dates */}
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '140px' }}>
+                          <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>START DATE</label>
+                          <input
+                            name="event_date"
+                            type="date"
+                            defaultValue={market.event_date}
+                            required
+                            style={{ width: '100%', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '140px' }}>
+                          <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>END DATE <span style={{ opacity: 0.5 }}>(OPTIONAL)</span></label>
+                          <input
+                            name="event_date_end"
+                            type="date"
+                            defaultValue={(market as any).event_date_end ?? ''}
+                            style={{ width: '100%', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+                      {/* Times */}
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '120px' }}>
+                          <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>OPENS</label>
+                          <input
+                            name="starts_at"
+                            type="time"
+                            defaultValue={market.starts_at}
+                            required
+                            style={{ width: '100%', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '120px' }}>
+                          <label style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', display: 'block', marginBottom: '4px' }}>CLOSES</label>
+                          <input
+                            name="ends_at"
+                            type="time"
+                            defaultValue={market.ends_at}
+                            required
+                            style={{ width: '100%', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', background: 'var(--P2)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                        <button
+                          type="submit"
+                          disabled={isPending}
+                          style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--P)', background: 'var(--INK)', border: '2px solid var(--INK)', padding: '9px 18px', cursor: 'pointer', opacity: isPending ? 0.5 : 1 }}>
+                          {isPending ? 'SAVING…' : '✓ SAVE CHANGES'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingId(null); setEditError(null) }}
+                          style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)', background: 'transparent', border: '1px solid rgba(24,22,20,.2)', padding: '9px 14px', cursor: 'pointer' }}>
+                          CANCEL
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
 
                 {/* Checked-in makers */}
                 {market.attending_makers.length > 0 ? (

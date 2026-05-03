@@ -177,6 +177,41 @@ export async function setMarketStatus(
   return { success: true }
 }
 
+// ── Update Market ─────────────────────────────────────────────
+
+export async function updateMarket(marketId: string, formData: FormData) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const title = (formData.get('title') as string)?.trim()
+  const eventDate = formData.get('event_date') as string
+  const eventDateEnd = (formData.get('event_date_end') as string) || null
+  const startsAt = formData.get('starts_at') as string
+  const endsAt = formData.get('ends_at') as string
+
+  if (!title || !eventDate || !startsAt || !endsAt) {
+    return { error: 'Title, date and times are required.' }
+  }
+
+  const { error: updateError } = await supabase
+    .from('markets')
+    .update({
+      title,
+      event_date: eventDate,
+      event_date_end: eventDateEnd || null,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', marketId)
+    .eq('curator_id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
 // ── Delete Market ─────────────────────────────────────────────
 
 export async function deleteMarket(marketId: string) {
