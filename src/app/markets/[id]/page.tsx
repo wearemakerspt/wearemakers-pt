@@ -22,6 +22,59 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function MarketJsonLd({ market }: { market: any }) {
+  const startDate = `${market.event_date}T${market.starts_at}`
+  const endDate = `${market.event_date_end ?? market.event_date}T${market.ends_at}`
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: market.title,
+    description: market.description ?? `${market.title} at ${market.space.name}, Lisbon.`,
+    startDate,
+    endDate,
+    eventStatus: market.status === 'cancelled'
+      ? 'https://schema.org/EventCancelled'
+      : market.status === 'live' || market.status === 'community_live'
+        ? 'https://schema.org/EventScheduled'
+        : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    url: `https://wearemakers.pt/markets/${market.id}`,
+    location: {
+      '@type': 'Place',
+      name: market.space.name,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: market.space.address ?? undefined,
+        addressLocality: 'Lisbon',
+        addressCountry: 'PT',
+      },
+      ...(market.space.lat && market.space.lng ? {
+        geo: {
+          '@type': 'GeoCoordinates',
+          latitude: market.space.lat,
+          longitude: market.space.lng,
+        }
+      } : {}),
+    },
+    organizer: market.curator ? {
+      '@type': 'Organization',
+      name: market.curator.display_name,
+      url: `https://wearemakers.pt/curators/${market.curator.slug}`,
+    } : {
+      '@type': 'Organization',
+      name: 'WEAREMAKERS.PT',
+      url: 'https://wearemakers.pt',
+    },
+    image: 'https://wearemakers.pt/og-default.png',
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  )
+}
+
 const GEM_ICONS: Record<string, string> = { coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈' }
 const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560', GREEN = '#1a5c30'
 const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
@@ -49,6 +102,7 @@ export default async function MarketDetailPage({ params }: Props) {
 
   return (
     <>
+      <MarketJsonLd market={market} />
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={isLive ? market.checkin_count : 0} />
       <main style={{ background: WHITE, minHeight: '100dvh' }}>

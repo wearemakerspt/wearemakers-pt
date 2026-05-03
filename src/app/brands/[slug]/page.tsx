@@ -24,6 +24,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function BrandJsonLd({ brand }: { brand: any }) {
+  const bio_i18n = brand.bio_i18n as any
+  const category = bio_i18n?._category?.split(',')[0]?.trim() ?? 'Independent Maker'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: brand.display_name,
+    description: brand.bio ?? `${brand.display_name} — independent maker at Lisbon street markets.`,
+    url: `https://wearemakers.pt/brands/${brand.slug ?? brand.id}`,
+    image: brand.avatar_url ?? undefined,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Lisbon',
+      addressCountry: 'PT',
+    },
+    sameAs: brand.instagram_handle
+      ? [`https://instagram.com/${brand.instagram_handle.replace('@', '')}`]
+      : undefined,
+    priceRange: bio_i18n?._price_range ?? undefined,
+    knowsAbout: category,
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  )
+}
+
 export default async function BrandProfilePage({ params }: Props) {
   const { slug } = await params
   const [brand, user] = await Promise.all([getBrandBySlug(slug), getCurrentUser()])
@@ -52,6 +81,7 @@ export default async function BrandProfilePage({ params }: Props) {
 
   return (
     <>
+      <BrandJsonLd brand={brand} />
       <SiteHeader user={user} liveCount={isLive ? 1 : 0} />
       <BrandViewTracker brandId={brand.id} marketId={null} />
 
