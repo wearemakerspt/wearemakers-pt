@@ -206,7 +206,7 @@ export default async function CuratorDashboardPage() {
                 bio: profile.bio ?? null,
                 instagram_handle: profile.instagram_handle ?? null,
                 organisation_url: profile.organisation_url ?? null,
-                whatsapp: profile.whatsapp ?? null,
+                whatsapp: (profile as any).whatsapp ?? null,
               }}
               initialMembers={members}
             />
