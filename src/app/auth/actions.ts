@@ -89,6 +89,8 @@ async function signUpWithRole(
   // Role-specific extra fields
   const category = (formData.get('category') as string)?.trim() || null       // maker
   const marketName = (formData.get('market_name') as string)?.trim() || null  // curator
+  const organisationUrl = (formData.get('organisation_url') as string)?.trim() || null // curator
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null        // curator
 
   if (!email || !password || !displayName) {
     redirect(`${errorRedirectBase}?error=${encodeURIComponent('Please fill in all required fields.')}`)
@@ -140,6 +142,12 @@ async function signUpWithRole(
         ...(profileData.bio_i18n ?? {}),
         _market_name: marketName,
       }
+    }
+
+    // Save org details for curators
+    if (role === 'curator') {
+      if (organisationUrl) profileData.organisation_url = organisationUrl
+      if (whatsapp) profileData.whatsapp = whatsapp
     }
 
     await supabase.from('profiles').update(profileData).eq('id', data.user.id)

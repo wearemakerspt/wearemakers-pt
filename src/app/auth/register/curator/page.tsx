@@ -98,6 +98,16 @@ export default async function RegisterCuratorPage({
             </div>
 
             <div style={{ marginBottom: '16px' }}>
+              <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>WEBSITE</label>
+              <input type="url" name="organisation_url" placeholder="https://yourmarket.pt" style={inputStyle} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>WHATSAPP BUSINESS</label>
+              <input type="text" name="whatsapp" placeholder="+351 9XX XXX XXX" style={inputStyle} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
               <label style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)', display: 'block', marginBottom: '6px' }}>EMAIL ADDRESS *</label>
               <input type="email" name="email" required autoComplete="email" placeholder="your@email.com" style={inputStyle} />
             </div>
