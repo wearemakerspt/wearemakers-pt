@@ -113,15 +113,35 @@ export default async function CuratorPage({ params }: Props) {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', padding: '24px 52px', gap: '0' }}>
               {curator.members.map(member => (
-                <div key={member.id} style={{ minWidth: '160px', marginRight: '32px', marginBottom: '16px' }}>
+                <div key={member.id} style={{ minWidth: '200px', marginRight: '32px', marginBottom: '20px' }}>
                   <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', color: INK, lineHeight: 1, marginBottom: '3px' }}>
                     {member.name}
                   </div>
                   {member.role && (
-                    <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: STONE }}>
+                    <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: STONE, marginBottom: '6px' }}>
                       {member.role}
                     </div>
                   )}
+                  {member.bio && (
+                    <p style={{ fontFamily: FB, fontSize: '13px', color: STONE, lineHeight: 1.6, margin: '0 0 6px' }}>{member.bio}</p>
+                  )}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {member.instagram_handle && (
+                      <a href={`https://instagram.com/${member.instagram_handle.replace('@','')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FM, fontSize: '10px', color: RED, textDecoration: 'none', letterSpacing: '0.1em' }}>
+                        {member.instagram_handle.startsWith('@') ? member.instagram_handle : `@${member.instagram_handle}`} ↗
+                      </a>
+                    )}
+                    {member.whatsapp && (
+                      <a href={`https://wa.me/${member.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FM, fontSize: '10px', color: STONE, textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                        WHATSAPP ↗
+                      </a>
+                    )}
+                    {member.email && (
+                      <a href={`mailto:${member.email}`} style={{ fontFamily: FM, fontSize: '10px', color: STONE, textDecoration: 'none', letterSpacing: '0.1em' }}>
+                        {member.email}
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

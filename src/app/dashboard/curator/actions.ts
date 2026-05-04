@@ -316,6 +316,10 @@ export async function addCuratorMember(formData: FormData) {
 
   const name = (formData.get('name') as string)?.trim()
   const role = (formData.get('role') as string)?.trim() || null
+  const bio = (formData.get('bio') as string)?.trim() || null
+  const email = (formData.get('email') as string)?.trim() || null
+  const instagram_handle = (formData.get('instagram_handle') as string)?.trim() || null
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null
 
   if (!name) return { error: 'Name is required.' }
 
@@ -331,7 +335,7 @@ export async function addCuratorMember(formData: FormData) {
 
   const { error: insertError } = await supabase
     .from('curator_members')
-    .insert({ curator_id: user.id, name, role, sort_order })
+    .insert({ curator_id: user.id, name, role, bio, email, instagram_handle, whatsapp, sort_order })
 
   if (insertError) return { error: insertError.message }
 

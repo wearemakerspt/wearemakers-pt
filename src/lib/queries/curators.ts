@@ -6,6 +6,9 @@ export interface CuratorMember {
   role: string | null
   photo_url: string | null
   bio: string | null
+  email: string | null
+  instagram_handle: string | null
+  whatsapp: string | null
   sort_order: number
 }
 
@@ -56,7 +59,7 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
     .from('profiles')
     .select('id, display_name, slug, bio, avatar_url, instagram_handle, shop_url, whatsapp, organisation_name, organisation_url')
     .eq('slug', slug)
-    .eq('role', 'curator')
+    .in('role', ['curator', 'admin'])
     .single()
 
   if (error || !profile) return null
@@ -92,7 +95,7 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
 
     supabase
       .from('curator_members')
-      .select('id, name, role, photo_url, bio, sort_order')
+      .select('id, name, role, photo_url, bio, email, instagram_handle, whatsapp, sort_order')
       .eq('curator_id', profile.id)
       .order('sort_order', { ascending: true }),
   ])

@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { updateCuratorProfile, addCuratorMember, removeCuratorMember } from '@/app/dashboard/curator/actions'
 
-interface Member { id: string; name: string; role: string | null; sort_order: number }
+interface Member { id: string; name: string; role: string | null; bio: string | null; email: string | null; instagram_handle: string | null; whatsapp: string | null; sort_order: number }
 
 interface Props {
   profile: {
@@ -50,7 +50,11 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
         // Optimistically add placeholder — page will revalidate
         const name = fd.get('name') as string
         const role = (fd.get('role') as string) || null
-        setMembers(prev => [...prev, { id: crypto.randomUUID(), name, role, sort_order: prev.length }])
+        const bio = (fd.get('bio') as string) || null
+        const email = (fd.get('email') as string) || null
+        const instagram_handle = (fd.get('instagram_handle') as string) || null
+        const whatsapp = (fd.get('whatsapp') as string) || null
+        setMembers(prev => [...prev, { id: crypto.randomUUID(), name, role, bio, email, instagram_handle, whatsapp, sort_order: prev.length }])
       }
     })
   }
@@ -121,10 +125,16 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
             <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)' }}>No team members yet.</div>
           )}
           {members.map(m => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', color: 'var(--INK)', lineHeight: 1 }}>{m.name}</div>
                 {m.role && <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '2px' }}>{m.role}</div>}
+                {m.bio && <div style={{ fontFamily: 'var(--MONO)', fontSize: '11px', color: 'rgba(24,22,20,.5)', marginTop: '4px', lineHeight: 1.5 }}>{m.bio}</div>}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+                  {m.email && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.email}</span>}
+                  {m.instagram_handle && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.instagram_handle}</span>}
+                  {m.whatsapp && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.whatsapp}</span>}
+                </div>
               </div>
               <button onClick={() => handleRemoveMember(m.id)} disabled={isPending}
                 style={{ ...T, fontSize: '8px', padding: '4px 8px', border: '1px solid rgba(200,41,26,.3)', cursor: 'pointer', background: 'transparent', color: 'var(--RED)', flexShrink: 0 }}>
@@ -145,6 +155,22 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
               <div>
                 <label style={labelStyle}>ROLE</label>
                 <input name="role" placeholder="Market Director" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>EMAIL</label>
+                <input name="email" type="email" placeholder="joao@example.com" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>INSTAGRAM</label>
+                <input name="instagram_handle" placeholder="@handle" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>WHATSAPP</label>
+                <input name="whatsapp" placeholder="+351 9XX XXX XXX" style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label style={labelStyle}>BIO (OPTIONAL)</label>
+                <textarea name="bio" rows={2} style={{ ...inputStyle, resize: 'vertical' as const, lineHeight: 1.6 }} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
