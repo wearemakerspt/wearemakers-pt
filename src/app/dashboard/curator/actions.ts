@@ -343,6 +343,33 @@ export async function addCuratorMember(formData: FormData) {
   return { success: true }
 }
 
+// ── Update Curator Member ─────────────────────────────────────
+
+export async function updateCuratorMember(memberId: string, formData: FormData) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const name = (formData.get('name') as string)?.trim()
+  const role = (formData.get('role') as string)?.trim() || null
+  const bio = (formData.get('bio') as string)?.trim() || null
+  const email = (formData.get('email') as string)?.trim() || null
+  const instagram_handle = (formData.get('instagram_handle') as string)?.trim() || null
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null
+
+  if (!name) return { error: 'Name is required.' }
+
+  const { error: updateError } = await supabase
+    .from('curator_members')
+    .update({ name, role, bio, email, instagram_handle, whatsapp })
+    .eq('id', memberId)
+    .eq('curator_id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
 // ── Remove Curator Member ─────────────────────────────────────
 
 export async function removeCuratorMember(memberId: string) {

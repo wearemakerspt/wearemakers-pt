@@ -1,7 +1,7 @@
 'use client'
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { updateCuratorProfile, addCuratorMember, removeCuratorMember, updateMemberPhoto } from '@/app/dashboard/curator/actions'
+import { updateCuratorProfile, addCuratorMember, removeCuratorMember, updateMemberPhoto, updateCuratorMember } from '@/app/dashboard/curator/actions'
 import AvatarUpload from '@/components/dashboard/AvatarUpload'
 
 interface Member { id: string; name: string; role: string | null; bio: string | null; email: string | null; instagram_handle: string | null; whatsapp: string | null; photo_url: string | null; sort_order: number }
@@ -27,6 +27,7 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
   const [addingMember, setAddingMember] = useState(false)
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
 
   async function handleMemberPhoto(memberId: string, file: File, userId: string) {
     if (!file.type.startsWith('image/')) return
@@ -71,6 +72,27 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
         const instagram_handle = (fd.get('instagram_handle') as string) || null
         const whatsapp = (fd.get('whatsapp') as string) || null
         setMembers(prev => [...prev, { id: crypto.randomUUID(), name, role, bio, email, instagram_handle, whatsapp, photo_url: null, sort_order: prev.length }])
+      }
+    })
+  }
+
+  function handleEditMember(memberId: string, fd: FormData) {
+    setMemberError(null)
+    startTransition(async () => {
+      const r = await updateCuratorMember(memberId, fd)
+      if (r?.error) { setMemberError(r.error) }
+      else {
+        setEditingMemberId(null)
+        const name = fd.get('name') as string
+        const role = (fd.get('role') as string) || null
+        const bio = (fd.get('bio') as string) || null
+        const email = (fd.get('email') as string) || null
+        const instagram_handle = (fd.get('instagram_handle') as string) || null
+        const whatsapp = (fd.get('whatsapp') as string) || null
+        setMembers(prev => prev.map(m => m.id === memberId
+          ? { ...m, name, role, bio, email, instagram_handle, whatsapp }
+          : m
+        ))
       }
     })
   }
@@ -154,33 +176,83 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
             <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)' }}>No team members yet.</div>
           )}
           {members.map(m => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
-              {/* Photo */}
-              <label style={{ flexShrink: 0, cursor: 'pointer' }} title="Upload photo">
-                <div style={{ width: '44px', height: '44px', background: 'var(--INK)', border: '2px solid rgba(24,22,20,.2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' as const }}>
-                  {m.photo_url
-                    ? <img src={m.photo_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '14px', color: 'var(--RED)' }}>{m.name.slice(0,2).toUpperCase()}</span>
-                  }
+            <div key={m.id} style={{ background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
+              {editingMemberId === m.id ? (
+                <form action={(fd) => handleEditMember(m.id, fd)} style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--INK)', marginBottom: '4px' }}>✎ EDITING — {m.name.toUpperCase()}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={labelStyle}>NAME *</label>
+                      <input name="name" defaultValue={m.name} required style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>ROLE</label>
+                      <input name="role" defaultValue={m.role ?? ''} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>EMAIL</label>
+                      <input name="email" type="email" defaultValue={m.email ?? ''} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>INSTAGRAM</label>
+                      <input name="instagram_handle" defaultValue={m.instagram_handle ?? ''} style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>WHATSAPP</label>
+                      <input name="whatsapp" defaultValue={m.whatsapp ?? ''} style={inputStyle} />
+                    </div>
+                    <div style={{ gridColumn: '1/-1' }}>
+                      <label style={labelStyle}>BIO</label>
+                      <textarea name="bio" defaultValue={m.bio ?? ''} rows={2} style={{ ...inputStyle, resize: 'vertical' as const, lineHeight: 1.6 }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="submit" disabled={isPending}
+                      style={{ ...T, fontSize: '10px', fontWeight: 700, color: 'var(--P)', background: 'var(--INK)', border: '2px solid var(--INK)', padding: '8px 14px', cursor: 'pointer', opacity: isPending ? 0.5 : 1 }}>
+                      {isPending ? 'SAVING…' : '✓ SAVE'}
+                    </button>
+                    <button type="button" onClick={() => setEditingMemberId(null)}
+                      style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)', background: 'transparent', border: '1px solid rgba(24,22,20,.2)', padding: '8px 12px', cursor: 'pointer' }}>
+                      CANCEL
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px' }}>
+                  {/* Photo */}
+                  <label style={{ flexShrink: 0, cursor: 'pointer' }} title="Upload photo">
+                    <div style={{ width: '44px', height: '44px', background: 'var(--INK)', border: '2px solid rgba(24,22,20,.2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' as const }}>
+                      {m.photo_url
+                        ? <img src={m.photo_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '14px', color: 'var(--RED)' }}>{m.name.slice(0,2).toUpperCase()}</span>
+                      }
+                    </div>
+                    <div style={{ ...T, fontSize: '8px', color: 'rgba(24,22,20,.35)', textAlign: 'center', marginTop: '2px' }}>PHOTO</div>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleMemberPhoto(m.id, f, profile.id); e.target.value = '' }} />
+                  </label>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', color: 'var(--INK)', lineHeight: 1 }}>{m.name}</div>
+                    {m.role && <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '2px' }}>{m.role}</div>}
+                    {m.bio && <div style={{ fontFamily: 'var(--MONO)', fontSize: '11px', color: 'rgba(24,22,20,.5)', marginTop: '4px', lineHeight: 1.5 }}>{m.bio}</div>}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {m.email && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.email}</span>}
+                      {m.instagram_handle && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.instagram_handle}</span>}
+                      {m.whatsapp && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.whatsapp}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    <button onClick={() => { setEditingMemberId(m.id); setMemberError(null) }} disabled={isPending}
+                      style={{ ...T, fontSize: '8px', padding: '4px 8px', border: '1px solid rgba(24,22,20,.2)', cursor: 'pointer', background: 'transparent', color: 'var(--INK)' }}>
+                      EDIT
+                    </button>
+                    <button onClick={() => handleRemoveMember(m.id)} disabled={isPending}
+                      style={{ ...T, fontSize: '8px', padding: '4px 8px', border: '1px solid rgba(200,41,26,.3)', cursor: 'pointer', background: 'transparent', color: 'var(--RED)' }}>
+                      REMOVE
+                    </button>
+                  </div>
                 </div>
-                <div style={{ ...T, fontSize: '8px', color: 'rgba(24,22,20,.35)', textAlign: 'center', marginTop: '2px' }}>PHOTO</div>
-                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleMemberPhoto(m.id, f, profile.id); e.target.value = '' }} />
-              </label>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', color: 'var(--INK)', lineHeight: 1 }}>{m.name}</div>
-                {m.role && <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '2px' }}>{m.role}</div>}
-                {m.bio && <div style={{ fontFamily: 'var(--MONO)', fontSize: '11px', color: 'rgba(24,22,20,.5)', marginTop: '4px', lineHeight: 1.5 }}>{m.bio}</div>}
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
-                  {m.email && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.email}</span>}
-                  {m.instagram_handle && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.instagram_handle}</span>}
-                  {m.whatsapp && <span style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)' }}>{m.whatsapp}</span>}
-                </div>
-              </div>
-              <button onClick={() => handleRemoveMember(m.id)} disabled={isPending}
-                style={{ ...T, fontSize: '8px', padding: '4px 8px', border: '1px solid rgba(200,41,26,.3)', cursor: 'pointer', background: 'transparent', color: 'var(--RED)', flexShrink: 0 }}>
-                REMOVE
-              </button>
+              )}
             </div>
           ))}
         </div>
