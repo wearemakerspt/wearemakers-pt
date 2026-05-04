@@ -1,18 +1,21 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function WelcomePage() {
+function WelcomeContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || '/'
 
   function handleRole(role: 'visitor' | 'maker' | 'curator') {
     if (typeof window !== 'undefined') localStorage.setItem('wam_welcomed', '1')
-    if (role === 'visitor') router.push('/')
+    if (role === 'visitor') router.push(next)
     else router.push(`/welcome/${role}`)
   }
 
   function handleExplore() {
     if (typeof window !== 'undefined') localStorage.setItem('wam_welcomed', '1')
-    router.push('/')
+    router.push(next)
   }
 
   return (
@@ -66,5 +69,13 @@ export default function WelcomePage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function WelcomePage() {
+  return (
+    <Suspense fallback={null}>
+      <WelcomeContent />
+    </Suspense>
   )
 }

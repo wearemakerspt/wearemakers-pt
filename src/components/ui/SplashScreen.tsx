@@ -15,7 +15,8 @@ export default function SplashScreen() {
 
     const welcomed = localStorage.getItem('wam_welcomed')
     if (!welcomed) {
-      router.replace('/welcome')
+      const next = pathname !== '/' ? `?next=${encodeURIComponent(pathname)}` : ''
+      router.replace(`/welcome${next}`)
     }
   }, [pathname, router])
 
