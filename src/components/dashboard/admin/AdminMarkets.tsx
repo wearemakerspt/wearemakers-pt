@@ -9,6 +9,8 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
   const [createError, setCreateError] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
   const inputStyle = { width: '100%', background: 'var(--P)', border: '2px solid var(--INK)', padding: '7px 10px', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', outline: 'none', boxSizing: 'border-box' as const }
@@ -62,6 +64,19 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
     shadow: 'rgba(24,22,20,.2)',
     cancelled: 'var(--INK)',
   }
+
+  const filtered = list.filter((m: any) => {
+    const q = search.toLowerCase()
+    const matchesSearch = !q ||
+      (m.title ?? '').toLowerCase().includes(q) ||
+      (m.space?.name ?? '').toLowerCase().includes(q) ||
+      (m.curator?.display_name ?? '').toLowerCase().includes(q)
+    const matchesStatus = statusFilter === 'all' || m.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const statusCounts: Record<string, number> = { all: list.length }
+  list.forEach((m: any) => { statusCounts[m.status] = (statusCounts[m.status] ?? 0) + 1 })
 
   return (
     <div style={{ background: 'var(--P)', padding: '14px' }}>
@@ -138,10 +153,34 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
         </form>
       )}
 
-      <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px' }}>{list.length} MARKETS</div>
+      {/* Status filter tabs */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: '10px', border: '2px solid var(--INK)', overflow: 'hidden', flexWrap: 'wrap' }}>
+        {[
+          { key: 'all', label: `ALL (${statusCounts.all ?? 0})` },
+          { key: 'scheduled', label: `SCHEDULED (${statusCounts.scheduled ?? 0})` },
+          { key: 'live', label: `LIVE (${(statusCounts.live ?? 0) + (statusCounts.community_live ?? 0)})` },
+          { key: 'shadow', label: `SHADOW (${statusCounts.shadow ?? 0})` },
+          { key: 'cancelled', label: `CANCELLED (${statusCounts.cancelled ?? 0})` },
+        ].map((t, i, arr) => (
+          <button key={t.key} onClick={() => setStatusFilter(t.key)}
+            style={{ ...T, fontSize: '9px', fontWeight: 700, flex: 1, padding: '7px 8px', cursor: 'pointer', background: statusFilter === t.key ? 'var(--INK)' : 'transparent', color: statusFilter === t.key ? 'var(--P)' : 'var(--INK)', border: 'none', borderRight: i < arr.length - 1 ? '1px solid rgba(24,22,20,.2)' : 'none', whiteSpace: 'nowrap' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search by title, space, curator..."
+        style={{ width: '100%', background: 'var(--P2)', border: '2px solid var(--INK)', padding: '8px 12px', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', outline: 'none', marginBottom: '10px', boxSizing: 'border-box' as const }}
+      />
+
+      <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px' }}>{filtered.length} MARKETS
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '480px', overflowY: 'auto' }}>
-        {list.map((m: any) => (
+        {filtered.map((m: any) => (
           <div key={m.id} style={{ padding: '10px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)', borderLeft: `4px solid ${statusColor[m.status] ?? 'transparent'}` }}>
 
             {/* Edit mode */}
@@ -234,7 +273,7 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
             )}
           </div>
         ))}
-        {list.length === 0 && <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)' }}>No markets yet.</div>}
+        {filtered.length === 0 && <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.3)' }}>{list.length === 0 ? 'No markets yet.' : 'No markets match.'}</div>}
       </div>
     </div>
   )
