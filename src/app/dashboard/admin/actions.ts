@@ -386,6 +386,36 @@ export async function adminCreateGem(formData: FormData) {
   return { success: true }
 }
 
+export async function adminUpdateGem(gemId: string, formData: FormData) {
+  const { error, supabase } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const name = (formData.get('name') as string)?.trim()
+  const spaceId = formData.get('space_id') as string
+  const category = formData.get('category') as string
+  const description = (formData.get('description') as string)?.trim()
+  const address = (formData.get('address') as string)?.trim()
+  const lat = parseFloat(formData.get('lat') as string)
+  const lng = parseFloat(formData.get('lng') as string)
+
+  if (!name || !spaceId || !category) return { error: 'Name, space and category are required' }
+
+  const { error: e } = await supabase.from('gems').update({
+    name,
+    near_space_id: spaceId,
+    category,
+    description: description || null,
+    address: address || null,
+    lat: isNaN(lat) ? 0 : lat,
+    lng: isNaN(lng) ? 0 : lng,
+  }).eq('id', gemId)
+
+  if (e) return { error: e.message }
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/gems')
+  return { success: true }
+}
+
 // ── WAM Top 20 ─────────────────────────────────────────────
 
 export async function setTop20(makerId: string, position: number) {
