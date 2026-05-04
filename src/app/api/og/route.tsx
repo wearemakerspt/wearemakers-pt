@@ -107,15 +107,23 @@ export async function GET(req: NextRequest) {
                   height={100}
                   style={{ objectFit: 'cover', border: '2px solid rgba(244,241,236,0.2)' }}
                 />
+              ) : type === 'curator' && avatar ? (
+                <img
+                  src={avatar}
+                  alt=""
+                  width={100}
+                  height={100}
+                  style={{ objectFit: 'cover', border: '2px solid rgba(244,241,236,0.2)' }}
+                />
               ) : (
                 <div style={{ fontSize: '52px', color: isLive ? '#1a5c30' : 'rgba(244,241,236,0.12)', display: 'flex' }}>
-                  {type === 'brand' ? title.slice(0, 2).toUpperCase() : '◈'}
+                  {type === 'brand' ? title.slice(0, 2).toUpperCase() : type === 'curator' ? title.slice(0, 2).toUpperCase() : '◈'}
                 </div>
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.2em', color: 'rgba(244,241,236,0.35)', textTransform: 'uppercase', display: 'flex' }}>
-                  {type === 'brand' ? 'MAKER BRAND' : 'STREET MARKET'}
+                  {type === 'brand' ? 'MAKER BRAND' : type === 'curator' ? 'MARKET CURATOR' : 'STREET MARKET'}
                 </div>
                 <div style={{ fontSize: '10px', letterSpacing: '0.14em', color: 'rgba(244,241,236,0.2)', textTransform: 'uppercase', display: 'flex' }}>
                   wearemakers.pt
