@@ -282,6 +282,81 @@ export async function unpinFeaturedMaker(featuredId: string) {
   return { success: true }
 }
 
+// ── Update Curator Profile ────────────────────────────────────
+
+export async function updateCuratorProfile(formData: FormData) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const display_name = (formData.get('display_name') as string)?.trim()
+  const bio = (formData.get('bio') as string)?.trim() || null
+  const instagram_handle = (formData.get('instagram_handle') as string)?.trim() || null
+  const organisation_url = (formData.get('organisation_url') as string)?.trim() || null
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null
+
+  if (!display_name) return { error: 'Organisation name is required.' }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ display_name, bio, instagram_handle, organisation_url, whatsapp, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/curator')
+  revalidatePath(`/curators`)
+  return { success: true }
+}
+
+// ── Add Curator Member ────────────────────────────────────────
+
+export async function addCuratorMember(formData: FormData) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const name = (formData.get('name') as string)?.trim()
+  const role = (formData.get('role') as string)?.trim() || null
+
+  if (!name) return { error: 'Name is required.' }
+
+  const { data: existing } = await supabase
+    .from('curator_members')
+    .select('sort_order')
+    .eq('curator_id', user.id)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .single()
+
+  const sort_order = (existing?.sort_order ?? 0) + 1
+
+  const { error: insertError } = await supabase
+    .from('curator_members')
+    .insert({ curator_id: user.id, name, role, sort_order })
+
+  if (insertError) return { error: insertError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
+// ── Remove Curator Member ─────────────────────────────────────
+
+export async function removeCuratorMember(memberId: string) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const { error: deleteError } = await supabase
+    .from('curator_members')
+    .delete()
+    .eq('id', memberId)
+    .eq('curator_id', user.id)
+
+  if (deleteError) return { error: deleteError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
 // ── Verify Attendance ─────────────────────────────────────────
 
 export async function verifyAttendance(attendanceId: string) {

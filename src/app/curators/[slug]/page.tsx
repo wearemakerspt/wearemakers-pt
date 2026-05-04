@@ -40,6 +40,12 @@ export default async function CuratorPage({ params }: Props) {
   return (
     <>
       <SiteHeader user={user} liveCount={liveMarkets.length} />
+      <style>{`
+        .curator-maker-card:hover { background: ${PAPER} !important; }
+        @media (max-width: 860px) {
+          .curator-makers { grid-template-columns: repeat(2,1fr) !important; }
+        }
+      `}</style>
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
         {/* Dark header */}
@@ -58,16 +64,23 @@ export default async function CuratorPage({ params }: Props) {
               <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(36px,8vw,68px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: WHITE, marginBottom: '10px' }}>
                 {curator.display_name}
               </h1>
-              {curator.organisation_name && (
-                <div style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  {curator.organisation_url ? <a href={curator.organisation_url} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(244,241,236,0.4)', textDecoration: 'none' }}>{curator.organisation_name} ↗</a> : curator.organisation_name}
-                </div>
-              )}
-              {curator.instagram_handle && (
-                <a href={`https://instagram.com/${curator.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', color: RED, textDecoration: 'none' }}>
-                  {curator.instagram_handle} ↗
-                </a>
-              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
+                {curator.instagram_handle && (
+                  <a href={`https://instagram.com/${curator.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FH, fontWeight: 700, fontSize: '18px', color: RED, textDecoration: 'none' }}>
+                    {curator.instagram_handle.startsWith('@') ? curator.instagram_handle : `@${curator.instagram_handle}`} ↗
+                  </a>
+                )}
+                {curator.organisation_url && (
+                  <a href={curator.organisation_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                    WEBSITE ↗
+                  </a>
+                )}
+                {curator.whatsapp && (
+                  <a href={`https://wa.me/${curator.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                    WHATSAPP ↗
+                  </a>
+                )}
+              </div>
             </div>
           </div>
           {/* Stats */}
@@ -89,6 +102,29 @@ export default async function CuratorPage({ params }: Props) {
         {curator.bio && (
           <div style={{ padding: '32px 52px', borderBottom: B }}>
             <p style={{ fontFamily: FB, fontSize: '15px', color: STONE, lineHeight: 1.75, maxWidth: '640px', margin: 0 }}>{curator.bio}</p>
+          </div>
+        )}
+
+        {/* Team members */}
+        {curator.members.length > 0 && (
+          <div style={{ borderBottom: B }}>
+            <div style={{ padding: '0 52px', height: '46px', display: 'flex', alignItems: 'center', borderBottom: Bsm }}>
+              <span style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE }}>THE TEAM</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', padding: '24px 52px', gap: '0' }}>
+              {curator.members.map(member => (
+                <div key={member.id} style={{ minWidth: '160px', marginRight: '32px', marginBottom: '16px' }}>
+                  <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', color: INK, lineHeight: 1, marginBottom: '3px' }}>
+                    {member.name}
+                  </div>
+                  {member.role && (
+                    <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: STONE }}>
+                      {member.role}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -123,10 +159,7 @@ export default async function CuratorPage({ params }: Props) {
                 const cardImage = maker.featured_photo_url ?? maker.avatar_url ?? null
                 const category = maker.bio_i18n?._category?.split(',')[0]?.trim() ?? null
                 return (
-                  <Link key={maker.id} href={href} style={{ textDecoration: 'none', display: 'block', borderRight: Bsm, borderBottom: Bsm, background: maker.is_live ? 'rgba(232,0,28,.02)' : WHITE, position: 'relative', overflow: 'hidden', transition: 'background .15s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = maker.is_live ? 'rgba(232,0,28,.02)' : WHITE}
-                  >
+                  <Link key={maker.id} href={href} className="curator-maker-card" style={{ textDecoration: 'none', display: 'block', borderRight: Bsm, borderBottom: Bsm, background: maker.is_live ? 'rgba(232,0,28,.02)' : WHITE, position: 'relative', overflow: 'hidden', transition: 'background .15s' }}>
                     {maker.is_live && <div style={{ position: 'absolute' as const, top: 0, left: 0, right: 0, background: GREEN, fontFamily: FM, fontWeight: 700, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: WHITE, padding: '4px 8px', zIndex: 2, textAlign: 'center' }}>● LIVE NOW</div>}
                     <div style={{ aspectRatio: '1', overflow: 'hidden', background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' as const }}>
                       {cardImage ? <img src={cardImage} alt={maker.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontFamily: FH, fontWeight: 900, fontSize: '32px', color: 'rgba(12,12,12,0.12)' }}>{maker.display_name.slice(0, 2).toUpperCase()}</span>}
@@ -153,11 +186,6 @@ export default async function CuratorPage({ params }: Props) {
           <Link href="/markets" style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>← ALL MARKETS</Link>
         </div>
       </main>
-      <style>{`
-        @media (max-width: 860px) {
-          .curator-makers { grid-template-columns: repeat(2,1fr) !important; }
-        }
-      `}</style>
     </>
   )
 }
@@ -165,7 +193,7 @@ export default async function CuratorPage({ params }: Props) {
 function MarketRow({ market, i, isLive = false }: { market: any; i: number; isLive?: boolean }) {
   const st = STATUS_LABEL[market.status] ?? { label: market.status.toUpperCase(), color: STONE }
   return (
-    <div style={{ padding: '0 52px', display: 'flex', gap: '20px', alignItems: 'center', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER, transition: 'background .15s' }}>
+    <div style={{ padding: '0 52px', display: 'flex', gap: '20px', alignItems: 'center', height: '72px', borderBottom: Bsm, background: i % 2 === 0 ? WHITE : PAPER }}>
       <div style={{ flexShrink: 0, minWidth: '80px' }}>
         <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '13px', color: INK, lineHeight: 1.3 }}>{formatDate(market.event_date)}</div>
         {market.event_date_end && market.event_date_end !== market.event_date && <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, marginTop: '2px' }}>→ {formatDate(market.event_date_end)}</div>}

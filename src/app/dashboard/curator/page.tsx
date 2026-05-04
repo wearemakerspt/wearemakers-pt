@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { getCuratorDashboardData } from '@/lib/queries/curator'
+import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import CreateMarketForm from '@/components/dashboard/CreateMarketForm'
 import MarketLedger from '@/components/dashboard/MarketLedger'
@@ -9,6 +10,7 @@ import SpotlightPins from '@/components/dashboard/SpotlightPins'
 import ActivityLog from '@/components/dashboard/ActivityLog'
 import PromoKit from '@/components/dashboard/PromoKit'
 import PendingApproval from '@/components/dashboard/PendingApproval'
+import CuratorProfile from '@/components/dashboard/CuratorProfile'
 
 export const metadata: Metadata = {
   title: 'Command Center — Curator Dashboard',
@@ -35,8 +37,13 @@ export default async function CuratorDashboardPage() {
     )
   }
 
-  const { ownMarkets, spaces, featuredSlots, recentActivityLog, searchableMakers } =
-    await getCuratorDashboardData(user.id)
+  const supabase = await createClient()
+  const [{ ownMarkets, spaces, featuredSlots, recentActivityLog, searchableMakers }, membersRes] =
+    await Promise.all([
+      getCuratorDashboardData(user.id),
+      supabase.from('curator_members').select('id, name, role, sort_order').eq('curator_id', user.id).order('sort_order'),
+    ])
+  const members = membersRes.data ?? []
 
   const today = new Date().toISOString().split('T')[0]
   const liveNow = ownMarkets.filter(m => m.status === 'live' || m.status === 'community_live')
@@ -102,7 +109,7 @@ export default async function CuratorDashboardPage() {
         {/* ── Field Protocol subheader ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)' }}>
-            COMMAND CENTER — CURATOR PROTOCOL · FP-CUR-001 through FP-CUR-005
+            COMMAND CENTER — CURATOR PROTOCOL · FP-CUR-001 through FP-CUR-006
           </div>
           <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.25)' }}>
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}
@@ -158,7 +165,7 @@ export default async function CuratorDashboardPage() {
           </div>
 
           {/* §5 Status key */}
-          <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
             <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
               <span style={{ ...T, fontWeight: 700 }}>§5 — MARKET STATUS KEY</span>
               <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-005</span>
@@ -178,6 +185,31 @@ export default async function CuratorDashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* §6 Organisation Profile */}
+          <div style={{ margin: '12px 12px 12px', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§6 — ORGANISATION PROFILE · PUBLIC PAGE</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-006</span>
+            </div>
+            <div style={{ background: 'var(--P2)', padding: '8px 13px', borderBottom: '2px solid rgba(24,22,20,.15)' }}>
+              <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)' }}>
+                Your public organisation page — visible to visitors on market and brand pages.
+              </div>
+            </div>
+            <CuratorProfile
+              profile={{
+                id: profile.id,
+                display_name: profile.display_name,
+                slug: profile.slug ?? null,
+                bio: profile.bio ?? null,
+                instagram_handle: profile.instagram_handle ?? null,
+                organisation_url: profile.organisation_url ?? null,
+                whatsapp: profile.whatsapp ?? null,
+              }}
+              initialMembers={members}
+            />
           </div>
 
         </div>

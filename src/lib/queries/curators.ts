@@ -1,5 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 
+export interface CuratorMember {
+  id: string
+  name: string
+  role: string | null
+  photo_url: string | null
+  bio: string | null
+  sort_order: number
+}
+
 export interface CuratorProfile {
   id: string
   display_name: string
@@ -8,10 +17,12 @@ export interface CuratorProfile {
   avatar_url: string | null
   instagram_handle: string | null
   shop_url: string | null
+  whatsapp: string | null
   organisation_name: string | null
   organisation_url: string | null
   markets: CuratorMarket[]
   featured_makers: FeaturedMaker[]
+  members: CuratorMember[]
 }
 
 export interface CuratorMarket {
@@ -43,7 +54,7 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('id, display_name, slug, bio, avatar_url, instagram_handle, shop_url, organisation_name, organisation_url')
+    .select('id, display_name, slug, bio, avatar_url, instagram_handle, shop_url, whatsapp, organisation_name, organisation_url')
     .eq('slug', slug)
     .eq('role', 'curator')
     .single()
@@ -54,7 +65,7 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const [marketsRes, featuredRes] = await Promise.all([
+  const [marketsRes, featuredRes, membersRes] = await Promise.all([
     supabase
       .from('markets')
       .select(`
@@ -78,6 +89,12 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
       .gte('pinned_until', new Date().toISOString())
       .order('pinned_at', { ascending: false })
       .limit(20),
+
+    supabase
+      .from('curator_members')
+      .select('id, name, role, photo_url, bio, sort_order')
+      .eq('curator_id', profile.id)
+      .order('sort_order', { ascending: true }),
   ])
 
   const markets: CuratorMarket[] = (marketsRes.data ?? []).map((m: any) => ({
@@ -129,9 +146,11 @@ export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | n
     avatar_url: profile.avatar_url,
     instagram_handle: profile.instagram_handle,
     shop_url: profile.shop_url,
+    whatsapp: profile.whatsapp,
     organisation_name: profile.organisation_name,
     organisation_url: profile.organisation_url,
     markets,
     featured_makers,
+    members: (membersRes.data ?? []) as CuratorMember[],
   }
 }
