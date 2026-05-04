@@ -2,6 +2,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { updateCuratorProfile, addCuratorMember, removeCuratorMember } from '@/app/dashboard/curator/actions'
+import AvatarUpload from '@/components/dashboard/AvatarUpload'
 
 interface Member { id: string; name: string; role: string | null; bio: string | null; email: string | null; instagram_handle: string | null; whatsapp: string | null; sort_order: number }
 
@@ -11,6 +12,7 @@ interface Props {
     display_name: string
     slug: string | null
     bio: string | null
+    avatar_url: string | null
     instagram_handle: string | null
     organisation_url: string | null
     whatsapp: string | null
@@ -67,6 +69,19 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
 
   return (
     <div style={{ background: 'var(--P)', padding: '14px' }}>
+
+      {/* Logo upload */}
+      <div style={{ marginBottom: '16px' }}>
+        <AvatarUpload
+          currentUrl={profile.avatar_url}
+          userId={profile.id}
+          displayName={profile.display_name}
+          onUpload={() => {}}
+        />
+        <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '-8px' }}>
+          ORGANISATION LOGO — Square image, JPG or PNG, max 5MB
+        </div>
+      </div>
 
       {/* Profile form */}
       <form action={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>

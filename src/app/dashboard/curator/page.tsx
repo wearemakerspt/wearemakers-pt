@@ -204,6 +204,7 @@ export default async function CuratorDashboardPage() {
                 display_name: profile.display_name,
                 slug: profile.slug ?? null,
                 bio: profile.bio ?? null,
+                avatar_url: profile.avatar_url ?? null,
                 instagram_handle: profile.instagram_handle ?? null,
                 organisation_url: profile.organisation_url ?? null,
                 whatsapp: (profile as any).whatsapp ?? null,
