@@ -13,6 +13,7 @@ import AdminGems from '@/components/dashboard/admin/AdminGems'
 import AdminPush from '@/components/dashboard/admin/AdminPush'
 import AdminTop20 from '@/components/dashboard/admin/AdminTop20'
 import AdminJournal from '@/components/dashboard/admin/AdminJournal'
+import AdminCreateProfile from '@/components/dashboard/admin/AdminCreateProfile'
 
 export const metadata: Metadata = {
   title: 'Admin — WEAREMAKERS.PT',
@@ -153,6 +154,10 @@ export default async function AdminDashboardPage() {
 
           <Section num="§9" title={`JOURNAL — ${publishedArticles.length} PUBLISHED · ${articles.length - publishedArticles.length} DRAFT`} ref_code="ADM-009">
             <AdminJournal articles={articles as any} />
+          </Section>
+
+          <Section num="§10" title="CREATE PROFILE" ref_code="ADM-010">
+            <AdminCreateProfile spaces={spaces} curators={curators} />
           </Section>
 
         </div>

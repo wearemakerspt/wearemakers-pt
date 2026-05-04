@@ -472,7 +472,77 @@ export async function adminUpdateGem(gemId: string, formData: FormData) {
   return { success: true }
 }
 
-// ── WAM Top 20 ─────────────────────────────────────────────
+// ── Create Profile ─────────────────────────────────────────
+
+export async function adminCreateProfile(formData: FormData) {
+  const { error } = await getAdminClient()
+  if (error) return { error }
+
+  const email = (formData.get('email') as string)?.trim().toLowerCase()
+  const password = (formData.get('password') as string)?.trim()
+  const displayName = (formData.get('display_name') as string)?.trim()
+  const role = formData.get('role') as string
+  const instagramHandle = (formData.get('instagram_handle') as string)?.trim() || null
+  const organisationUrl = (formData.get('organisation_url') as string)?.trim() || null
+  const whatsapp = (formData.get('whatsapp') as string)?.trim() || null
+
+  if (!email || !password || !displayName || !role) {
+    return { error: 'Email, password, name and role are required' }
+  }
+  if (!['maker', 'curator', 'visitor'].includes(role)) {
+    return { error: 'Invalid role' }
+  }
+  if (password.length < 8) {
+    return { error: 'Password must be at least 8 characters' }
+  }
+
+  const { createClient: sc } = await import('@supabase/supabase-js')
+  const serviceClient = sc(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Create auth user
+  const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      display_name: displayName,
+      requested_role: role,
+    },
+  })
+
+  if (authError) return { error: authError.message }
+  if (!authData.user) return { error: 'Failed to create user' }
+
+  const userId = authData.user.id
+  const slug = displayName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  // Upsert profile (handle_new_user trigger may have already created it)
+  const { error: profileError } = await serviceClient.from('profiles').upsert({
+    id: userId,
+    role,
+    display_name: displayName,
+    slug,
+    is_approved: true,
+    is_active: true,
+    bio_i18n: {},
+    applied_at: new Date().toISOString(),
+    instagram_handle: instagramHandle,
+    organisation_url: organisationUrl,
+    whatsapp,
+  }, { onConflict: 'id' })
+
+  if (profileError) return { error: profileError.message }
+
+  revalidatePath('/dashboard/admin')
+  return { success: true, email, role, displayName }
+}
+
+
 
 export async function setTop20(makerId: string, position: number) {
   const { error, supabase, user } = await getAdminClient()
