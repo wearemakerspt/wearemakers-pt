@@ -8,6 +8,8 @@ const B = '2px solid #0C0C0C', Bsm = '1px solid rgba(12,12,12,0.15)'
 const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", FB = "'Barlow',sans-serif"
 
 const GEM_ICONS: Record<string, string> = {
+  coffee: '☕', food: '🍽', drinks: '🍷', studio: '◆', shop: '◈'
+}
 
 function formatDate(d: string) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()
