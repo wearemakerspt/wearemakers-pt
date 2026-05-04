@@ -5,7 +5,12 @@ import { deleteVisitor, downloadVisitorEmails } from '@/app/dashboard/admin/acti
 export default function AdminVisitors({ visitors }: { visitors: any[] }) {
   const [list, setList] = useState(visitors)
   const [isPending, startTransition] = useTransition()
+  const [search, setSearch] = useState('')
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
+
+  const filtered = list.filter((v: any) =>
+    !search || v.display_name?.toLowerCase().includes(search.toLowerCase())
+  )
 
   function handleDelete(id: string) {
     if (!confirm('Delete this visitor account?')) return
@@ -24,13 +29,19 @@ export default function AdminVisitors({ visitors }: { visitors: any[] }) {
   return (
     <div style={{ background: 'var(--P)', padding: '14px' }}>
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)' }}>{list.length} VISITORS</div>
+        <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.5)' }}>{filtered.length} VISITORS</div>
         <button onClick={handleDownloadCSV} style={{ ...T, fontWeight: 700, fontSize: '9px', color: 'var(--P)', background: 'var(--INK)', border: '2px solid var(--INK)', padding: '6px 12px', cursor: 'pointer' }}>
           ↓ DOWNLOAD CSV
         </button>
       </div>
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search visitors..."
+        style={{ width: '100%', background: 'var(--P2)', border: '2px solid var(--INK)', padding: '8px 12px', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', outline: 'none', marginBottom: '10px', boxSizing: 'border-box' as const }}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '300px', overflowY: 'auto' }}>
-        {list.map((v: any) => (
+        {filtered.map((v: any) => (
           <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--MONO)', fontSize: '14px', color: 'var(--INK)' }}>{v.display_name}</div>
