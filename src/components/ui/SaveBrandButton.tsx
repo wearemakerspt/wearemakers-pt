@@ -21,7 +21,7 @@ function trackEvent(event_type: string, brand_id: string, visitor_id: string | n
   }).catch(() => {})
 }
 
-type ModalStep = 'offer' | 'email' | null
+type ModalStep = 'offer' | 'email' | 'circuit' | null
 
 export default function SaveBrandButton({
   brandId,
@@ -60,7 +60,7 @@ export default function SaveBrandButton({
     e.stopPropagation()
     if (isPending) return
 
-    // Anonymous visitor — save to localStorage, show offer modal if available
+    // Anonymous visitor — save to localStorage, show circuit confirmation
     if (!userId) {
       const next = !saved
       setSaved(next)
@@ -74,7 +74,11 @@ export default function SaveBrandButton({
           saved_at: new Date().toISOString(),
         }
         anonAdd(ANON_KEYS.brands, item)
-        if (digitalOffer) setModalStep('offer')
+        if (digitalOffer) {
+          setModalStep('offer')
+        } else {
+          setModalStep('circuit')
+        }
       } else {
         anonRemove(ANON_KEYS.brands, brandId)
       }
@@ -220,7 +224,7 @@ export default function SaveBrandButton({
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
-                    onClick={() => setModalStep('email')}
+                    onClick={() => setModalStep(userId ? 'email' : 'circuit')}
                     style={{ flex: 1, fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px', cursor: 'pointer' }}
                   >
                     GOT IT ✓
@@ -233,6 +237,30 @@ export default function SaveBrandButton({
                   </button>
                 </div>
               </>
+            )}
+
+            {/* ── STEP: Circuit confirmation (anon) ── */}
+            {modalStep === 'circuit' && (
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: '48px', color: '#1a5c30', marginBottom: '12px' }}>♥</div>
+                <div style={{ fontFamily: LOGO, fontWeight: 900, fontSize: 'clamp(24px,6vw,32px)', textTransform: 'uppercase', letterSpacing: '-0.01em', color: P, lineHeight: 1, marginBottom: '10px' }}>
+                  SAVED TO YOUR CIRCUIT
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '13px', color: 'rgba(240,236,224,.45)', lineHeight: 1.6, marginBottom: '24px' }}>
+                  {brandName} is in your Circuit. Register free to get notified when they go live.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <a href="/auth/register" style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px 28px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                    JOIN FREE — GET NOTIFIED →
+                  </a>
+                  <a href="/circuit" style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: 'transparent', color: 'rgba(240,236,224,.5)', border: '1px solid rgba(240,236,224,.2)', padding: '10px 28px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                    VIEW MY CIRCUIT →
+                  </a>
+                  <button onClick={closeModal} style={{ fontFamily: TAG, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', background: 'none', color: 'rgba(240,236,224,.25)', border: 'none', padding: '8px', cursor: 'pointer' }}>
+                    Continue browsing
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* ── STEP 2: Email capture ── */}

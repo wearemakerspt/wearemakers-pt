@@ -204,6 +204,7 @@ export default async function BrandProfilePage({ params }: Props) {
               initialSaved={initialSaved}
               userId={user?.id ?? null}
               digitalOffer={hasOffer ? brand.digital_offer : null}
+              dark={true}
             />
 
             <div className="dh-divider" />
