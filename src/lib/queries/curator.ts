@@ -19,7 +19,7 @@ export interface CuratorMarket extends Market {
 }
 
 export interface FeaturedSlot {
-  position: number               // 1, 2, or 3
+  position: number               // 1–20
   pinned: CuratorFeaturedMaker & { maker: Profile } | null
 }
 
@@ -88,7 +88,7 @@ export async function getCuratorDashboardData(
         .eq('curator_id', curatorId)
         .gt('pinned_until', new Date().toISOString())
         .order('pinned_at', { ascending: true })
-        .limit(3),
+        .limit(20),
 
       // ── 4. All makers — for spotlight search (active makers only)
       supabase
@@ -123,11 +123,11 @@ export async function getCuratorDashboardData(
       }
     })
 
-  // ── Build 3 featured slots ─────────────────────────────────
+  // ── Build 20 featured slots ────────────────────────────────
   const pinned = (featuredResult.data ?? []) as (CuratorFeaturedMaker & { maker: Profile })[]
-  const featuredSlots: FeaturedSlot[] = [1, 2, 3].map((pos) => ({
-    position: pos,
-    pinned: pinned[pos - 1] ?? null,
+  const featuredSlots: FeaturedSlot[] = Array.from({ length: 20 }, (_, i) => ({
+    position: i + 1,
+    pinned: pinned[i] ?? null,
   }))
 
   // ── Build activity log from market events ──────────────────
