@@ -184,7 +184,7 @@ export default async function HomePage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.1, color: INK }}>{m.title}</div>
                       <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.06em', color: STONE, marginTop: '3px' }}>
-                        {m.space.name}{m.curator ? ` · ${m.curator.display_name}` : ''}
+                        {m.space.name}{m.curator ? <> · <Link href={`/curators/${m.curator.slug}`} style={{ color: RED, textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>{m.curator.display_name} ↗</Link></> : ''}
                       </div>
                     </div>
                     <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: INK, letterSpacing: '0.06em', flexShrink: 0 }}>{m.starts_at.slice(0,5)}–{m.ends_at.slice(0,5)}</div>
