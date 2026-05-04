@@ -159,8 +159,6 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
         </form>
       )}
 
-      )}
-
       {/* Seed shadow markets form */}
       {seedOpen && (
         <form
