@@ -177,7 +177,7 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
         style={{ width: '100%', background: 'var(--P2)', border: '2px solid var(--INK)', padding: '8px 12px', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', outline: 'none', marginBottom: '10px', boxSizing: 'border-box' as const }}
       />
 
-      <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px' }}>{filtered.length} MARKETS
+      <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginBottom: '10px' }}>{filtered.length} MARKETS</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '480px', overflowY: 'auto' }}>
         {filtered.map((m: any) => (
