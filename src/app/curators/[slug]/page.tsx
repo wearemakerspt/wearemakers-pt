@@ -12,7 +12,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const curator = await getCuratorBySlug(slug)
   if (!curator) return { title: 'Curator Not Found' }
-  return { title: `${curator.display_name} — WEAREMAKERS.PT`, description: curator.bio ?? `${curator.display_name} — market curator.`, alternates: { canonical: `/curators/${slug}` } }
+  const title = curator.display_name
+  const description = curator.bio ?? `${curator.display_name} — market curator on WEAREMAKERS.PT`
+  const ogUrl = `/api/og?type=curator&title=${encodeURIComponent(title)}&sub=${encodeURIComponent(`${curator.markets.length} MARKETS`)}&avatar=${encodeURIComponent(curator.avatar_url ?? '')}`
+  return {
+    title: `${title} — WEAREMAKERS.PT`,
+    description,
+    alternates: { canonical: `/curators/${slug}` },
+    openGraph: { title: `${title} | WEAREMAKERS.PT`, description, type: 'profile', images: [{ url: ogUrl, width: 1200, height: 630, alt: title }] },
+    twitter: { card: 'summary_large_image', title, description },
+  }
 }
 
 const INK = '#1A1A1A', RED = '#E8001C', WHITE = '#F4F1EC', PAPER = '#EDE9E2', STONE = '#6B6560', GREEN = '#1a5c30'
@@ -40,6 +49,15 @@ export default async function CuratorPage({ params }: Props) {
   return (
     <>
       <SiteHeader user={user} liveCount={liveMarkets.length} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: curator.display_name,
+        description: curator.bio ?? undefined,
+        url: curator.organisation_url ?? `https://wearemakers.pt/curators/${slug}`,
+        logo: curator.avatar_url ?? undefined,
+        sameAs: curator.instagram_handle ? [`https://instagram.com/${curator.instagram_handle.replace('@','')}`] : undefined,
+      }) }} />
       <style>{`
         .curator-maker-card:hover { background: ${PAPER} !important; }
         @media (max-width: 860px) {
