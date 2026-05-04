@@ -1,12 +1,15 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { adminSetMarketStatus, adminCreateMarket, adminAssignCurator, adminDeleteMarket, adminCancelMarket, adminUpdateMarket } from '@/app/dashboard/admin/actions'
+import { adminSetMarketStatus, adminCreateMarket, adminAssignCurator, adminDeleteMarket, adminCancelMarket, adminUpdateMarket, adminSeedShadowMarkets } from '@/app/dashboard/admin/actions'
 
 export default function AdminMarkets({ markets: initialMarkets, spaces, curators }: { markets: any[]; spaces: any[]; curators: any[] }) {
   const [list, setList] = useState(initialMarkets)
   const [isPending, startTransition] = useTransition()
   const [createOpen, setCreateOpen] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [seedOpen, setSeedOpen] = useState(false)
+  const [seedError, setSeedError] = useState<string | null>(null)
+  const [seedResult, setSeedResult] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -81,10 +84,13 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
   return (
     <div style={{ background: 'var(--P)', padding: '14px' }}>
 
-      {/* Create market button */}
-      <div style={{ marginBottom: '14px' }}>
-        <button onClick={() => setCreateOpen(!createOpen)} style={{ ...T, fontWeight: 700, fontSize: '10px', color: createOpen ? 'var(--P)' : 'var(--INK)', background: createOpen ? 'var(--INK)' : 'transparent', border: '2px solid var(--INK)', padding: '8px 14px', cursor: 'pointer' }}>
+      {/* Action buttons */}
+      <div style={{ marginBottom: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button onClick={() => { setCreateOpen(!createOpen); setSeedOpen(false) }} style={{ ...T, fontWeight: 700, fontSize: '10px', color: createOpen ? 'var(--P)' : 'var(--INK)', background: createOpen ? 'var(--INK)' : 'transparent', border: '2px solid var(--INK)', padding: '8px 14px', cursor: 'pointer' }}>
           {createOpen ? '✕ CANCEL' : '+ CREATE MARKET'}
+        </button>
+        <button onClick={() => { setSeedOpen(!seedOpen); setCreateOpen(false); setSeedResult(null) }} style={{ ...T, fontWeight: 700, fontSize: '10px', color: seedOpen ? 'var(--P)' : 'var(--INK)', background: seedOpen ? 'rgba(24,22,20,.7)' : 'transparent', border: '2px solid var(--INK)', padding: '8px 14px', cursor: 'pointer' }}>
+          {seedOpen ? '✕ CANCEL' : '⬡ SEED SHADOW MARKETS'}
         </button>
       </div>
 
@@ -151,6 +157,93 @@ export default function AdminMarkets({ markets: initialMarkets, spaces, curators
             {isPending ? 'CREATING...' : 'CREATE MARKET →'}
           </button>
         </form>
+      )}
+
+      )}
+
+      {/* Seed shadow markets form */}
+      {seedOpen && (
+        <form
+          action={(fd) => {
+            setSeedError(null)
+            setSeedResult(null)
+            startTransition(async () => {
+              const r = await adminSeedShadowMarkets(fd)
+              if (r?.error) setSeedError(r.error)
+              else {
+                setSeedResult(`✓ ${r.count} shadow markets created`)
+                setSeedOpen(false)
+              }
+            })
+          }}
+          style={{ marginBottom: '16px', padding: '14px', background: 'rgba(24,22,20,.04)', border: '2px solid var(--INK)' }}
+        >
+          <div style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--INK)', marginBottom: '4px' }}>SEED SHADOW MARKETS</div>
+          <div style={{ fontFamily: 'var(--MONO)', fontSize: '11px', color: 'var(--GRY)', marginBottom: '12px' }}>
+            Batch-creates hidden shadow markets for a recurring schedule. Shadow markets are invisible to the public until promoted to SCHEDULED.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>SPACE *</div>
+              <select name="space_id" required style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="">Select space</option>
+                {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>ASSIGN CURATOR</div>
+              <select name="curator_id" style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="">No curator</option>
+                {curators.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>FROM DATE *</div>
+              <input name="from_date" type="date" required style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>TO DATE *</div>
+              <input name="to_date" type="date" required style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>STARTS AT *</div>
+              <input name="starts_at" type="time" required defaultValue="10:00" style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '4px' }}>ENDS AT *</div>
+              <input name="ends_at" type="time" required defaultValue="18:00" style={inputStyle} />
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.45)', marginBottom: '6px' }}>DAYS OF WEEK *</div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {[
+                  { label: 'SUN', value: '0' },
+                  { label: 'MON', value: '1' },
+                  { label: 'TUE', value: '2' },
+                  { label: 'WED', value: '3' },
+                  { label: 'THU', value: '4' },
+                  { label: 'FRI', value: '5' },
+                  { label: 'SAT', value: '6' },
+                ].map(d => (
+                  <label key={d.value} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', ...T, fontSize: '9px', fontWeight: 700 }}>
+                    <input type="checkbox" name="days" value={d.value} style={{ accentColor: 'var(--INK)', width: '14px', height: '14px' }} />
+                    {d.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          {seedError && <div style={{ ...T, fontSize: '9px', color: 'var(--RED)', fontWeight: 700, marginBottom: '8px' }}>✗ {seedError}</div>}
+          <button type="submit" disabled={isPending} style={{ ...T, fontWeight: 700, fontSize: '10px', color: 'var(--P)', background: 'var(--INK)', border: '2px solid var(--INK)', padding: '8px 16px', cursor: 'pointer' }}>
+            {isPending ? 'SEEDING...' : 'SEED MARKETS →'}
+          </button>
+        </form>
+      )}
+
+      {seedResult && (
+        <div style={{ ...T, fontSize: '10px', color: 'var(--GRN)', fontWeight: 700, marginBottom: '12px', padding: '8px 12px', background: 'rgba(26,92,48,.08)', border: '1px solid var(--GRN)' }}>
+          {seedResult}
+        </div>
       )}
 
       {/* Status filter tabs */}

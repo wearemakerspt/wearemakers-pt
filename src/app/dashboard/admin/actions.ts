@@ -213,6 +213,62 @@ export async function adminUpdateMarket(marketId: string, formData: FormData) {
   return { success: true }
 }
 
+export async function adminSeedShadowMarkets(formData: FormData) {
+  const { error, supabase, user } = await getAdminClient()
+  if (error || !supabase) return { error }
+
+  const spaceId = formData.get('space_id') as string
+  const curatorId = (formData.get('curator_id') as string) || null
+  const startsAt = formData.get('starts_at') as string
+  const endsAt = formData.get('ends_at') as string
+  const fromDate = formData.get('from_date') as string
+  const toDate = formData.get('to_date') as string
+  const daysRaw = formData.getAll('days') as string[]
+
+  if (!spaceId || !startsAt || !endsAt || !fromDate || !toDate || !daysRaw.length) {
+    return { error: 'Space, times, date range and at least one day are required' }
+  }
+
+  const { data: space } = await supabase.from('spaces').select('name').eq('id', spaceId).single()
+  const spaceName = space?.name ?? 'Market'
+
+  const selectedDays = daysRaw.map(Number) // 0=Sun, 1=Mon ... 6=Sat
+
+  // Generate all dates in range that match selected days
+  const dates: string[] = []
+  const cur = new Date(fromDate + 'T12:00:00Z')
+  const end = new Date(toDate + 'T12:00:00Z')
+
+  while (cur <= end) {
+    if (selectedDays.includes(cur.getUTCDay())) {
+      dates.push(cur.toISOString().slice(0, 10))
+    }
+    cur.setUTCDate(cur.getUTCDate() + 1)
+  }
+
+  if (dates.length === 0) return { error: 'No dates match the selected days in that range' }
+  if (dates.length > 104) return { error: 'Maximum 104 markets per seed (2 years of weeklies)' }
+
+  const rows = dates.map(date => ({
+    space_id: spaceId,
+    curator_id: curatorId || null,
+    title: `${spaceName} — ${date}`,
+    event_date: date,
+    event_date_end: null,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    status: 'shadow',
+    checkin_threshold: 3,
+  }))
+
+  const { error: e } = await supabase.from('markets').insert(rows)
+  if (e) return { error: e.message }
+
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/markets')
+  return { success: true, count: dates.length }
+}
+
 // ── Makers ─────────────────────────────────────────────────
 
 export async function toggleVerifiedBadge(makerId: string, verified: boolean) {
@@ -383,36 +439,6 @@ export async function adminCreateGem(formData: FormData) {
   })
   if (e) return { error: e.message }
   revalidatePath('/dashboard/admin')
-  return { success: true }
-}
-
-export async function adminUpdateGem(gemId: string, formData: FormData) {
-  const { error, supabase } = await getAdminClient()
-  if (error || !supabase) return { error }
-
-  const name = (formData.get('name') as string)?.trim()
-  const spaceId = formData.get('space_id') as string
-  const category = formData.get('category') as string
-  const description = (formData.get('description') as string)?.trim()
-  const address = (formData.get('address') as string)?.trim()
-  const lat = parseFloat(formData.get('lat') as string)
-  const lng = parseFloat(formData.get('lng') as string)
-
-  if (!name || !spaceId || !category) return { error: 'Name, space and category are required' }
-
-  const { error: e } = await supabase.from('gems').update({
-    name,
-    near_space_id: spaceId,
-    category,
-    description: description || null,
-    address: address || null,
-    lat: isNaN(lat) ? 0 : lat,
-    lng: isNaN(lng) ? 0 : lng,
-  }).eq('id', gemId)
-
-  if (e) return { error: e.message }
-  revalidatePath('/dashboard/admin')
-  revalidatePath('/gems')
   return { success: true }
 }
 
