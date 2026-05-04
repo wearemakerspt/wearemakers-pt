@@ -1,10 +1,10 @@
 'use client'
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { updateCuratorProfile, addCuratorMember, removeCuratorMember } from '@/app/dashboard/curator/actions'
+import { updateCuratorProfile, addCuratorMember, removeCuratorMember, updateMemberPhoto } from '@/app/dashboard/curator/actions'
 import AvatarUpload from '@/components/dashboard/AvatarUpload'
 
-interface Member { id: string; name: string; role: string | null; bio: string | null; email: string | null; instagram_handle: string | null; whatsapp: string | null; sort_order: number }
+interface Member { id: string; name: string; role: string | null; bio: string | null; email: string | null; instagram_handle: string | null; whatsapp: string | null; photo_url: string | null; sort_order: number }
 
 interface Props {
   profile: {
@@ -27,6 +27,20 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
   const [addingMember, setAddingMember] = useState(false)
+
+  async function handleMemberPhoto(memberId: string, file: File, userId: string) {
+    if (!file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) return
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${userId}/members/${memberId}.${ext}`
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) return
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    await updateMemberPhoto(memberId, publicUrl)
+    setMembers(prev => prev.map(m => m.id === memberId ? { ...m, photo_url: publicUrl } : m))
+  }
 
   const T = { fontFamily: 'var(--TAG)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' as const }
   const inputStyle = { width: '100%', background: 'var(--P)', border: '2px solid rgba(24,22,20,.2)', padding: '8px 10px', fontFamily: 'var(--MONO)', fontSize: '13px', color: 'var(--INK)', outline: 'none', boxSizing: 'border-box' as const }
@@ -56,7 +70,7 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
         const email = (fd.get('email') as string) || null
         const instagram_handle = (fd.get('instagram_handle') as string) || null
         const whatsapp = (fd.get('whatsapp') as string) || null
-        setMembers(prev => [...prev, { id: crypto.randomUUID(), name, role, bio, email, instagram_handle, whatsapp, sort_order: prev.length }])
+        setMembers(prev => [...prev, { id: crypto.randomUUID(), name, role, bio, email, instagram_handle, whatsapp, photo_url: null, sort_order: prev.length }])
       }
     })
   }
@@ -141,6 +155,18 @@ export default function CuratorProfile({ profile, initialMembers }: Props) {
           )}
           {members.map(m => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'var(--P2)', border: '1px solid rgba(24,22,20,.1)' }}>
+              {/* Photo */}
+              <label style={{ flexShrink: 0, cursor: 'pointer' }} title="Upload photo">
+                <div style={{ width: '44px', height: '44px', background: 'var(--INK)', border: '2px solid rgba(24,22,20,.2)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' as const }}>
+                  {m.photo_url
+                    ? <img src={m.photo_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '14px', color: 'var(--RED)' }}>{m.name.slice(0,2).toUpperCase()}</span>
+                  }
+                </div>
+                <div style={{ ...T, fontSize: '8px', color: 'rgba(24,22,20,.35)', textAlign: 'center', marginTop: '2px' }}>PHOTO</div>
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleMemberPhoto(m.id, f, profile.id); e.target.value = '' }} />
+              </label>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '16px', textTransform: 'uppercase', color: 'var(--INK)', lineHeight: 1 }}>{m.name}</div>
                 {m.role && <div style={{ ...T, fontSize: '9px', color: 'rgba(24,22,20,.4)', marginTop: '2px' }}>{m.role}</div>}

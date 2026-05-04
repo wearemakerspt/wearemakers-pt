@@ -361,6 +361,24 @@ export async function removeCuratorMember(memberId: string) {
   return { success: true }
 }
 
+// ── Update Member Photo ───────────────────────────────────────
+
+export async function updateMemberPhoto(memberId: string, photoUrl: string | null) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  const { error: updateError } = await supabase
+    .from('curator_members')
+    .update({ photo_url: photoUrl })
+    .eq('id', memberId)
+    .eq('curator_id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
 // ── Verify Attendance ─────────────────────────────────────────
 
 export async function verifyAttendance(attendanceId: string) {

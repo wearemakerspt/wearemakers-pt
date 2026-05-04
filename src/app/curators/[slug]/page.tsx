@@ -114,6 +114,11 @@ export default async function CuratorPage({ params }: Props) {
             <div style={{ display: 'flex', flexWrap: 'wrap', padding: '24px 52px', gap: '0' }}>
               {curator.members.map(member => (
                 <div key={member.id} style={{ minWidth: '200px', marginRight: '32px', marginBottom: '20px' }}>
+                  {member.photo_url && (
+                    <div style={{ width: '64px', height: '64px', marginBottom: '10px', overflow: 'hidden', border: Bsm }}>
+                      <img src={member.photo_url} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
                   <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', color: INK, lineHeight: 1, marginBottom: '3px' }}>
                     {member.name}
                   </div>
