@@ -177,11 +177,22 @@ export default async function BrandProfilePage({ params }: Props) {
               </p>
             )}
 
-            {hasOffer && !initialSaved && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--red)', textTransform: 'uppercase', border: '1px solid rgba(232,0,28,0.3)', padding: '9px 16px', width: 'fit-content' }}>
-                ✦ SAVE TO UNLOCK EXCLUSIVE OFFER
-              </div>
-            )}
+            {/* Save button — always visible in hero */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <SaveBrandButton
+                brandId={brand.id}
+                brandName={brand.display_name}
+                initialSaved={initialSaved}
+                userId={user?.id ?? null}
+                digitalOffer={hasOffer ? brand.digital_offer : null}
+                size="lg"
+              />
+              {hasOffer && !initialSaved && (
+                <span style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--red)', textTransform: 'uppercase' }}>
+                  ✦ SAVE TO UNLOCK EXCLUSIVE OFFER
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Right — dark sidebar */}
