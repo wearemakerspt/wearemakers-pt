@@ -41,7 +41,7 @@ export default async function CuratorDashboardPage() {
   const [{ ownMarkets, spaces, featuredSlots, recentActivityLog, searchableMakers }, membersRes] =
     await Promise.all([
       getCuratorDashboardData(user.id),
-      supabase.from('curator_members').select('id, name, role, bio, email, instagram_handle, whatsapp, sort_order').eq('curator_id', user.id).order('sort_order'),
+      supabase.from('curator_members').select('id, name, role, bio, email, instagram_handle, whatsapp, photo_url, sort_order').eq('curator_id', user.id).order('sort_order'),
     ])
   const members = membersRes.data ?? []
 
