@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ANON_KEYS, anonAdd, anonRemove, anonIsSaved, type AnonBrand } from '@/lib/anonCircuit'
 
 interface Props {
   brandId: string
@@ -40,7 +41,10 @@ export default function SaveBrandButton({
   const [emailPending, setEmailPending] = useState(false)
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      setSaved(anonIsSaved(ANON_KEYS.brands, brandId))
+      return
+    }
     const supabase = createClient()
     supabase
       .from('saved_brands')
@@ -56,12 +60,23 @@ export default function SaveBrandButton({
     e.stopPropagation()
     if (isPending) return
 
-    // Anonymous visitor — skip save to DB, go straight to email capture
+    // Anonymous visitor — save to localStorage, show offer modal if available
     if (!userId) {
-      if (digitalOffer) {
-        setModalStep('offer')
+      const next = !saved
+      setSaved(next)
+      if (next) {
+        const item: AnonBrand = {
+          id: brandId,
+          slug: '',
+          display_name: brandName,
+          avatar_url: null,
+          category: null,
+          saved_at: new Date().toISOString(),
+        }
+        anonAdd(ANON_KEYS.brands, item)
+        if (digitalOffer) setModalStep('offer')
       } else {
-        setModalStep('email')
+        anonRemove(ANON_KEYS.brands, brandId)
       }
       return
     }

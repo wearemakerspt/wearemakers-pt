@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ANON_KEYS, anonAdd, anonRemove, anonIsSaved, type AnonMarket } from '@/lib/anonCircuit'
 
 interface Props {
   marketId: string
@@ -15,7 +16,10 @@ export default function SaveMarketButton({ marketId, marketTitle, userId, initia
   const [isPending, setIsPending] = useState(false)
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      setSaved(anonIsSaved(ANON_KEYS.markets, marketId))
+      return
+    }
     const supabase = createClient()
     supabase
       .from('saved_markets')
@@ -29,7 +33,29 @@ export default function SaveMarketButton({ marketId, marketTitle, userId, initia
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (isPending || !userId) return
+    if (isPending) return
+
+    // Anonymous — save to localStorage
+    if (!userId) {
+      const next = !saved
+      setSaved(next)
+      if (next) {
+        const item: AnonMarket = {
+          id: marketId,
+          title: marketTitle,
+          event_date: '',
+          starts_at: '',
+          ends_at: '',
+          space_name: null,
+          saved_at: new Date().toISOString(),
+        }
+        anonAdd(ANON_KEYS.markets, item)
+      } else {
+        anonRemove(ANON_KEYS.markets, marketId)
+      }
+      return
+    }
+
     setIsPending(true)
     const next = !saved
     setSaved(next)
@@ -41,10 +67,8 @@ export default function SaveMarketButton({ marketId, marketTitle, userId, initia
           { onConflict: 'visitor_id,market_id' }
         )
       } else {
-        await supabase.from('saved_markets')
-          .delete()
-          .eq('visitor_id', userId)
-          .eq('market_id', marketId)
+        await supabase.from('saved_markets').delete()
+          .eq('visitor_id', userId).eq('market_id', marketId)
       }
     } catch {
       setSaved(!next)
@@ -67,17 +91,6 @@ export default function SaveMarketButton({ marketId, marketTitle, userId, initia
     gap: '6px',
     border: 'none',
     transition: 'all .1s',
-  }
-
-  if (!userId) {
-    return (
-      <a
-        href="/auth/login"
-        style={{ ...T, background: 'transparent', color: dark ? 'rgba(240,236,224,.4)' : 'rgba(24,22,20,.35)', outline: '2px solid', outlineColor: dark ? 'rgba(240,236,224,.15)' : 'rgba(24,22,20,.15)', textDecoration: 'none' }}
-      >
-        <span>♡</span> SAVE DATE
-      </a>
-    )
   }
 
   const buttonStyle = saved

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ANON_KEYS, anonAdd, anonRemove, anonIsSaved, type AnonGem } from '@/lib/anonCircuit'
 
 interface Props {
   gemId: string
@@ -14,7 +15,10 @@ export default function SaveGemButton({ gemId, gemName, userId, size = 'md' }: P
   const [isPending, setIsPending] = useState(false)
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      setSaved(anonIsSaved(ANON_KEYS.gems, gemId))
+      return
+    }
     const supabase = createClient()
     supabase
       .from('saved_gems')
@@ -28,23 +32,41 @@ export default function SaveGemButton({ gemId, gemName, userId, size = 'md' }: P
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (isPending || !userId) return
+    if (isPending) return
+
+    // Anonymous — save to localStorage
+    if (!userId) {
+      const next = !saved
+      setSaved(next)
+      if (next) {
+        const item: AnonGem = {
+          id: gemId,
+          name: gemName,
+          category: '',
+          description: null,
+          address: null,
+          space_name: null,
+          saved_at: new Date().toISOString(),
+        }
+        anonAdd(ANON_KEYS.gems, item)
+      } else {
+        anonRemove(ANON_KEYS.gems, gemId)
+      }
+      return
+    }
+
     setIsPending(true)
     const next = !saved
     setSaved(next)
-
     try {
       const supabase = createClient()
       if (next) {
         await supabase.from('saved_gems').upsert({
-          visitor_id: userId,
-          gem_id: gemId,
+          visitor_id: userId, gem_id: gemId,
         }, { onConflict: 'visitor_id,gem_id' })
       } else {
-        await supabase.from('saved_gems')
-          .delete()
-          .eq('visitor_id', userId)
-          .eq('gem_id', gemId)
+        await supabase.from('saved_gems').delete()
+          .eq('visitor_id', userId).eq('gem_id', gemId)
       }
     } catch {
       setSaved(!next)
@@ -56,17 +78,6 @@ export default function SaveGemButton({ gemId, gemName, userId, size = 'md' }: P
   const s = size === 'sm'
     ? { padding: '5px 10px', fontSize: '9px' }
     : { padding: '7px 14px', fontSize: '10px' }
-
-  if (!userId) {
-    return (
-      <a
-        href="/auth/login"
-        style={{ fontFamily: 'var(--TAG)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, border: '1px solid rgba(24,22,20,.2)', color: 'rgba(24,22,20,.4)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', ...s }}
-      >
-        <span>◆</span> SAVE
-      </a>
-    )
-  }
 
   return (
     <button

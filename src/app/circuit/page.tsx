@@ -7,6 +7,7 @@ import SaveBrandButton from '@/components/ui/SaveBrandButton'
 import SaveMarketButton from '@/components/ui/SaveMarketButton'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import PushSubscribe from '@/components/ui/PushSubscribe'
+import CircuitAnon from '@/components/circuit/CircuitAnon'
 
 export const metadata: Metadata = {
   title: 'My Circuit — WEAREMAKERS.PT',
@@ -155,19 +156,8 @@ export default async function CircuitPage() {
           )}
         </div>
 
-        {/* Not logged in */}
-        {!user && (
-          <div style={{ padding: '64px 52px', borderBottom: B }}>
-            <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '32px', textTransform: 'uppercase', color: 'rgba(12,12,12,0.12)', marginBottom: '16px' }}>SIGN IN TO ACCESS YOUR CIRCUIT</div>
-            <div style={{ fontFamily: FB, fontSize: '15px', color: STONE, lineHeight: 1.7, marginBottom: '28px', maxWidth: '480px' }}>
-              Save brands, market dates and hidden gems. Get notified when saved brands go live.
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link href="/auth/register" style={{ fontFamily: FM, fontWeight: 700, fontSize: '10px', color: WHITE, background: RED, border: `2px solid ${RED}`, padding: '12px 22px', textDecoration: 'none', display: 'inline-block', textTransform: 'uppercase', letterSpacing: '0.14em' }}>JOIN FREE →</Link>
-              <Link href="/auth/login" style={{ fontFamily: FM, fontWeight: 700, fontSize: '10px', color: INK, background: 'transparent', border: B, padding: '12px 22px', textDecoration: 'none', display: 'inline-block', textTransform: 'uppercase', letterSpacing: '0.14em' }}>SIGN IN</Link>
-            </div>
-          </div>
-        )}
+        {/* Not logged in — anonymous circuit */}
+        {!user && <CircuitAnon />}
 
         {/* Empty */}
         {user && savedBrands.length === 0 && savedGems.length === 0 && savedMarkets.length === 0 && (
