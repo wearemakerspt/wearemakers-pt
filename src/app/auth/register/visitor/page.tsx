@@ -26,12 +26,12 @@ export default async function RegisterVisitorPage({
       <main style={{ background: 'var(--INK)', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '48px', color: 'var(--GRN)', lineHeight: 1, marginBottom: '16px' }}>✓</div>
-          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', color: 'var(--P)', marginBottom: '12px' }}>CHECK YOUR EMAIL</div>
+          <div style={{ fontFamily: 'var(--LOGO)', fontWeight: 900, fontSize: '28px', textTransform: 'uppercase', color: 'var(--P)', marginBottom: '12px' }}>YOU'RE IN</div>
           <div style={{ fontFamily: 'var(--MONO)', fontSize: '15px', color: 'rgba(240,236,224,.5)', lineHeight: 1.6, marginBottom: '24px' }}>
-            We've sent a confirmation link. Click it to activate your account and start saving brands.
+            Your Circuit is ready. Start saving brands and get notified when they go live at markets.
           </div>
-          <Link href="/" style={{ ...T, fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '3px solid var(--RED)', padding: '12px 22px', textDecoration: 'none', display: 'inline-block' }}>
-            EXPLORE THE APP →
+          <Link href="/circuit" style={{ ...T, fontWeight: 700, color: 'var(--P)', background: 'var(--RED)', border: '3px solid var(--RED)', padding: '12px 22px', textDecoration: 'none', display: 'inline-block' }}>
+            VIEW MY CIRCUIT →
           </Link>
         </div>
       </main>
