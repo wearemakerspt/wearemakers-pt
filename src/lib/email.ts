@@ -205,13 +205,29 @@ export async function sendApprovalEmail(
   role: 'maker' | 'curator'
 ): Promise<void> {
   const dashUrl = `${SITE}/dashboard/${role}`
+  const isMaker = role === 'maker'
+
+  const profileSteps = isMaker
+    ? `<p class="meta">TO APPEAR ON THE PLATFORM, COMPLETE YOUR PROFILE:</p>
+       <p>→ Upload a <strong>profile photo</strong> (avatar)<br/>
+       → Add a <strong>bio</strong> describing your brand<br/>
+       → Set your <strong>category</strong> and price range<br/>
+       → Add a <strong>featured photo</strong> of your work</p>`
+    : `<p class="meta">TO APPEAR ON THE PLATFORM, COMPLETE YOUR PROFILE:</p>
+       <p>→ Upload a <strong>logo or photo</strong><br/>
+       → Add a <strong>bio</strong> for your organisation<br/>
+       → Create your first <strong>market</strong> in the Markets section</p>`
 
   const html = wrapEmail(`
     <div class="badge">✓ APPROVED</div>
     <h1>YOU'RE IN,<br/>${name.toUpperCase()}</h1>
-    <p>Your ${role} account has been approved. You can now access your dashboard and start using all features.</p>
+    <p>Your ${role} account has been approved. Head to your dashboard to complete your profile and go live on the platform.</p>
     <div class="divider"></div>
-    <a href="${dashUrl}" class="btn">GO TO YOUR DASHBOARD →</a>
+    ${profileSteps}
+    <div class="divider"></div>
+    <a href="${dashUrl}" class="btn">COMPLETE YOUR PROFILE →</a>
+    <div class="divider"></div>
+    <p class="meta">Questions? <a href="mailto:info@wearemakers.pt" style="color:#E8001C">info@wearemakers.pt</a></p>
   `)
 
   await sendEmail(to, `WEAREMAKERS.PT — Your account is approved`, html)

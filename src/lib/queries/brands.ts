@@ -61,6 +61,8 @@ export async function getAllBrands(lang = 'en'): Promise<BrandSummary[]> {
     `)
     .in('role', ['maker', 'admin'])
     .eq('is_active', true)
+    .eq('is_approved', true)
+    .not('avatar_url', 'is', null)
     .order('display_name', { ascending: true })
 
   if (error || !data) return []
