@@ -54,3 +54,34 @@ export async function getMakersForArticle(makerIds: string[]) {
   }
   return data ?? []
 }
+
+export async function getNextMarket(): Promise<{
+  id: string
+  title: string
+  event_date: string
+  starts_at: string
+  space_name: string | null
+} | null> {
+  const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('markets')
+    .select('id, title, event_date, starts_at, space:spaces(name)')
+    .in('status', ['scheduled', 'live', 'community_live'])
+    .gte('event_date', today)
+    .order('event_date', { ascending: true })
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .single()
+
+  if (error || !data) return null
+
+  return {
+    id: data.id,
+    title: data.title,
+    event_date: data.event_date,
+    starts_at: data.starts_at,
+    space_name: (data.space as any)?.name ?? null,
+  }
+}

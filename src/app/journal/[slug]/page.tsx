@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getAllArticles, getArticleBySlug, getMakersForArticle } from '@/lib/queries/journal'
+import { getAllArticles, getArticleBySlug, getMakersForArticle, getNextMarket } from '@/lib/queries/journal'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { absoluteUrl } from '@/lib/utils'
 import SiteHeader from '@/components/ui/SiteHeader'
@@ -43,7 +43,7 @@ const FM = "'Share Tech Mono',monospace", FH = "'Barlow Condensed',sans-serif", 
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
-  const [article, user] = await Promise.all([getArticleBySlug(slug), getCurrentUser()])
+  const [article, user, nextMarket] = await Promise.all([getArticleBySlug(slug), getCurrentUser(), getNextMarket()])
   if (!article) notFound()
 
   const featuredMakers = await getMakersForArticle(article.featured_makers ?? [])
@@ -136,6 +136,30 @@ export default async function ArticlePage({ params }: Props) {
                     </div>
                   </Link>
                 ))}
+              </div>
+            )}
+            {nextMarket && (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: STONE, borderBottom: Bsm, paddingBottom: '8px', marginBottom: '12px', textTransform: 'uppercase' }}>
+                  NEXT MARKET HERE
+                </div>
+                <Link href={`/markets/${nextMarket.id}`} style={{ textDecoration: 'none', display: 'block', background: INK, padding: '14px', border: `2px solid ${INK}` }}>
+                  <div style={{ fontFamily: FM, fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: RED, marginBottom: '6px', fontWeight: 700 }}>
+                    {new Date(nextMarket.event_date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
+                    {' · '}{nextMarket.starts_at.slice(0, 5)}
+                  </div>
+                  <div style={{ fontFamily: FH, fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: WHITE, lineHeight: 1, marginBottom: '6px' }}>
+                    {nextMarket.title}
+                  </div>
+                  {nextMarket.space_name && (
+                    <div style={{ fontFamily: FM, fontSize: '10px', color: 'rgba(244,241,236,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      {nextMarket.space_name}
+                    </div>
+                  )}
+                  <div style={{ marginTop: '12px', fontFamily: FM, fontSize: '9px', fontWeight: 700, color: RED, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                    SEE MARKET →
+                  </div>
+                </Link>
               </div>
             )}
             <div>
