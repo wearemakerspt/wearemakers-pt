@@ -272,18 +272,20 @@ export default async function HomePage() {
 
         {/* 2×2 maker grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
-          {spotlightBrands.map((b: any, i: number) => (
-            <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ borderLeft: i % 2 === 1 ? Bsm : B, borderBottom: i < 2 ? Bsm : 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit', background: WHITE, minHeight: '140px', position: 'relative' as const, transition: 'background .18s' }} className="maker-cell-hover">
-              <div style={{ width: '40px', height: '40px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '12px', overflow: 'hidden' }}>
-                {b.avatar_url ? <img src={b.avatar_url} alt={b.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.display_name.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '15px', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: '16px', color: INK }}>{b.display_name}</div>
-                {(b.bio_i18n as any)?._category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.1em', color: STONE, marginTop: '3px', textTransform: 'uppercase' }}>{(b.bio_i18n as any)._category.split(',')[0].trim()}</div>}
-                {(b.bio_i18n as any)?._price_range && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: RED, marginTop: '3px' }}>{(b.bio_i18n as any)._price_range}</div>}
+          {spotlightBrands.map((b: any, i: number) => {
+            const cardImg = b.featured_photo_url ?? b.avatar_url ?? null
+            return (
+            <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ borderLeft: i % 2 === 1 ? Bsm : B, borderBottom: i < 2 ? Bsm : 'none', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', textDecoration: 'none', color: 'inherit', background: INK, minHeight: '190px', position: 'relative' as const, overflow: 'hidden', transition: 'opacity .18s' }} className="maker-cell-hover">
+              {cardImg && <img src={cardImg} alt={b.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(12,12,12,0.75) 100%)' }} />
+              <div style={{ position: 'relative', zIndex: 2, padding: '14px 18px' }}>
+                <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '15px', letterSpacing: '0.04em', textTransform: 'uppercase', color: WHITE }}>{b.display_name}</div>
+                {(b.bio_i18n as any)?._category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.1em', color: 'rgba(244,241,236,0.6)', marginTop: '2px', textTransform: 'uppercase' }}>{(b.bio_i18n as any)._category.split(',')[0].trim()}</div>}
+                {(b.bio_i18n as any)?._price_range && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: RED, marginTop: '2px' }}>{(b.bio_i18n as any)._price_range}</div>}
               </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       </section></>
       )}
