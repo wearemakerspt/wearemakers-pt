@@ -80,7 +80,20 @@ export default function UpdatePasswordPage() {
       setIsPending(false)
     } else {
       setSuccess(true)
-      setTimeout(() => router.push('/dashboard/maker'), 2000)
+      // Redirect based on role
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user!.id)
+        .single()
+      const role = profile?.role ?? 'visitor'
+      const dest = role === 'admin' || role === 'maker'
+        ? '/dashboard/maker'
+        : role === 'curator'
+          ? '/dashboard/curator'
+          : '/circuit'
+      setTimeout(() => router.push(dest), 2000)
     }
   }
 
