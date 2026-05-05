@@ -303,8 +303,16 @@ export async function updateCuratorProfile(formData: FormData) {
 
   if (updateError) return { error: updateError.message }
 
+  // Fetch slug for revalidation
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('slug')
+    .eq('id', user.id)
+    .single()
+
   revalidatePath('/dashboard/curator')
-  revalidatePath(`/curators`)
+  revalidatePath('/curators')
+  if (profile?.slug) revalidatePath(`/curators/${profile.slug}`)
   return { success: true }
 }
 
