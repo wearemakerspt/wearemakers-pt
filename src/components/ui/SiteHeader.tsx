@@ -37,16 +37,18 @@ export default function SiteHeader({ user, liveCount = 0 }: Props) {
 
         {user ? (
           <>
-            <Link
-              href={
-                role === 'admin' ? '/dashboard/admin'
-                : role === 'curator' ? '/dashboard/curator'
-                : '/dashboard/maker'
-              }
-              className="mh-cell"
-            >
-              DASHBOARD
-            </Link>
+            {role !== 'visitor' && (
+              <Link
+                href={
+                  role === 'admin' ? '/dashboard/admin'
+                  : role === 'curator' ? '/dashboard/curator'
+                  : '/dashboard/maker'
+                }
+                className="mh-cell"
+              >
+                DASHBOARD
+              </Link>
+            )}
             <form action={signOut} style={{ display: 'flex' }}>
               <button type="submit" className="mh-cell inv">EXIT</button>
             </form>
