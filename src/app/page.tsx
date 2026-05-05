@@ -84,8 +84,11 @@ export default async function HomePage() {
   const top20Brands = (top20Rows as any[]).map(r => r.maker).filter(Boolean).slice(0, 10)
   // Slideshow: prefer live brands (≥2), fall back to top20
   const slideshowBrands = liveBrands.length >= 2 ? liveBrands.slice(0, 8) : top20Brands
-  // Spotlight 2×2 grid: top4 of top20, or live brands if no top20
-  const spotlightBrands = top20Brands.slice(0, 4).length > 0 ? top20Brands.slice(0, 4) : liveBrands.slice(0, 4)
+  // Spotlight 2×2: always needs 4 brands — pad top20 with live brands if needed
+  const top4 = top20Brands.slice(0, 4)
+  const spotlightBrands = top4.length >= 4
+    ? top4
+    : [...top4, ...liveBrands.filter(b => !top4.find((t: any) => t.id === b.id))].slice(0, 4)
   // Curator spotlight cards for carousel
   const curatorCards = (curatorSpotlightRows as any[])
   const latestArticles = articles.slice(0, 3)
