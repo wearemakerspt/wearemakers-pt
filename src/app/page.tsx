@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { getLiveMarkets, getAllMarkets } from '@/lib/queries/markets'
 import { getAllBrands } from '@/lib/queries/brands'
 import { getCurrentUser } from '@/lib/queries/auth'
-import { getWamTop20 } from '@/lib/queries/spotlight'
+import { getWamTop20, getCuratorSpotlights } from '@/lib/queries/spotlight'
 import { getAllArticles } from '@/lib/queries/journal'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import InstallPrompt from '@/components/ui/InstallPrompt'
 import HeroSlideshow from '@/components/ui/HeroSlideshow'
+import SpotlightCarousel from '@/components/ui/SpotlightCarousel'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +67,7 @@ const STONE = '#6B6560'
 const GREEN = '#1a5c30'
 
 export default async function HomePage() {
-  const [liveMarkets, allMarkets, allBrands, user, top20Rows, articles, weather] = await Promise.all([
+  const [liveMarkets, allMarkets, allBrands, user, top20Rows, articles, weather, curatorSpotlightRows] = await Promise.all([
     getLiveMarkets(),
     getAllMarkets(),
     getAllBrands(),
@@ -74,6 +75,7 @@ export default async function HomePage() {
     getWamTop20(),
     getAllArticles(),
     getLisbonWeather(),
+    getCuratorSpotlights(),
   ])
 
   const { day, abbr, greeting } = getDayAndGreeting()
@@ -84,6 +86,8 @@ export default async function HomePage() {
   const slideshowBrands = liveBrands.length >= 2 ? liveBrands.slice(0, 8) : top20Brands
   // Spotlight 2×2 grid: top4 of top20, or live brands if no top20
   const spotlightBrands = top20Brands.slice(0, 4).length > 0 ? top20Brands.slice(0, 4) : liveBrands.slice(0, 4)
+  // Curator spotlight cards for carousel
+  const curatorCards = (curatorSpotlightRows as any[])
   const latestArticles = articles.slice(0, 3)
 
   return (
@@ -275,7 +279,7 @@ export default async function HomePage() {
           {spotlightBrands.map((b: any, i: number) => {
             const cardImg = b.featured_photo_url ?? b.avatar_url ?? null
             return (
-            <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ borderLeft: i % 2 === 1 ? Bsm : B, borderBottom: i < 2 ? Bsm : 'none', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', textDecoration: 'none', color: 'inherit', background: INK, minHeight: '190px', position: 'relative' as const, overflow: 'hidden', transition: 'opacity .18s' }} className="maker-cell-hover">
+            <Link key={b.id} href={`/brands/${b.slug ?? b.id}`} style={{ borderLeft: i % 2 === 1 ? Bsm : B, borderBottom: i < 2 ? Bsm : 'none', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', textDecoration: 'none', color: 'inherit', background: INK, aspectRatio: '4/3', position: 'relative' as const, overflow: 'hidden', transition: 'opacity .18s' }} className="maker-cell-hover">
               {cardImg && <img src={cardImg} alt={b.display_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(12,12,12,0.75) 100%)' }} />
               <div style={{ position: 'relative', zIndex: 2, padding: '14px 18px' }}>
@@ -287,7 +291,14 @@ export default async function HomePage() {
             )
           })}
         </div>
-      </section></>
+      </section>
+
+      {/* ── Curator spotlight carousel ── */}
+      {curatorCards.length > 0 && (
+        <div style={{ padding: '0 52px', borderBottom: B }}>
+          <SpotlightCarousel curatorCards={curatorCards} />
+        </div>
+      )}</>
       )}
 
       {/* ── Live brands scroll ── */}
