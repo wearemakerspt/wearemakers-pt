@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import SaveMarketButton from '@/components/ui/SaveMarketButton'
+import MapEmbed from '@/components/ui/MapEmbed'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: Promise<{ id: string }> }
@@ -193,6 +194,13 @@ export default async function MarketDetailPage({ params }: Props) {
             <SaveMarketButton marketId={market.id} marketTitle={market.title} userId={user?.id ?? null} initialSaved={initialSaved} dark={true} />
           </div>
         </div>
+
+        {/* Map */}
+        {market.space.lat && market.space.lng && (
+          <div style={{ borderBottom: B }}>
+            <MapEmbed lat={market.space.lat} lng={market.space.lng} label={market.space.name} address={market.space.address} height={260} />
+          </div>
+        )}
 
         {/* Live badge */}
         {isLive && (

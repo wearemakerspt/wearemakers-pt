@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getSpaceBySlug } from '@/lib/queries/spaces'
 import { getCurrentUser } from '@/lib/queries/auth'
 import SiteHeader from '@/components/ui/SiteHeader'
+import MapEmbed from '@/components/ui/MapEmbed'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: Promise<{ slug: string }> }
@@ -85,6 +86,13 @@ export default async function SpacePage({ params }: Props) {
         {space.description && (
           <div style={{ padding: '32px 52px', borderBottom: B }}>
             <p style={{ fontFamily: FB, fontSize: '15px', color: STONE, lineHeight: 1.75, maxWidth: '640px', margin: 0 }}>{space.description}</p>
+          </div>
+        )}
+
+        {/* Map */}
+        {space.lat && space.lng && (
+          <div style={{ borderBottom: '2px solid #1A1A1A' }}>
+            <MapEmbed lat={space.lat} lng={space.lng} label={space.name} address={space.address} height={280} />
           </div>
         )}
 
