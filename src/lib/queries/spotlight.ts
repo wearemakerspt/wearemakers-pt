@@ -11,6 +11,7 @@ export async function getWamTop20() {
         display_name,
         slug,
         avatar_url,
+        featured_photo_url,
         is_verified,
         bio_i18n,
         instagram_handle
@@ -69,6 +70,7 @@ export async function getCuratorSpotlightBrands(curatorSlug: string) {
         display_name,
         slug,
         avatar_url,
+        featured_photo_url,
         is_verified,
         bio_i18n,
         instagram_handle
