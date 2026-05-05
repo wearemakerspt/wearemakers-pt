@@ -51,6 +51,37 @@ export interface FeaturedMaker {
   is_live: boolean
 }
 
+export async function getAllCurators(): Promise<CuratorProfile[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, display_name, slug, bio, avatar_url, instagram_handle, shop_url, whatsapp, organisation_name, organisation_url')
+    .in('role', ['curator', 'admin'])
+    .eq('is_active', true)
+    .eq('is_approved', true)
+    .not('avatar_url', 'is', null)
+    .order('display_name', { ascending: true })
+
+  if (error || !data) return []
+
+  return data.map((p: any) => ({
+    id: p.id,
+    display_name: p.display_name,
+    slug: p.slug,
+    bio: p.bio,
+    avatar_url: p.avatar_url,
+    instagram_handle: p.instagram_handle,
+    shop_url: p.shop_url,
+    whatsapp: p.whatsapp,
+    organisation_name: p.organisation_name,
+    organisation_url: p.organisation_url,
+    markets: [],
+    featured_makers: [],
+    members: [],
+  }))
+}
+
 export async function getCuratorBySlug(slug: string): Promise<CuratorProfile | null> {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
