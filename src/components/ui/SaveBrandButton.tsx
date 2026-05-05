@@ -250,7 +250,7 @@ export default function SaveBrandButton({
                   {brandName} is in your Circuit. Register free to get notified when they go live.
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <a href="/auth/register" style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px 28px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                  <a href="/auth/register/visitor" style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: RED, color: P, border: 'none', padding: '12px 28px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' }}>
                     JOIN FREE — GET NOTIFIED →
                   </a>
                   <a href="/circuit" style={{ fontFamily: TAG, fontWeight: 700, fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', background: 'transparent', color: 'rgba(240,236,224,.5)', border: '1px solid rgba(240,236,224,.2)', padding: '10px 28px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' }}>

@@ -81,7 +81,7 @@ export default function CircuitAnon() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-          <Link href="/auth/register" style={{ fontFamily: FM, fontWeight: 700, fontSize: '10px', color: WHITE, background: RED, border: `2px solid ${RED}`, padding: '10px 18px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'inline-block' }}>
+          <Link href="/auth/register/visitor" style={{ fontFamily: FM, fontWeight: 700, fontSize: '10px', color: WHITE, background: RED, border: `2px solid ${RED}`, padding: '10px 18px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'inline-block' }}>
             JOIN FREE →
           </Link>
           <Link href="/auth/login" style={{ fontFamily: FM, fontWeight: 700, fontSize: '10px', color: 'rgba(244,241,236,0.6)', background: 'transparent', border: `1px solid rgba(244,241,236,0.2)`, padding: '10px 18px', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'inline-block' }}>
