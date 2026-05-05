@@ -70,52 +70,57 @@ export default function HeroSlideshow({ brands, dayLabel, greetingLine }: Props)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', borderRight: '2px solid #0C0C0C', position: 'relative', overflow: 'hidden', background: '#F4F1EC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', borderRight: '2px solid #0C0C0C', position: 'relative', overflow: 'hidden', background: '#1A1A1A' }}>
+
+      {/* Full-bleed background image */}
+      <div style={{ position: 'absolute', inset: 0, opacity: fading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
+        {img ? (
+          <img src={img} alt={brand!.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EDE9E2' }}>
+            <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '120px', color: 'rgba(12,12,12,0.08)', letterSpacing: '-0.04em' }}>
+              {brand!.display_name.slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+        )}
+        {/* Gradient overlay for legibility */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(12,12,12,0.15) 0%, rgba(12,12,12,0) 40%, rgba(12,12,12,0.7) 100%)' }} />
+      </div>
 
       {/* Top kicker */}
-      <div style={{ padding: '24px 52px 0', flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.18em', color: '#6B6560', textTransform: 'uppercase' }}>
+      <div style={{ padding: '24px 52px 0', flexShrink: 0, position: 'relative', zIndex: 2 }}>
+        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.18em', color: 'rgba(244,241,236,0.6)', textTransform: 'uppercase' }}>
           {dayLabel}
         </div>
       </div>
 
-      {/* Brand content */}
-      <div style={{ flex: 1, padding: '20px 52px', display: 'flex', flexDirection: 'column', justifyContent: 'center', opacity: fading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
-        {/* Image */}
-        <div style={{ width: '100%', aspectRatio: '4/5', maxHeight: '380px', overflow: 'hidden', background: '#EDE9E2', border: '2px solid #0C0C0C', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', marginBottom: '20px' }}>
-          {img ? (
-            <img src={img} alt={brand!.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '96px', color: 'rgba(12,12,12,0.08)', letterSpacing: '-0.04em' }}>
-              {brand!.display_name.slice(0, 2).toUpperCase()}
-            </span>
-          )}
-          {/* Counter */}
-          <div style={{ position: 'absolute', top: '12px', right: '12px', fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', color: 'rgba(244,241,236,0.7)', background: 'rgba(12,12,12,0.5)', padding: '3px 8px' }}>
-            {String(current + 1).padStart(2, '0')} / {String(brands.length).padStart(2, '0')}
-          </div>
-        </div>
+      {/* Counter */}
+      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 2, fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.12em', color: 'rgba(244,241,236,0.5)', background: 'rgba(12,12,12,0.4)', padding: '3px 8px' }}>
+        {String(current + 1).padStart(2, '0')} / {String(brands.length).padStart(2, '0')}
+      </div>
 
-        {/* Brand info */}
-        <div>
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(28px,4vw,48px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.9, color: '#1A1A1A', marginBottom: '6px' }}>
-            {brand!.display_name}
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6B6560' }}>{category}</div>}
-            {priceRange && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: '#E8001C' }}>{priceRange}</div>}
-          </div>
+      {/* Spacer */}
+      <div style={{ flex: 1 }} />
+
+      {/* Brand info — bottom overlay */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '0 52px 20px', opacity: fading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 'clamp(28px,4vw,56px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.9, color: '#F4F1EC', marginBottom: '6px' }}>
+          {brand!.display_name}
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {category && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.6)' }}>{category}</div>}
+          {priceRange && <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: '#E8001C' }}>{priceRange}</div>}
         </div>
       </div>
 
       {/* Bottom: progress + view link */}
       {href && (
-        <div style={{ borderTop: '2px solid #0C0C0C', flexShrink: 0 }}>
-          <div style={{ height: '2px', background: 'rgba(12,12,12,0.1)' }}>
+        <div style={{ borderTop: '2px solid rgba(244,241,236,0.15)', flexShrink: 0, position: 'relative', zIndex: 2, background: 'rgba(12,12,12,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ height: '2px', background: 'rgba(244,241,236,0.1)' }}>
             <div style={{ height: '100%', width: `${progress}%`, background: '#E8001C', transition: 'width 0.05s linear' }} />
           </div>
           <Link href={href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 52px', textDecoration: 'none' }}>
-            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#1A1A1A' }}>VIEW BRAND</span>
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.8)' }}>VIEW BRAND</span>
             <span style={{ color: '#E8001C', fontSize: '16px' }}>→</span>
           </Link>
         </div>
@@ -123,10 +128,10 @@ export default function HeroSlideshow({ brands, dayLabel, greetingLine }: Props)
 
       {/* Dot indicators */}
       {brands.length > 1 && (
-        <div style={{ position: 'absolute', bottom: '60px', left: '52px', display: 'flex', gap: '6px' }}>
+        <div style={{ position: 'absolute', bottom: '60px', left: '52px', display: 'flex', gap: '6px', zIndex: 3 }}>
           {brands.map((_, i) => (
             <button key={i} onClick={() => { setFading(true); setTimeout(() => { setCurrent(i); setFading(false) }, 300) }}
-              style={{ width: i === current ? '20px' : '6px', height: '3px', background: i === current ? '#E8001C' : 'rgba(12,12,12,0.2)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s, background 0.3s' }}
+              style={{ width: i === current ? '20px' : '6px', height: '3px', background: i === current ? '#E8001C' : 'rgba(244,241,236,0.3)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s, background 0.3s' }}
             />
           ))}
         </div>
