@@ -25,7 +25,8 @@ export async function signInWithPassword(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect(next)
+  // Redirect through sync to flush any localStorage Circuit saves to DB
+  redirect(`/auth/sync?next=${encodeURIComponent(next)}`)
 }
 
 // ── Sign In with Magic Link ───────────────────────────────────
@@ -162,9 +163,10 @@ async function signUpWithRole(
       }).catch(() => {})
     }
 
-    // After auto-confirm, show pending approval state
-    // (is_approved = false so dashboard will show pending screen)
-    redirect(`${errorRedirectBase}?success=1`)
+    // Redirect through sync page to flush localStorage Circuit to DB
+    // Then land on success page
+    const successUrl = `${errorRedirectBase}?success=1`
+    redirect(`/auth/sync?next=${encodeURIComponent(successUrl)}`)
   }
 
   // Email confirmation required
