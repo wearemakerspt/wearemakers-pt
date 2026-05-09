@@ -368,24 +368,18 @@ export default function EspacosPage() {
           MERCADOS JÁ NA PLATAFORMA · MARKETS ALREADY ON THE PLATFORM
         </div>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          {[
-            { name: 'MERCADO NO BAIRRO', slug: 'mercado-no-bairro', desc: 'Praça D. Luís I · Cais do Sodré · Príncipe Real' },
-          ].map(curator => (
-            <a key={curator.slug} href={`/curators/${curator.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: '8px', padding: '20px 24px', border: `1px solid ${C.ink3}`, background: C.ink, flex: '1 1 260px', maxWidth: '320px', transition: 'border-color .15s' }}>
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: C.paper, letterSpacing: '-0.01em', lineHeight: 1 }}>
-                {curator.name}
-              </div>
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink4, letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.6 }}>
-                {curator.desc}
-              </div>
-              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: GOLD, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: '4px' }}>
-                VER PERFIL →
-              </div>
-            </a>
-          ))}
-          {/* Placeholder for more curators */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 24px', border: `1px dashed ${C.ink3}`, flex: '1 1 260px', maxWidth: '320px' }}>
-            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 40px', border: `1px dashed ${C.ink3}`, flex: '1 1 260px', maxWidth: '320px' }}>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' as const }}>
+              O SEU MERCADO AQUI<br />YOUR MARKET HERE
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 40px', border: `1px dashed ${C.ink3}`, flex: '1 1 260px', maxWidth: '320px' }}>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' as const }}>
+              O SEU MERCADO AQUI<br />YOUR MARKET HERE
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 40px', border: `1px dashed ${C.ink3}`, flex: '1 1 260px', maxWidth: '320px' }}>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' as const }}>
               O SEU MERCADO AQUI<br />YOUR MARKET HERE
             </div>
           </div>
