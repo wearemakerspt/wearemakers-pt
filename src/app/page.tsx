@@ -413,10 +413,11 @@ export default async function HomePage() {
           .home-live-markets { grid-template-columns: 1fr !important; }
           .home-live-markets > a { border-right: none !important; border-bottom: 2px solid #0C0C0C !important; }
           .home-hero { grid-template-columns: 1fr !important; min-height: auto !important; }
-          .home-hero > div:first-child { min-height: 75vw !important; }
+          .home-hero > div:first-child { min-height: 100vw !important; }
           .home-spotlight { grid-template-columns: 1fr !important; min-height: auto !important; }
-          .home-spotlight > div:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 40px 24px !important; min-height: 260px; }
-          .home-spotlight > div:last-child > a { min-height: 180px !important; aspect-ratio: unset !important; }
+          .home-spotlight > div:first-child { border-right: none !important; border-bottom: ${B} !important; padding: 40px 24px !important; min-height: 300px; }
+          .home-spotlight > div:last-child { grid-template-columns: 1fr 1fr !important; }
+          .home-spotlight > div:last-child > a { min-height: 56vw !important; aspect-ratio: unset !important; }
           .home-journal { grid-template-columns: 1fr !important; }
           .home-journal > a { border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; padding: 28px 24px !important; }
           .home-footer { grid-template-columns: 1fr 1fr !important; }
@@ -428,10 +429,10 @@ export default async function HomePage() {
           .section-rule { padding: 0 16px !important; }
         }
         @media (max-width: 540px) {
+          .home-hero > div:first-child { min-height: 110vw !important; }
+          .home-spotlight > div:last-child > a { min-height: 52vw !important; }
           .home-footer { grid-template-columns: 1fr !important; }
           .home-footer > div { border-right: none !important; border-bottom: 1px solid rgba(12,12,12,0.15) !important; padding: 32px 24px !important; }
-          .home-spotlight > div:last-child { grid-template-columns: 1fr 1fr !important; }
-          .home-spotlight > div:last-child > a { min-height: 44vw !important; }
         }
       `}</style>
     </>
