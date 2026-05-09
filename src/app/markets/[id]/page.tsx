@@ -8,6 +8,7 @@ import SiteHeader from '@/components/ui/SiteHeader'
 import RealtimeRefresh from '@/components/ui/RealtimeRefresh'
 import SaveMarketButton from '@/components/ui/SaveMarketButton'
 import MapEmbed from '@/components/ui/MapEmbed'
+import MarketHeroCarousel from '@/components/markets/MarketHeroCarousel'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: Promise<{ id: string }> }
@@ -54,9 +55,7 @@ function MarketJsonLd({ market }: { market: any }) {
     endDate,
     eventStatus: market.status === 'cancelled'
       ? 'https://schema.org/EventCancelled'
-      : market.status === 'live' || market.status === 'community_live'
-        ? 'https://schema.org/EventScheduled'
-        : 'https://schema.org/EventScheduled',
+      : 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     url: `https://wearemakers.pt/markets/${market.id}`,
     location: {
@@ -125,16 +124,82 @@ export default async function MarketDetailPage({ params }: Props) {
       <MarketJsonLd market={market} />
       <RealtimeRefresh />
       <SiteHeader user={user} liveCount={isLive ? market.checkin_count : 0} />
+
+      <style>{`
+        .mkt-mobile-hero { display: none; }
+        .mkt-mobile-actions { display: none; }
+        @media (max-width: 860px) {
+          .mkt-mobile-hero {
+            display: block;
+            position: relative;
+            width: 100%;
+            min-height: 80vw;
+            background: #1A1A1A;
+            overflow: hidden;
+            border-bottom: 2px solid #0C0C0C;
+          }
+          .mkt-mobile-hero-dark { min-height: 56vw; }
+          .mkt-mobile-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(12,12,12,0.1) 0%, rgba(12,12,12,0.75) 100%);
+          }
+          .mkt-mobile-hero-content {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 24px 20px;
+          }
+          .detail-hero { grid-template-columns: 1fr !important; }
+          .detail-hero-l { border-right: none !important; border-bottom: 2px solid #0C0C0C !important; padding: 28px 20px !important; justify-content: flex-start !important; gap: 20px !important; }
+          .detail-hero-r { display: none !important; }
+          .detail-meta-row { gap: 16px !important; }
+          .detail-makers { grid-template-columns: repeat(2,1fr) !important; }
+          .mkt-mobile-actions { display: block; border-bottom: 2px solid #0C0C0C; }
+          .mkt-maker-card { padding: 16px !important; }
+        }
+        @media (max-width: 540px) {
+          .detail-makers { grid-template-columns: 1fr 1fr !important; }
+        }
+      `}</style>
+
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
-        {/* Two-column detail hero */}
+        {/* Breadcrumb — dark, matches brand page */}
+        <div style={{ height: '44px', display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: B, background: INK }}>
+          <Link href="/markets" style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.6)', textDecoration: 'none' }}>← ALL MARKETS</Link>
+        </div>
+
+        {/* Mobile hero carousel — makers' avatars auto-scrolling */}
+        <MarketHeroCarousel
+          makers={market.makers}
+          marketTitle={market.title}
+          eventDate={market.event_date}
+          startsAt={market.starts_at}
+          endsAt={market.ends_at}
+          isLive={isLive}
+          checkinCount={market.checkin_count}
+        />
+
+        {/* Mobile action strip — DIRECTIONS + SAVE */}
+        <div className="mkt-mobile-actions">
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((market.space.address ?? market.space.name) + ', Lisbon')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px 0', background: RED, color: WHITE, fontFamily: FM, fontSize: '10px', letterSpacing: '0.16em', textDecoration: 'none', textTransform: 'uppercase' }}
+          >
+            DIRECTIONS →
+          </a>
+          <div style={{ padding: '16px 20px' }}>
+            <SaveMarketButton marketId={market.id} marketTitle={market.title} userId={user?.id ?? null} initialSaved={initialSaved} dark={false} />
+          </div>
+        </div>
+
+        {/* Two-column detail hero — desktop only */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', borderBottom: B, minHeight: '280px' }} className="detail-hero">
           {/* Left */}
-          <div style={{ padding: '52px', borderRight: B, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ padding: '52px', borderRight: B, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} className="detail-hero-l">
             <div>
-              <Link href="/markets" style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', color: STONE, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '28px', textTransform: 'uppercase', transition: 'color .15s' }}>
-                ← BACK TO MARKETS
-              </Link>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
                 <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(52px,6.5vw,88px)', lineHeight: 0.88, letterSpacing: '-0.02em', textTransform: 'uppercase', color: INK }}>
                   {market.title}
@@ -147,7 +212,7 @@ export default async function MarketDetailPage({ params }: Props) {
               </div>
             </div>
             {/* Meta row */}
-            <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }} className="detail-meta-row">
               {[
                 { label: 'DATE', value: new Date(market.event_date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase() },
                 { label: 'HOURS', value: `${market.starts_at.slice(0,5)}–${market.ends_at.slice(0,5)}` },
@@ -162,7 +227,7 @@ export default async function MarketDetailPage({ params }: Props) {
           </div>
 
           {/* Right sidebar — dark */}
-          <div style={{ background: INK, color: WHITE, padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ background: INK, color: WHITE, padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: '24px' }} className="detail-hero-r">
             {(market as any).curator && (
               <div>
                 <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(244,241,236,0.4)', marginBottom: '8px', textTransform: 'uppercase' }}>CURATOR</div>
@@ -219,25 +284,33 @@ export default async function MarketDetailPage({ params }: Props) {
             <span className="section-rule-link">{market.makers.length} {isLive ? 'CHECKED IN' : 'REGISTERED'}</span>
           </div>
           {market.makers.length === 0 ? (
-            <div style={{ padding: '48px 40px', borderBottom: B }}>
-              <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE, lineHeight: 2 }}>NO MAKERS CHECKED IN YET<br />Check back when the market opens.</div>
+            <div style={{ padding: '48px 24px', borderBottom: B }}>
+              <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: STONE, lineHeight: 2 }}>NO MAKERS REGISTERED YET<br />Check back closer to the market date.</div>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderBottom: B }} className="detail-makers">
               {market.makers.map(mk => (
-                <Link key={mk.maker_id} href={`/brands/${mk.maker_slug ?? mk.maker_id}`} style={{ textDecoration: 'none', color: 'inherit', borderRight: Bsm, padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', background: WHITE, transition: 'background .15s' }}
+                <Link
+                  key={mk.maker_id}
+                  href={`/brands/${mk.maker_slug ?? mk.maker_id}`}
+                  className="mkt-maker-card"
+                  style={{ textDecoration: 'none', color: 'inherit', borderRight: Bsm, borderBottom: Bsm, padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', background: WHITE, transition: 'background .15s' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = WHITE}
                 >
-                  <div style={{ width: '48px', height: '48px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '14px', overflow: 'hidden', position: 'relative' }}>
-                    {mk.avatar_url ? <img src={mk.avatar_url} alt={mk.maker_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : mk.maker_name.slice(0, 2).toUpperCase()}
+                  <div style={{ width: '56px', height: '56px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '16px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+                    {mk.avatar_url
+                      ? <img src={mk.avatar_url} alt={mk.maker_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : mk.maker_name.slice(0, 2).toUpperCase()
+                    }
                   </div>
-                  <div>
-                    <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '14px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK }}>{mk.maker_name}</div>
-                    {mk.stall_label && <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase', marginTop: '3px' }}>Stall {mk.stall_label}</div>}
-                    {mk.digital_offer && <div style={{ fontFamily: FB, fontSize: '13px', color: STONE, marginTop: '4px', fontStyle: 'italic' }}>✦ {mk.digital_offer}</div>}
-                    {mk.is_verified && <div style={{ fontFamily: FM, fontSize: '10px', color: INK, border: `1px solid ${INK}`, padding: '1px 6px', display: 'inline-block', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>✦ PRO</div>}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '15px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK, lineHeight: 1.1 }}>{mk.maker_name}</div>
+                    {mk.stall_label && <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase', marginTop: '4px' }}>Stall {mk.stall_label}</div>}
+                    {mk.digital_offer && <div style={{ fontFamily: FB, fontSize: '12px', color: STONE, marginTop: '5px', fontStyle: 'italic', lineHeight: 1.4 }}>✦ {mk.digital_offer}</div>}
+                    {mk.is_verified && <div style={{ fontFamily: FM, fontSize: '9px', color: INK, border: `1px solid ${INK}`, padding: '1px 6px', display: 'inline-block', marginTop: '5px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>✦ PRO</div>}
                   </div>
+                  <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.1em', alignSelf: 'flex-end' }}>→</div>
                 </Link>
               ))}
             </div>
@@ -267,22 +340,8 @@ export default async function MarketDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* Back */}
-        <div style={{ padding: '24px 52px', borderTop: B }}>
-          <Link href="/markets" style={{ fontFamily: FM, fontSize: '10px', fontWeight: 700, color: RED, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' }}>← ALL MARKETS</Link>
-        </div>
+        <div className="wam-nav-spacer" />
       </main>
-      <style>{`
-        @media (max-width: 860px) {
-          .detail-hero { grid-template-columns: 1fr !important; }
-          .detail-hero > div:first-child { border-right: none !important; border-bottom: 2px solid #0C0C0C !important; padding: 36px 24px !important; }
-          .detail-hero > div:last-child { padding: 28px 24px !important; }
-          .detail-makers { grid-template-columns: repeat(2,1fr) !important; }
-        }
-        @media (max-width: 540px) {
-          .detail-makers { grid-template-columns: 1fr 1fr !important; }
-        }
-      `}</style>
     </>
   )
 }
