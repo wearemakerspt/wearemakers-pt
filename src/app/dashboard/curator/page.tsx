@@ -12,6 +12,7 @@ import PromoKit from '@/components/dashboard/PromoKit'
 import PendingApproval from '@/components/dashboard/PendingApproval'
 import CuratorProfile from '@/components/dashboard/CuratorProfile'
 import CuratorAnalytics from '@/components/dashboard/CuratorAnalytics'
+import MakerRequests from '@/components/dashboard/MakerRequests'
 
 export const metadata: Metadata = {
   title: 'Command Center — Curator Dashboard',
@@ -137,6 +138,48 @@ export default async function CuratorDashboardPage() {
             </div>
             <MarketLedger markets={ownMarkets} spaces={spaces} />
           </div>
+
+          {/* §8 Maker Requests */}
+          {(() => {
+            const marketsWithRequests = ownMarkets
+              .filter(m => m.attending_makers.length > 0)
+              .map(m => ({
+                market_id: m.id,
+                market_title: m.title,
+                event_date: m.event_date,
+                requests: m.attending_makers.map(mk => ({
+                  attendance_id: mk.attendance_id,
+                  maker_id: mk.id,
+                  display_name: mk.display_name,
+                  slug: mk.slug,
+                  category: mk.category,
+                  is_verified: mk.is_verified,
+                  stall_label: mk.stall_label,
+                  checked_in_at: mk.checked_in_at,
+                })),
+              }))
+            const totalPending = marketsWithRequests.reduce((sum, m) =>
+              sum + m.requests.filter(r => r.stall_label === 'INTENT' && !r.is_verified).length, 0)
+            return (
+              <div style={{ margin: '12px 12px 0', border: `3px solid ${totalPending > 0 ? 'var(--RED)' : 'var(--INK)'}`, boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+                <div style={{ background: totalPending > 0 ? 'var(--RED)' : 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+                  <span style={{ ...T, fontWeight: 700 }}>§8 — MAKER REQUESTS · CONFIRM ATTENDANCE</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {totalPending > 0 && (
+                      <span style={{ ...T, fontSize: '10px', fontWeight: 700 }}>{totalPending} PENDING</span>
+                    )}
+                    <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-008</span>
+                  </div>
+                </div>
+                <div style={{ background: 'var(--P2)', padding: '8px 13px', borderBottom: '2px solid rgba(24,22,20,.15)' }}>
+                  <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.4)' }}>
+                    Makers who declare attendance intent appear here. Confirm to add them to the market, or refuse to remove them.
+                  </div>
+                </div>
+                <MakerRequests markets={marketsWithRequests} />
+              </div>
+            )
+          })()}
 
           {/* §2 Promo Kit */}
           <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>

@@ -430,3 +430,67 @@ export async function verifyAttendance(attendanceId: string) {
   revalidatePath('/dashboard/curator')
   return { success: true }
 }
+
+// ── Confirm Maker Request (clear INTENT, mark verified) ───────
+
+export async function confirmMakerRequest(attendanceId: string) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  // Verify this attendance belongs to one of the curator's markets
+  const { data: attendance } = await supabase
+    .from('attendance')
+    .select('id, market:markets!attendance_market_id_fkey(curator_id)')
+    .eq('id', attendanceId)
+    .single()
+
+  if (!attendance) return { error: 'Attendance record not found.' }
+  const market = Array.isArray((attendance as any).market)
+    ? (attendance as any).market[0]
+    : (attendance as any).market
+  if (market?.curator_id !== user.id && user.profile.role !== 'admin') {
+    return { error: 'Not authorised.' }
+  }
+
+  const { error: updateError } = await supabase
+    .from('attendance')
+    .update({ is_verified: true, stall_label: null })
+    .eq('id', attendanceId)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
+
+// ── Remove Maker Request (reject/delete attendance row) ───────
+
+export async function removeMakerRequest(attendanceId: string) {
+  const { supabase, user, error } = await getAuthenticatedCurator()
+  if (error || !user) return { error }
+
+  // Verify this attendance belongs to one of the curator's markets
+  const { data: attendance } = await supabase
+    .from('attendance')
+    .select('id, market:markets!attendance_market_id_fkey(curator_id)')
+    .eq('id', attendanceId)
+    .single()
+
+  if (!attendance) return { error: 'Attendance record not found.' }
+  const market = Array.isArray((attendance as any).market)
+    ? (attendance as any).market[0]
+    : (attendance as any).market
+  if (market?.curator_id !== user.id && user.profile.role !== 'admin') {
+    return { error: 'Not authorised.' }
+  }
+
+  const { error: deleteError } = await supabase
+    .from('attendance')
+    .delete()
+    .eq('id', attendanceId)
+
+  if (deleteError) return { error: deleteError.message }
+
+  revalidatePath('/dashboard/curator')
+  return { success: true }
+}
