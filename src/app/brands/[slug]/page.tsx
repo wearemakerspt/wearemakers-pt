@@ -120,6 +120,7 @@ export default async function BrandProfilePage({ params }: Props) {
         .bp-member:last-child { border-right: none; }
         .bp-mobile-hero { display: none; }
         .bp-mobile-contacts { display: none; }
+        .bp-mobile-save { display: none; }
         @media (max-width: 860px) {
           .bp-hero { grid-template-columns: 1fr; }
           .bp-hero-l { border-right: none; border-bottom: 1px solid rgba(12,12,12,0.15); padding: 20px; gap: 12px; }
@@ -138,7 +139,7 @@ export default async function BrandProfilePage({ params }: Props) {
           .bp-mobile-contact-item:last-child { border-right: none; }
           .bp-mobile-contact-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
           .bp-mobile-contact-label { font-family: var(--fm); font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,241,236,0.4); text-align: center; }
-          .bp-mobile-save { display: block; padding: 0 20px 20px; }
+          .bp-mobile-save { display: block; padding: 20px; border-bottom: 1px solid rgba(12,12,12,0.15); }
         }
         @media (hover: none) { .lightbox-arrow { display: none !important; } }
       `}</style>
@@ -146,8 +147,8 @@ export default async function BrandProfilePage({ params }: Props) {
       <main style={{ background: 'var(--white)', minHeight: '100dvh' }}>
 
         {/* ── Breadcrumb ── */}
-        <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: '1px solid rgba(12,12,12,0.15)', background: 'var(--paper)' }}>
-          <Link href="/brands" className="dh-back">← ALL BRANDS</Link>
+        <div style={{ height: '44px', display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: '2px solid #0C0C0C', background: '#1A1A1A' }}>
+          <Link href="/brands" style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.6)', textDecoration: 'none' }}>← ALL BRANDS</Link>
         </div>
 
         {/* ── Mobile full-bleed hero ── */}
@@ -215,6 +216,9 @@ export default async function BrandProfilePage({ params }: Props) {
 
         {/* ── Mobile save button ── */}
         <div className="bp-mobile-save">
+          <div style={{ fontFamily: 'var(--fm)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--stone)', marginBottom: '10px' }}>
+            SAVE TO GET NOTIFIED WHEN THEY GO LIVE
+          </div>
           <SaveBrandButton
             brandId={brand.id}
             brandName={brand.display_name}
@@ -224,8 +228,8 @@ export default async function BrandProfilePage({ params }: Props) {
             dark={false}
           />
           {hasOffer && !initialSaved && (
-            <div style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--red)', textTransform: 'uppercase', marginTop: '8px' }}>
-              ✦ SAVE TO UNLOCK EXCLUSIVE OFFER
+            <div style={{ fontFamily: 'var(--fm)', fontSize: '9px', letterSpacing: '0.14em', color: 'var(--red)', textTransform: 'uppercase', marginTop: '8px' }}>
+              ✦ UNLOCK EXCLUSIVE OFFER ON SAVE
             </div>
           )}
           {hasOffer && initialSaved && (
