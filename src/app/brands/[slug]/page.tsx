@@ -119,18 +119,26 @@ export default async function BrandProfilePage({ params }: Props) {
         .bp-member { padding: 32px 40px; border-right: 1px solid rgba(12,12,12,0.15); display: flex; gap: 20px; align-items: flex-start; }
         .bp-member:last-child { border-right: none; }
         .bp-mobile-hero { display: none; }
+        .bp-mobile-contacts { display: none; }
         @media (max-width: 860px) {
           .bp-hero { grid-template-columns: 1fr; }
-          .bp-hero-l { border-right: none; border-bottom: 1px solid rgba(12,12,12,0.15); padding: 28px 20px; gap: 16px; }
-          .bp-hero-r { padding: 24px 20px; }
+          .bp-hero-l { border-right: none; border-bottom: 1px solid rgba(12,12,12,0.15); padding: 20px; gap: 12px; }
+          .bp-hero-r { display: none !important; }
           .bp-market-row { padding: 0 20px; gap: 12px; }
           .bp-member { padding: 20px; }
           .bp-hero-save { display: none !important; }
+          .bp-hero-desktop-name { display: none !important; }
           .bp-hero-desktop-avatar { display: none !important; }
-          .bp-mobile-hero { display: block; position: relative; width: 100%; min-height: 88vw; background: #1A1A1A; overflow: hidden; border-bottom: 2px solid #0C0C0C; }
+          .bp-mobile-hero { display: block; position: relative; width: 100%; min-height: 88vw; background: #1A1A1A; overflow: hidden; border-bottom: 1px solid rgba(12,12,12,0.15); }
           .bp-mobile-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
           .bp-mobile-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 35%, rgba(12,12,12,0.85) 100%); }
           .bp-mobile-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 20px; }
+          .bp-mobile-contacts { display: grid; grid-template-columns: repeat(3, 1fr); background: #1A1A1A; border-bottom: 1px solid rgba(12,12,12,0.15); }
+          .bp-mobile-contact-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 12px; gap: 8px; text-decoration: none; border-right: 1px solid rgba(244,241,236,0.08); }
+          .bp-mobile-contact-item:last-child { border-right: none; }
+          .bp-mobile-contact-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+          .bp-mobile-contact-label { font-family: var(--fm); font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,241,236,0.4); text-align: center; }
+          .bp-mobile-save { display: block; padding: 0 20px 20px; }
         }
         @media (hover: none) { .lightbox-arrow { display: none !important; } }
       `}</style>
@@ -164,6 +172,71 @@ export default async function BrandProfilePage({ params }: Props) {
           </div>
         </div>
 
+        {/* ── Mobile contacts + save ── */}
+        {(brand.instagram_handle || brand.shop_url || brand.whatsapp) && (
+          <div className="bp-mobile-contacts">
+            {brand.instagram_handle && (
+              <InstagramTapTracker brandId={brand.id} handle={brand.instagram_handle} marketId={null}>
+                <a href={`https://instagram.com/${brand.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="bp-mobile-contact-item">
+                  <div className="bp-mobile-contact-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="2" y="2" width="20" height="20" rx="5" stroke="#F4F1EC" strokeWidth="1.5"/>
+                      <circle cx="12" cy="12" r="4" stroke="#F4F1EC" strokeWidth="1.5"/>
+                      <circle cx="17.5" cy="6.5" r="1" fill="#F4F1EC"/>
+                    </svg>
+                  </div>
+                  <span className="bp-mobile-contact-label">INSTAGRAM</span>
+                </a>
+              </InstagramTapTracker>
+            )}
+            {brand.shop_url && (
+              <a href={brand.shop_url} target="_blank" rel="noopener noreferrer" className="bp-mobile-contact-item">
+                <div className="bp-mobile-contact-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9h18M3 9l2-5h14l2 5M3 9v10a1 1 0 001 1h16a1 1 0 001-1V9M9 13h6" stroke="#F4F1EC" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="bp-mobile-contact-label">SHOP</span>
+              </a>
+            )}
+            {brand.whatsapp && (
+              <a href={`https://wa.me/${brand.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="bp-mobile-contact-item">
+                <div className="bp-mobile-contact-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.35A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" stroke="#F4F1EC" strokeWidth="1.5"/>
+                    <path d="M8.5 9.5c.5 1 1.5 2.5 3 3.5s2.5 1.5 3 1.5" stroke="#F4F1EC" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="bp-mobile-contact-label">WHATSAPP</span>
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* ── Mobile save button ── */}
+        <div className="bp-mobile-save">
+          <SaveBrandButton
+            brandId={brand.id}
+            brandName={brand.display_name}
+            initialSaved={initialSaved}
+            userId={user?.id ?? null}
+            digitalOffer={hasOffer ? brand.digital_offer : null}
+            dark={false}
+          />
+          {hasOffer && !initialSaved && (
+            <div style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--red)', textTransform: 'uppercase', marginTop: '8px' }}>
+              ✦ SAVE TO UNLOCK EXCLUSIVE OFFER
+            </div>
+          )}
+          {hasOffer && initialSaved && (
+            <div style={{ marginTop: '12px', background: 'rgba(232,0,28,0.06)', border: '1px solid rgba(232,0,28,0.2)', padding: '14px' }}>
+              <div style={{ fontFamily: 'var(--fm)', fontSize: '8px', letterSpacing: '0.22em', color: 'var(--red)', textTransform: 'uppercase', marginBottom: '6px' }}>✦ YOUR EXCLUSIVE OFFER</div>
+              <div style={{ fontFamily: 'var(--fb)', fontSize: '15px', fontStyle: 'italic', lineHeight: 1.5, marginBottom: '8px' }}>{brand.digital_offer}</div>
+              <div style={{ fontFamily: 'var(--fm)', fontSize: '8px', color: 'var(--stone)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>SHOW THIS AT THE STALL</div>
+            </div>
+          )}
+        </div>
+
         {/* ── Hero — desktop two-column ── */}
         <div className="bp-hero">
 
@@ -176,7 +249,7 @@ export default async function BrandProfilePage({ params }: Props) {
               </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px' }}>
+            <div className="bp-hero-desktop-name" style={{ display: 'flex', alignItems: 'flex-end', gap: '24px' }}>
               <div className="bp-hero-desktop-avatar" style={{ width: '88px', height: '88px', flexShrink: 0, border: '1px solid rgba(12,12,12,0.15)', background: 'var(--paper)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--fh)', fontWeight: 900, fontSize: '26px', color: 'var(--stone)' }}>
                 {brand.avatar_url
                   ? <img src={brand.avatar_url} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -283,18 +356,14 @@ export default async function BrandProfilePage({ params }: Props) {
 
         {/* ── Photo Gallery ── */}
         {photos.length > 0 && (
-          <div style={{ borderBottom: '2px solid #0C0C0C' }}>
-            <div className="section-rule">
-              <span className="section-rule-title">THE WORK</span>
-              <span style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.12em', color: 'var(--stone)', textTransform: 'uppercase' }}>{photos.length} PHOTO{photos.length !== 1 ? 'S' : ''}</span>
-            </div>
+          <div style={{ borderBottom: '1px solid rgba(12,12,12,0.15)' }}>
             <BrandGallery photos={photos} />
           </div>
         )}
 
         {/* ── Team Members ── */}
         {members.length > 0 && (
-          <div style={{ borderBottom: '2px solid #0C0C0C' }}>
+          <div style={{ borderBottom: '1px solid rgba(12,12,12,0.15)' }}>
             <div className="section-rule">
               <span className="section-rule-title">THE PEOPLE</span>
             </div>
@@ -302,7 +371,7 @@ export default async function BrandProfilePage({ params }: Props) {
               {members.map((m) => (
                 <div key={m.id} className="bp-member">
                   {m.photo_url && (
-                    <div style={{ width: '60px', height: '60px', flexShrink: 0, border: '2px solid #0C0C0C', overflow: 'hidden' }}>
+                    <div style={{ width: '60px', height: '60px', flexShrink: 0, border: '1px solid rgba(12,12,12,0.15)', overflow: 'hidden' }}>
                       <img src={m.photo_url} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
@@ -319,7 +388,7 @@ export default async function BrandProfilePage({ params }: Props) {
 
         {/* ── WHERE TO FIND ME ── */}
         {brand.upcoming_markets.length > 0 && (
-          <div style={{ borderBottom: '2px solid #0C0C0C' }}>
+          <div style={{ borderBottom: '1px solid rgba(12,12,12,0.15)' }}>
             <div className="section-rule">
               <span className="section-rule-title">WHERE TO FIND ME</span>
               <span style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.12em', color: 'var(--stone)', textTransform: 'uppercase' }}>{brand.upcoming_markets.length} UPCOMING</span>
