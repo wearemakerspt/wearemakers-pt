@@ -109,7 +109,7 @@ export default async function BrandProfilePage({ params }: Props) {
 
       <style>{`
         .bp-hero { display: grid; grid-template-columns: 1fr 340px; border-bottom: 2px solid #0C0C0C; }
-        .bp-hero-l { padding: 52px; border-right: 2px solid #0C0C0C; display: flex; flex-direction: column; gap: 28px; }
+        .bp-hero-l { padding: 52px; border-right: 1px solid rgba(12,12,12,0.15); display: flex; flex-direction: column; gap: 28px; }
         .bp-hero-r { background: #1A1A1A; color: #F4F1EC; padding: 40px 36px; display: flex; flex-direction: column; gap: 24px; }
         .bp-market-row { display: flex; align-items: center; gap: 24px; padding: 0 40px; height: 72px; border-bottom: 1px solid rgba(12,12,12,0.15); text-decoration: none; color: inherit; transition: background .12s; }
         .bp-market-row:last-child { border-bottom: none; }
@@ -118,13 +118,19 @@ export default async function BrandProfilePage({ params }: Props) {
         .bp-members { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
         .bp-member { padding: 32px 40px; border-right: 1px solid rgba(12,12,12,0.15); display: flex; gap: 20px; align-items: flex-start; }
         .bp-member:last-child { border-right: none; }
+        .bp-mobile-hero { display: none; }
         @media (max-width: 860px) {
           .bp-hero { grid-template-columns: 1fr; }
-          .bp-hero-l { border-right: none; border-bottom: 2px solid #0C0C0C; padding: 32px 24px; }
-          .bp-hero-r { padding: 28px 24px; }
-          .bp-market-row { padding: 0 24px; gap: 16px; }
-          .bp-member { padding: 24px; }
+          .bp-hero-l { border-right: none; border-bottom: 1px solid rgba(12,12,12,0.15); padding: 28px 20px; gap: 16px; }
+          .bp-hero-r { padding: 24px 20px; }
+          .bp-market-row { padding: 0 20px; gap: 12px; }
+          .bp-member { padding: 20px; }
           .bp-hero-save { display: none !important; }
+          .bp-hero-desktop-avatar { display: none !important; }
+          .bp-mobile-hero { display: block; position: relative; width: 100%; min-height: 88vw; background: #1A1A1A; overflow: hidden; border-bottom: 2px solid #0C0C0C; }
+          .bp-mobile-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+          .bp-mobile-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 35%, rgba(12,12,12,0.85) 100%); }
+          .bp-mobile-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 20px; }
         }
         @media (hover: none) { .lightbox-arrow { display: none !important; } }
       `}</style>
@@ -132,11 +138,33 @@ export default async function BrandProfilePage({ params }: Props) {
       <main style={{ background: 'var(--white)', minHeight: '100dvh' }}>
 
         {/* ── Breadcrumb ── */}
-        <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 40px', borderBottom: '1px solid rgba(12,12,12,0.15)', background: 'var(--paper)' }}>
+        <div style={{ height: '42px', display: 'flex', alignItems: 'center', padding: '0 24px', borderBottom: '1px solid rgba(12,12,12,0.15)', background: 'var(--paper)' }}>
           <Link href="/brands" className="dh-back">← ALL BRANDS</Link>
         </div>
 
-        {/* ── Hero ── */}
+        {/* ── Mobile full-bleed hero ── */}
+        <div className="bp-mobile-hero">
+          {(brand.featured_photo_url || brand.avatar_url) && (
+            <img src={brand.featured_photo_url ?? brand.avatar_url!} alt={brand.display_name} />
+          )}
+          <div className="bp-mobile-hero-overlay" />
+          <div className="bp-mobile-hero-content">
+            {isLive && (
+              <div style={{ fontFamily: 'var(--fm)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a5c30', background: 'rgba(26,92,48,0.15)', border: '1px solid #1a5c30', padding: '3px 10px', display: 'inline-block', marginBottom: '8px' }}>
+                ● LIVE NOW
+              </div>
+            )}
+            <h1 style={{ fontFamily: 'var(--fh)', fontWeight: 900, fontSize: 'clamp(36px,10vw,56px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.9, color: '#F4F1EC', marginBottom: '6px' }}>
+              {brand.display_name}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {category && <span style={{ fontFamily: 'var(--fm)', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.6)' }}>{category.split(',')[0].trim()}</span>}
+              {priceRange && <span style={{ fontFamily: 'var(--fm)', fontSize: '9px', color: 'var(--red)', letterSpacing: '0.1em' }}>{priceRange}</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Hero — desktop two-column ── */}
         <div className="bp-hero">
 
           {/* Left */}
@@ -149,7 +177,7 @@ export default async function BrandProfilePage({ params }: Props) {
             )}
 
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px' }}>
-              <div style={{ width: '88px', height: '88px', flexShrink: 0, border: '2px solid #0C0C0C', background: 'var(--paper)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--fh)', fontWeight: 900, fontSize: '26px', color: 'var(--stone)' }}>
+              <div className="bp-hero-desktop-avatar" style={{ width: '88px', height: '88px', flexShrink: 0, border: '1px solid rgba(12,12,12,0.15)', background: 'var(--paper)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--fh)', fontWeight: 900, fontSize: '26px', color: 'var(--stone)' }}>
                 {brand.avatar_url
                   ? <img src={brand.avatar_url} alt={brand.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : brand.display_name.slice(0, 2).toUpperCase()
