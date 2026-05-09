@@ -32,7 +32,7 @@ export default async function MarketsPage() {
       <main style={{ background: WHITE, minHeight: '100dvh' }}>
 
         {/* Page hero */}
-        <div style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', minHeight: '180px', flexWrap: 'wrap' }}>
+        <div className="markets-hero" style={{ borderBottom: B, padding: '56px 52px 48px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', minHeight: '180px', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: STONE, marginBottom: '8px' }}>LISBON STREET MARKETS</div>
             <h1 style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(64px,8vw,112px)', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 0.88, color: INK }}>
@@ -59,7 +59,9 @@ export default async function MarketsPage() {
 
         <style>{`
           @media (max-width: 860px) {
-            .markets-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
+            .markets-hero { padding: 32px 20px 28px !important; min-height: auto !important; }
+            .markets-hero h1 { font-size: 56px !important; }
+            .markets-hero > div:last-child { display: none; }
             .section-rule { padding: 0 16px !important; }
           }
         `}</style>

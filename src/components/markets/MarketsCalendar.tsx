@@ -24,43 +24,41 @@ function MarketRow({ market, even }: { market: MarketSummary; even: boolean }) {
 
   return (
     <Link href={`/markets/${market.id}`} style={{ textDecoration: 'none', display: 'block' }} className="mkt-cal-row">
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '24px',
-        padding: '0 40px', height: '72px', borderBottom: Bsm,
+      <div className="mkt-row-inner" style={{
+        display: 'flex', alignItems: 'center', gap: '16px',
+        padding: '0 40px', minHeight: '72px', borderBottom: Bsm,
         background: isLive ? 'rgba(26,92,48,.04)' : (even ? WHITE : PAPER),
         transition: 'background .15s', cursor: 'pointer',
       }}>
         {/* Date */}
-        <div style={{ width: '100px', flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-          <div style={{ ...FH, fontWeight: 900, fontSize: '32px', lineHeight: 1, letterSpacing: '-0.02em', color: INK }}>{dayNum}</div>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.1em', color: STONE, textTransform: 'uppercase' }}>{dayName}</div>
+        <div style={{ width: '56px', flexShrink: 0 }}>
+          <div style={{ ...FH, fontWeight: 900, fontSize: '28px', lineHeight: 1, letterSpacing: '-0.02em', color: INK }}>{dayNum}</div>
+          <div style={{ ...FM, fontSize: '9px', letterSpacing: '0.1em', color: STONE, textTransform: 'uppercase' }}>{dayName}</div>
         </div>
 
         {/* Market title + space + curator */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          <div style={{ ...FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px', padding: '12px 0' }}>
+          <div className="mkt-row-title" style={{ ...FH, fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK, lineHeight: 1.1 }}>
             {market.title}
           </div>
-          <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase' }}>
+          <div className="mkt-row-meta" style={{ ...FM, fontSize: '9px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase' }}>
             {market.space.name}{market.space.parish ? ` · ${market.space.parish}` : ''} · {market.starts_at.slice(0,5)}–{market.ends_at.slice(0,5)}
             {market.curator ? ` · ${market.curator.display_name}` : ''}
           </div>
         </div>
 
-        {/* Status */}
-        <div style={{ flexShrink: 0 }}>
-          <span style={{ ...FM, fontSize: '10px', fontWeight: 700, background: cfg.bg, color: cfg.color, padding: '4px 10px', border: cfg.bg === 'transparent' ? `1px solid ${STONE}` : 'none', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        {/* Status + live count */}
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="mkt-status-badge" style={{ ...FM, fontSize: '9px', fontWeight: 700, background: cfg.bg, color: cfg.color, padding: '3px 8px', border: cfg.bg === 'transparent' ? `1px solid ${STONE}` : 'none', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' as const }}>
             {cfg.label}
           </span>
+          {market.checkin_count > 0 && (
+            <div style={{ textAlign: 'center' as const }}>
+              <div style={{ ...FH, fontWeight: 900, fontSize: '18px', color: GREEN, lineHeight: 1 }}>{market.checkin_count}</div>
+              <div style={{ ...FM, fontSize: '8px', color: STONE, textTransform: 'uppercase' }}>LIVE</div>
+            </div>
+          )}
         </div>
-
-        {/* Live count */}
-        {market.checkin_count > 0 && (
-          <div style={{ flexShrink: 0, textAlign: 'center', minWidth: '32px' }}>
-            <div style={{ ...FH, fontWeight: 900, fontSize: '22px', color: GREEN, lineHeight: 1 }}>{market.checkin_count}</div>
-            <div style={{ ...FM, fontSize: '10px', color: STONE, textTransform: 'uppercase' }}>LIVE</div>
-          </div>
-        )}
 
         <div style={{ ...FM, fontSize: '14px', color: 'rgba(12,12,12,0.2)', flexShrink: 0 }}>→</div>
       </div>
@@ -73,7 +71,7 @@ function MonthBlock({ group }: { group: MarketsByMonth }) {
 
   return (
     <div style={{ borderBottom: B }}>
-      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '42px', background: group.isCurrentMonth ? INK : PAPER, border: 'none', cursor: 'pointer', borderBottom: open ? Bsm : 'none' }}>
+      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '42px', background: group.isCurrentMonth ? INK : PAPER, border: 'none', cursor: 'pointer', borderBottom: open ? Bsm : 'none' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
           <div style={{ ...FM, fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: group.isCurrentMonth ? WHITE : INK }}>
             {group.monthLabel}
@@ -179,6 +177,12 @@ export default function MarketsCalendar({ groups, liveCount }: { groups: Markets
         .mkt-cal-row:hover > div { background: #d8d2c4 !important; }
         .filter-tab-live::before { content: '●'; font-size: 6px; margin-right: 7px; animation: blink 2s infinite; display: inline; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+        @media (max-width: 640px) {
+          .mkt-row-inner { padding: 0 16px !important; gap: 10px !important; }
+          .mkt-status-badge { display: none !important; }
+          .mkt-row-title { font-size: 14px !important; }
+          .mkt-row-meta { font-size: 8px !important; }
+        }
       `}</style>
 
       {/* Row 1 — Status filter tabs */}
