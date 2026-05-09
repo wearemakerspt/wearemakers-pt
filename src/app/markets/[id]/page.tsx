@@ -311,8 +311,6 @@ export default async function MarketDetailPage({ params }: Props) {
                   href={`/brands/${mk.maker_slug ?? mk.maker_id}`}
                   className="mkt-maker-card"
                   style={{ textDecoration: 'none', color: 'inherit', borderRight: Bsm, borderBottom: Bsm, padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', background: WHITE, transition: 'background .15s' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = PAPER}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = WHITE}
                 >
                   <div style={{ width: '56px', height: '56px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '16px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
                     {mk.avatar_url
