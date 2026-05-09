@@ -45,7 +45,9 @@ export default async function BrandsPage() {
           .filter-tab-live:hover { background: ${RED} !important; color: ${WHITE} !important; }
           .brands-join-cta:hover { opacity: 0.85; }
           @media (max-width: 860px) {
-            .brands-hero { padding: 40px 24px 32px !important; flex-direction: column !important; align-items: flex-start !important; }
+            .brands-hero { padding: 32px 20px 0 !important; }
+            .brands-hero h1 { font-size: 56px !important; }
+            .brands-filter-bar { margin-left: -20px !important; margin-right: -20px !important; padding-left: 20px !important; }
           }
         `}</style>
 
@@ -64,7 +66,7 @@ export default async function BrandsPage() {
           </div>
 
           {/* Filter bar */}
-          <div style={{ display: 'flex', alignItems: 'stretch', borderTop: B, overflowX: 'auto', scrollbarWidth: 'none', marginLeft: '-52px', marginRight: '-52px', paddingLeft: '52px' }}>
+          <div className="brands-filter-bar" style={{ display: 'flex', alignItems: 'stretch', borderTop: B, overflowX: 'auto', scrollbarWidth: 'none', marginLeft: '-52px', marginRight: '-52px', paddingLeft: '52px' }}>
             {CATEGORIES.map((cat, i) => (
               <div key={cat} className={i === 0 ? 'filter-tab filter-tab-live' : 'filter-tab'} style={{
                 display: 'flex', alignItems: 'center', padding: '0 20px', height: '44px',
