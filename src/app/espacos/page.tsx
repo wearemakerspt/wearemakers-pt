@@ -362,6 +362,36 @@ export default function EspacosPage() {
         </div>
       </section>
 
+      {/* ── CURATORS ON THE PLATFORM ── */}
+      <section style={{ background: C.ink2, padding: '64px 80px', borderTop: `1px solid ${C.ink3}`, borderBottom: `1px solid ${C.ink3}` }}>
+        <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: C.ink4, marginBottom: '28px' }}>
+          MERCADOS JÁ NA PLATAFORMA · MARKETS ALREADY ON THE PLATFORM
+        </div>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          {[
+            { name: 'MERCADO NO BAIRRO', slug: 'mercado-no-bairro', desc: 'Praça D. Luís I · Cais do Sodré · Príncipe Real' },
+          ].map(curator => (
+            <a key={curator.slug} href={`/curators/${curator.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: '8px', padding: '20px 24px', border: `1px solid ${C.ink3}`, background: C.ink, flex: '1 1 260px', maxWidth: '320px', transition: 'border-color .15s' }}>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: '22px', textTransform: 'uppercase', color: C.paper, letterSpacing: '-0.01em', lineHeight: 1 }}>
+                {curator.name}
+              </div>
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink4, letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.6 }}>
+                {curator.desc}
+              </div>
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: GOLD, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: '4px' }}>
+                VER PERFIL →
+              </div>
+            </a>
+          ))}
+          {/* Placeholder for more curators */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 24px', border: `1px dashed ${C.ink3}`, flex: '1 1 260px', maxWidth: '320px' }}>
+            <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', color: C.ink3, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' }}>
+              O SEU MERCADO AQUI<br />YOUR MARKET HERE
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── SPLIT PARISHES (gold) ── */}
       <section style={{ background: GOLD, padding: '88px 80px' }}>
         <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: '20px' }}>{t.sp1label}</div>
