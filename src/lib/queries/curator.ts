@@ -15,6 +15,7 @@ export interface CuratorMarket extends Market {
     stall_label: string | null
     checked_in_at: string
     attendance_id: string
+    category: string | null
   }[]
 }
 
@@ -61,7 +62,7 @@ export async function getCuratorDashboardData(
             checked_in_at,
             checked_out_at,
             stall_label,
-            maker:profiles ( id, display_name, slug, instagram_handle, is_verified )
+            maker:profiles ( id, display_name, slug, instagram_handle, is_verified, bio_i18n )
           )
         `)
         .eq('curator_id', curatorId)
@@ -119,6 +120,7 @@ export async function getCuratorDashboardData(
           stall_label: a.stall_label,
           checked_in_at: a.checked_in_at,
           attendance_id: a.id,
+          category: a.maker?.bio_i18n?._category?.split(',')[0]?.trim() ?? null,
         })),
       }
     })
