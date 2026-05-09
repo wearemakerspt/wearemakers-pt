@@ -9,6 +9,7 @@ import SaveBrandButton from '@/components/ui/SaveBrandButton'
 import BrandGallery from '@/components/brands/BrandGallery'
 import BrandViewTracker from '@/components/ui/BrandViewTracker'
 import InstagramTapTracker from '@/components/ui/InstagramTapTracker'
+import MapEmbed from '@/components/ui/MapEmbed'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: Promise<{ slug: string }> }
@@ -294,6 +295,16 @@ export default async function BrandProfilePage({ params }: Props) {
               <span className="section-rule-title">WHERE TO FIND ME</span>
               <span style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.12em', color: 'var(--stone)', textTransform: 'uppercase' }}>{brand.upcoming_markets.length} UPCOMING</span>
             </div>
+            {/* Map of next upcoming market location */}
+            {brand.upcoming_markets[0]?.space_lat && brand.upcoming_markets[0]?.space_lng && (
+              <MapEmbed
+                lat={brand.upcoming_markets[0].space_lat}
+                lng={brand.upcoming_markets[0].space_lng}
+                label={brand.upcoming_markets[0].space_name}
+                address={brand.upcoming_markets[0].space_address}
+                height={220}
+              />
+            )}
             {brand.upcoming_markets.map((market) => {
               const d = new Date(market.event_date + 'T12:00:00')
               return (

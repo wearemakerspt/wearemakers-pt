@@ -31,6 +31,8 @@ export interface UpcomingMarketSlot {
   starts_at: string
   space_name: string
   space_address: string | null
+  space_lat: number | null
+  space_lng: number | null
 }
 
 export interface BrandGem {
@@ -107,7 +109,7 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
         id, checked_out_at,
         market:markets (
           id, title, status, event_date, starts_at,
-          space:spaces (id, name, address)
+          space:spaces (id, name, address, lat, lng)
         )
       )
     `)
@@ -144,6 +146,8 @@ export async function getBrandBySlug(slug: string, lang = 'en'): Promise<BrandDe
       starts_at: a.market?.starts_at,
       space_name: a.market?.space?.name ?? '',
       space_address: a.market?.space?.address ?? null,
+      space_lat: a.market?.space?.lat ?? null,
+      space_lng: a.market?.space?.lng ?? null,
     }))
     .slice(0, 6)
 
