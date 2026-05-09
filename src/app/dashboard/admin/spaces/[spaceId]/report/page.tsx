@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/queries/auth'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import PrintButton from '@/app/dashboard/admin/spaces/[spaceId]/report/PrintButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -124,18 +125,7 @@ export default async function SpaceImpactReport({ params }: Props) {
         .condensed { font-family: 'Arial Narrow', 'Helvetica Neue Condensed', Arial, sans-serif; font-weight: 900; text-transform: uppercase; }
       `}</style>
 
-      {/* Print button — hidden when printing */}
-      <div className="no-print" style={{ background: INK, padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: PAPER, fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-          SPACE IMPACT REPORT — {space.name.toUpperCase()}
-        </span>
-        <button
-          onClick={() => window.print()}
-          style={{ background: RED, color: PAPER, border: 'none', padding: '10px 20px', fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer' }}
-        >
-          ↓ DOWNLOAD PDF (PRINT)
-        </button>
-      </div>
+      <PrintButton spaceName={space.name} />
 
       <div className="page">
 
@@ -247,12 +237,6 @@ export default async function SpaceImpactReport({ params }: Props) {
 
       </div>
 
-      <script dangerouslySetInnerHTML={{ __html: `
-        // Auto-trigger print if ?print=1 in URL
-        if (window.location.search.includes('print=1')) {
-          window.addEventListener('load', () => setTimeout(() => window.print(), 500));
-        }
-      `}} />
     </>
   )
 }
