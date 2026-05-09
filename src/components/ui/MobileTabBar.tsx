@@ -6,7 +6,7 @@ const TABS = [
   { href: '/',        label: 'LIVE',    live: true },
   { href: '/markets', label: 'MARKETS', live: false },
   { href: '/brands',  label: 'BRANDS',  live: false },
-  { href: '/journal', label: 'JOURNAL', live: false },
+  { href: '/circuit', label: 'CIRCUIT', live: false },
   { href: '/gems',    label: 'GEMS',    live: false },
 ]
 
