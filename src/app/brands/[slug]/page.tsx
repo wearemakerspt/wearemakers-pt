@@ -124,6 +124,7 @@ export default async function BrandProfilePage({ params }: Props) {
           .bp-hero-r { padding: 28px 24px; }
           .bp-market-row { padding: 0 24px; gap: 16px; }
           .bp-member { padding: 24px; }
+          .bp-hero-save { display: none !important; }
         }
         @media (hover: none) { .lightbox-arrow { display: none !important; } }
       `}</style>
@@ -178,8 +179,8 @@ export default async function BrandProfilePage({ params }: Props) {
               </p>
             )}
 
-            {/* Save button — always visible in hero */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Save button — hidden on mobile (shown in dark sidebar below) */}
+            <div className="bp-hero-save" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <SaveBrandButton
                 brandId={brand.id}
                 brandName={brand.display_name}
