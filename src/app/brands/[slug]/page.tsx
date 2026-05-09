@@ -123,7 +123,8 @@ export default async function BrandProfilePage({ params }: Props) {
         @media (max-width: 860px) {
           .bp-hero { grid-template-columns: 1fr; }
           .bp-hero-l { border-right: none; border-bottom: 1px solid rgba(12,12,12,0.15); padding: 28px 20px; gap: 16px; }
-          .bp-hero-r { padding: 24px 20px; }
+          .bp-hero-r { display: none !important; }
+          .bp-hero-desktop-name { display: none !important; }
           .bp-market-row { padding: 0 20px; gap: 12px; }
           .bp-member { padding: 20px; }
           .bp-hero-save { display: none !important; }
@@ -280,18 +281,14 @@ export default async function BrandProfilePage({ params }: Props) {
 
         {/* ── Photo Gallery ── */}
         {photos.length > 0 && (
-          <div style={{ borderBottom: '2px solid #0C0C0C' }}>
-            <div className="section-rule">
-              <span className="section-rule-title">THE WORK</span>
-              <span style={{ fontFamily: 'var(--fm)', fontSize: '10px', letterSpacing: '0.12em', color: 'var(--stone)', textTransform: 'uppercase' }}>{photos.length} PHOTO{photos.length !== 1 ? 'S' : ''}</span>
-            </div>
+          <div style={{ borderBottom: '1px solid rgba(12,12,12,0.15)' }}>
             <BrandGallery photos={photos} />
           </div>
         )}
 
         {/* ── Team Members ── */}
         {members.length > 0 && (
-          <div style={{ borderBottom: '2px solid #0C0C0C' }}>
+          <div style={{ borderBottom: '1px solid rgba(12,12,12,0.15)' }}>
             <div className="section-rule">
               <span className="section-rule-title">THE PEOPLE</span>
             </div>
