@@ -128,6 +128,7 @@ export default async function MarketDetailPage({ params }: Props) {
       <style>{`
         .mkt-mobile-hero { display: none; }
         .mkt-mobile-actions { display: none; }
+        .mkt-mobile-curator { display: none; }
         @media (max-width: 860px) {
           .mkt-mobile-hero {
             display: block;
@@ -155,6 +156,7 @@ export default async function MarketDetailPage({ params }: Props) {
           .detail-meta-row { gap: 16px !important; }
           .detail-makers { grid-template-columns: repeat(2,1fr) !important; }
           .mkt-mobile-actions { display: block; border-bottom: 2px solid #0C0C0C; }
+          .mkt-mobile-curator { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 2px solid #0C0C0C; background: #1A1A1A; text-decoration: none; }
           .mkt-maker-card { padding: 16px !important; }
         }
         @media (max-width: 540px) {
@@ -259,6 +261,20 @@ export default async function MarketDetailPage({ params }: Props) {
             <SaveMarketButton marketId={market.id} marketTitle={market.title} userId={user?.id ?? null} initialSaved={initialSaved} dark={true} />
           </div>
         </div>
+
+        {/* Mobile curator row — shown before map on mobile */}
+        {(market as any).curator && (
+          <Link
+            href={`/curators/${(market as any).curator.slug}`}
+            className="mkt-mobile-curator"
+          >
+            <div>
+              <div style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(244,241,236,0.4)', marginBottom: '4px' }}>CURATED BY</div>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase', color: '#F4F1EC' }}>{(market as any).curator.display_name}</div>
+            </div>
+            <span style={{ fontFamily: "'Share Tech Mono',monospace", fontSize: '14px', color: 'rgba(244,241,236,0.4)' }}>↗</span>
+          </Link>
+        )}
 
         {/* Map */}
         {market.space.lat && market.space.lng && (
