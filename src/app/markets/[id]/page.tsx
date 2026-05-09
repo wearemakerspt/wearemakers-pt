@@ -305,28 +305,39 @@ export default async function MarketDetailPage({ params }: Props) {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', borderBottom: B }} className="detail-makers">
-              {market.makers.map(mk => (
-                <Link
-                  key={mk.maker_id}
-                  href={`/brands/${mk.maker_slug ?? mk.maker_id}`}
-                  className="mkt-maker-card"
-                  style={{ textDecoration: 'none', color: 'inherit', borderRight: Bsm, borderBottom: Bsm, padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', background: WHITE, transition: 'background .15s' }}
-                >
-                  <div style={{ width: '56px', height: '56px', border: B, background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FH, fontWeight: 900, fontSize: '16px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-                    {mk.avatar_url
-                      ? <img src={mk.avatar_url} alt={mk.maker_name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : mk.maker_name.slice(0, 2).toUpperCase()
-                    }
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '15px', letterSpacing: '0.04em', textTransform: 'uppercase', color: INK, lineHeight: 1.1 }}>{mk.maker_name}</div>
-                    {mk.stall_label && <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.08em', color: STONE, textTransform: 'uppercase', marginTop: '4px' }}>Stall {mk.stall_label}</div>}
-                    {mk.digital_offer && <div style={{ fontFamily: FB, fontSize: '12px', color: STONE, marginTop: '5px', fontStyle: 'italic', lineHeight: 1.4 }}>✦ {mk.digital_offer}</div>}
-                    {mk.is_verified && <div style={{ fontFamily: FM, fontSize: '9px', color: INK, border: `1px solid ${INK}`, padding: '1px 6px', display: 'inline-block', marginTop: '5px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>✦ PRO</div>}
-                  </div>
-                  <div style={{ fontFamily: FM, fontSize: '10px', color: STONE, letterSpacing: '0.1em', alignSelf: 'flex-end' }}>→</div>
-                </Link>
-              ))}
+              {market.makers.map(mk => {
+                const initials = mk.maker_name.slice(0, 2).toUpperCase()
+                return (
+                  <Link
+                    key={mk.maker_id}
+                    href={`/brands/${mk.maker_slug ?? mk.maker_id}`}
+                    className="mkt-maker-card"
+                    style={{ textDecoration: 'none', display: 'block', borderRight: Bsm, borderBottom: Bsm, background: WHITE, position: 'relative', overflow: 'hidden' }}
+                  >
+                    {/* Image — square aspect ratio matching BrandCard */}
+                    <div style={{ aspectRatio: '1', overflow: 'hidden', background: PAPER, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                      {mk.avatar_url ? (
+                        <img src={mk.avatar_url} alt={mk.maker_name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <span style={{ fontFamily: FH, fontWeight: 900, fontSize: 'clamp(28px,6vw,48px)', color: 'rgba(12,12,12,0.12)', letterSpacing: '-0.02em' }}>{initials}</span>
+                      )}
+                      {mk.is_verified && (
+                        <div style={{ position: 'absolute', top: '6px', right: '6px', background: INK, fontFamily: FM, fontWeight: 700, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: WHITE, padding: '2px 6px' }}>✦ PRO</div>
+                      )}
+                    </div>
+                    {/* Card body */}
+                    <div style={{ padding: '10px 12px 14px', borderTop: Bsm }}>
+                      <div style={{ fontFamily: FH, fontWeight: 700, fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.03em', color: INK, lineHeight: 1, marginBottom: '4px' }}>{mk.maker_name}</div>
+                      {mk.stall_label && mk.stall_label !== 'INTENT' && (
+                        <div style={{ fontFamily: FM, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: STONE }}>Stall {mk.stall_label}</div>
+                      )}
+                      {mk.digital_offer && (
+                        <div style={{ fontFamily: FM, fontSize: '10px', color: RED, marginTop: '2px' }}>✦ OFFER</div>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>
