@@ -234,15 +234,14 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
       space:spaces (id, name, address, parish, lat, lng),
       curator:profiles!markets_curator_id_fkey (id, display_name, slug),
       attendance (
-        id, stall_label, checked_in_at,
+        id, stall_label, checked_in_at, checked_out_at,
         maker:profiles!attendance_maker_id_fkey (
           id, display_name, slug, instagram_handle,
-          avatar_url, is_verified, digital_offer
+          avatar_url, featured_photo_url, is_verified, digital_offer
         )
       )
     `)
     .eq('id', slug)
-    .is('attendance.checked_out_at', null)
     .neq('status', 'shadow')
     .limit(1)
 
@@ -299,6 +298,8 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
     }
   }
 
+  const activeAttendance = (m.attendance ?? []).filter((a: any) => !a.checked_out_at)
+
   return {
     id: m.id,
     title: m.title,
@@ -308,15 +309,15 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
     ends_at: m.ends_at,
     description: m.description ?? null,
     description_i18n: m.description_i18n ?? {},
-    checkin_count: m.attendance?.length ?? 0,
+    checkin_count: activeAttendance.length,
     space: m.space ?? { id: '', name: '', address: null, parish: null, lat: 38.716, lng: -9.139 },
     curator: m.curator ?? null,
-    makers: (m.attendance ?? []).map((a: any) => ({
+    makers: activeAttendance.map((a: any) => ({
       maker_id: a.maker?.id ?? '',
       maker_name: a.maker?.display_name ?? '',
       maker_slug: a.maker?.slug ?? null,
       instagram_handle: a.maker?.instagram_handle ?? null,
-      avatar_url: a.maker?.avatar_url ?? null,
+      avatar_url: a.maker?.featured_photo_url ?? a.maker?.avatar_url ?? null,
       is_verified: a.maker?.is_verified ?? false,
       digital_offer: a.maker?.digital_offer ?? null,
       stall_label: a.stall_label ?? null,
