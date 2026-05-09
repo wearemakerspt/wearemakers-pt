@@ -70,6 +70,13 @@ export default function AdminSpaces({ spaces: initialSpaces }: { spaces: any[] }
               <div style={{ ...T, fontSize: '9px', color: s.is_active ? 'var(--GRN)' : 'rgba(24,22,20,.3)', fontWeight: 700 }}>
                 {s.is_active ? '● ACTIVE' : '○ INACTIVE'}
               </div>
+              <a
+                href={`/dashboard/admin/spaces/${s.id}/report`}
+                target="_blank"
+                style={{ ...T, fontSize: '8px', padding: '4px 8px', border: '1px solid rgba(24,22,20,.3)', cursor: 'pointer', background: 'transparent', color: 'rgba(24,22,20,.5)', textDecoration: 'none' }}
+              >
+                ↓ REPORT
+              </a>
               <button
                 onClick={() => handleToggleActive(s.id, s.is_active)}
                 disabled={isPending}
