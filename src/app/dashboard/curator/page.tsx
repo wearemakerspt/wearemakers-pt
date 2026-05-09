@@ -11,6 +11,7 @@ import ActivityLog from '@/components/dashboard/ActivityLog'
 import PromoKit from '@/components/dashboard/PromoKit'
 import PendingApproval from '@/components/dashboard/PendingApproval'
 import CuratorProfile from '@/components/dashboard/CuratorProfile'
+import CuratorAnalytics from '@/components/dashboard/CuratorAnalytics'
 
 export const metadata: Metadata = {
   title: 'Command Center — Curator Dashboard',
@@ -109,7 +110,7 @@ export default async function CuratorDashboardPage() {
         {/* ── Field Protocol subheader ── */}
         <div style={{ background: 'var(--P2)', borderBottom: '3px solid var(--INK)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.35)' }}>
-            COMMAND CENTER — CURATOR PROTOCOL · FP-CUR-001 through FP-CUR-006
+            COMMAND CENTER — CURATOR PROTOCOL · FP-CUR-001 through FP-CUR-007
           </div>
           <div style={{ ...T, fontSize: '10px', color: 'rgba(24,22,20,.25)' }}>
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}
@@ -185,6 +186,15 @@ export default async function CuratorDashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* §7 Analytics */}
+          <div style={{ margin: '12px 12px 0', border: '3px solid var(--INK)', boxShadow: 'var(--SHD-SM)', background: 'var(--P2)' }}>
+            <div style={{ background: 'var(--INK)', color: 'var(--P)', padding: '9px 13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '3px solid var(--INK)' }}>
+              <span style={{ ...T, fontWeight: 700 }}>§7 — ANALYTICS · MARKET PERFORMANCE</span>
+              <span style={{ ...T, fontSize: '9px', opacity: 0.3 }}>FP-CUR-007</span>
+            </div>
+            <CuratorAnalytics markets={ownMarkets as any} curatorId={profile.id} />
           </div>
 
           {/* §6 Organisation Profile */}
