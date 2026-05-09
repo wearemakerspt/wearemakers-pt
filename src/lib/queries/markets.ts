@@ -237,7 +237,7 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
         id, stall_label, checked_in_at, checked_out_at,
         maker:profiles!attendance_maker_id_fkey (
           id, display_name, slug, instagram_handle,
-          avatar_url, featured_photo_url, is_verified, digital_offer
+          avatar_url, is_verified, digital_offer
         )
       )
     `)
@@ -317,7 +317,7 @@ export async function getMarketBySlug(slug: string): Promise<MarketDetail | null
       maker_name: a.maker?.display_name ?? '',
       maker_slug: a.maker?.slug ?? null,
       instagram_handle: a.maker?.instagram_handle ?? null,
-      avatar_url: a.maker?.featured_photo_url ?? a.maker?.avatar_url ?? null,
+      avatar_url: a.maker?.avatar_url ?? null,
       is_verified: a.maker?.is_verified ?? false,
       digital_offer: a.maker?.digital_offer ?? null,
       stall_label: a.stall_label ?? null,
